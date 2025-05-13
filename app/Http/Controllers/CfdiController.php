@@ -16,6 +16,7 @@ use App\Services\CfdiXmlInjectorService;
 use App\Services\TimbradoService;
 use App\Services\ComplementoXmlService;
 use App\Services\AcuseJsonService;
+use App\Services\EnvioSatCfdiService;
 
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -65,12 +66,14 @@ class CfdiController extends Controller
 
             // 3. Validar CSD vs RFC
             $validadorCert = new CertificadoValidatorService();
-            $coincide = $validadorCert->validarRfcConCertificado(storage_path('csd/certificado.cer'), $rfcEmisor);
+            $coincide = $validadorCert->validarRfcConCertificado(storage_path('csd/00001000000708268982.cer'), $rfcEmisor);
             if (!$coincide) {
                 return response()->json([
                     'error' => 'El RFC del certificado no coincide con el RFC del emisor en el XML.',
                 ], 422);
             }
+
+
 
             // 4. Generar cadena original y sello
             $cadenaService = new CfdiCadenaOriginalService();
@@ -79,9 +82,9 @@ class CfdiController extends Controller
             $signer = new CfdiSignerService();
             $firma = $signer->firmarCadena(
                 $cadenaOriginal,
-                storage_path('csd/llave.pem'),
-                storage_path('csd/certificado.cer'),
-                '12345678a'
+                storage_path('csd/CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem'),
+                storage_path('csd/00001000000708268982.cer'),
+                'brenda01'
             );
 
             $sello = $firma['sello'];
@@ -128,13 +131,37 @@ class CfdiController extends Controller
                 'user_id' => Auth::id(),
                 'nombre_archivo' => $file->getClientOriginalName(),
                 'ruta' => $nombre,
+                'uuid' => $uuid,
+                'sello' => $sello,
                 'rfc_emisor' => $rfcEmisor,
                 'rfc_receptor' => $receptor ? (string) $receptor['Rfc'] : null,
                 'total' => (float) $xml['Total'],
                 'fecha' => (string) $xml['Fecha'],
                 'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
-                'estatus' => 'pendiente',
+                'estatus' => 'timbrado',
             ]);
+
+            // 11. Enviar al SAT (SOAP + Blob)
+            // app(\App\Services\EnvioSatCfdiService::class)->enviar($registro);
+
+            // 12. Actualizar base de datos despues del envio 
+
+            // 13. Enviar al SAT y Azure
+            try {
+                $envio = new EnvioSatCfdiService();
+                $envio->enviar($registro); // Este método ya actualiza los campos necesarios
+            } catch (\Exception $e) {
+                $registro->update([
+                    'respuesta_sat' => 'Error: ' . $e->getMessage(),
+                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
+                ]);
+                \Log::error('Error al enviar CFDI al SAT', [
+                    'uuid' => $registro->uuid,
+                    'error' => $e->getMessage()
+                ]);
+            }       
+
+
 
             \Log::info('CFDI timbrado exitosamente', [
                 'uuid' => $timbreData['uuid'],

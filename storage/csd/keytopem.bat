@@ -20,7 +20,7 @@ if not exist "%OPENSSL%" (
 )
 
 REM Confirmar que llave.key existe
-if not exist "%CSDDIR%\llave.key" (
+if not exist "%CSDDIR%\CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.key" (
     echo ❌ ERROR: No se encontró %CSDDIR%\llave.key
     pause
     exit /b
@@ -30,12 +30,12 @@ REM Solicitar contraseña
 set /p PASS=Introduce la contraseña del .key (CSD): 
 
 echo 🔄 Ejecutando conversión...
-"%OPENSSL%" pkcs8 -inform DER -in "%CSDDIR%\llave.key" -passin pass:%PASS% -out "%CSDDIR%\llave.pem"
+"%OPENSSL%" pkcs8 -inform DER -in "%CSDDIR%\CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.key" -passin pass:%PASS% -out "%CSDDIR%\CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem"
 
-if exist "%CSDDIR%\llave.pem" (
-    echo ✅ Conversion completada: llave.pem generada exitosamente.
+if exist "%CSDDIR%\CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem" (
+    echo ✅ Conversion completada: CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem generada exitosamente.
 ) else (
-    echo ❌ Error: No se pudo generar llave.pem
+    echo ❌ Error: No se pudo generar CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem
 )
 
 pause

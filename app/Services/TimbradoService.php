@@ -14,27 +14,44 @@ class TimbradoService
     public function generarTimbre(array $datosCfdi, string $cfdiXml, Carbon $fechaSimulada): array
     {
         $hsmUrl = 'http://35.208.215.143/akval-firma/api/FirmaHsm/FirmaCxi';
-        $certificadoSAT = '30001000000500003456';
-        $rfcPAC = 'SPR190613I52';
+        $certificadoSAT = '00001000000710051653';
+        $rfcPAC = 'ASF180914KY5';
 
         $uuid = $datosCfdi['uuid'];
         $fechaTimbrado = $fechaSimulada->format('Y-m-d\TH:i:s');
 
-        $doc = new DOMDocument('1.0', 'UTF-8');
+        $doc = new \DOMDocument('1.0', 'UTF-8');
+        $doc->formatOutput = false;
+        $doc->preserveWhiteSpace = false;
+        
+        // Crear nodo TFD
         $tfd = $doc->createElementNS('http://www.sat.gob.mx/TimbreFiscalDigital', 'tfd:TimbreFiscalDigital');
-
-        // Atributos obligatorios en orden correcto
+        
+        // Agregar atributos obligatorios
         $tfd->setAttribute('Version', '1.1');
         $tfd->setAttribute('UUID', $uuid);
         $tfd->setAttribute('FechaTimbrado', $fechaTimbrado);
         $tfd->setAttribute('SelloCFD', $datosCfdi['selloCFD']);
         $tfd->setAttribute('NoCertificadoSAT', $certificadoSAT);
         $tfd->setAttribute('RfcProvCertif', $rfcPAC);
-        //$tfd->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-        $tfd->setAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'xsi:schemaLocation',
-            'http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd');
-
+        
+        // ✅ Agregar namespace xsi explícito
+        $tfd->setAttributeNS(
+            'http://www.w3.org/2000/xmlns/',
+            'xmlns:xsi',
+            'http://www.w3.org/2001/XMLSchema-instance'
+        );
+        
+        // ✅ Agregar el schemaLocation obligatorio
+        $tfd->setAttributeNS(
+            'http://www.w3.org/2001/XMLSchema-instance',
+            'xsi:schemaLocation',
+            'http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd'
+        );
+        
         $doc->appendChild($tfd);
+        
+        // Esto es lo que se firma y posteriormente se inserta sin cambios
         $tfdXml = $doc->saveXML($tfd);
 
         // Generar cadena original del TFD
