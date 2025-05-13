@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd"
+    Version="4.0" 
+	Sello="" 
+	Certificado="" 
+	NoCertificado="00001000000708268982"
+    Serie="B" 
+    Folio="00112"
+    Fecha="2024-10-29T12:00:00"
+    FormaPago="03" 
+    MetodoPago="PUE" 
+    TipoDeComprobante="I"
+    LugarExpedicion="11700"
+	Exportacion="01"
+    Moneda="MXN"
+    SubTotal="5000.00"
+    Total="5800.00">
+    
+    <!-- Emisor -->
+    <cfdi:Emisor 
+        Rfc="PUL230626UV4" 
+		Nombre="PULSARIX" 
+		RegimenFiscal="601"/>
+    
+    <!-- Receptor -->
+    <cfdi:Receptor 
+        Rfc="SLA230703GL7"
+        Nombre="SORING LATINOAMERICA"
+        DomicilioFiscalReceptor="06500"
+        RegimenFiscalReceptor="601"
+        UsoCFDI="G03"/>
+    
+    <!-- Conceptos (Tickets) -->
+    <cfdi:Conceptos>
+        <cfdi:Concepto 
+            ClaveProdServ="46171515"
+            NoIdentificacion="001"
+            Cantidad="5000"
+            ClaveUnidad="H87"
+            Unidad="Pieza"
+            Descripcion="VENTA DE 5000 LLAVEROS PROMOCIONALES"
+            ValorUnitario="1.00"
+            Importe="5000.00"
+            ObjetoImp="02">
+            <cfdi:Impuestos>
+                <cfdi:Traslados>
+                    <cfdi:Traslado Base="5000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="800.00"/>
+                </cfdi:Traslados>
+            </cfdi:Impuestos>
+        </cfdi:Concepto>
+    </cfdi:Conceptos>
+
+    <!-- Impuestos -->
+    <cfdi:Impuestos TotalImpuestosTrasladados="800.00">
+        <cfdi:Traslados>
+            <cfdi:Traslado Base="5000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="800.00"/>
+        </cfdi:Traslados>
+    </cfdi:Impuestos>
+
+</cfdi:Comprobante>

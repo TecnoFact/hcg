@@ -1,7 +1,4 @@
 <<<<<<< HEAD
-# Apitimbrado
-
-=======
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
@@ -63,4 +60,7 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
->>>>>>> 6c88e2508043f68736169a62f212281a76e3c345
+=======
+# Apitimbrado
+
+>>>>>>> b5466475b68361f6b36eda9e4c4c6cc2219b214a

@@ -13,13 +13,20 @@ class CfdiArchivo extends Model
         'user_id',
         'nombre_archivo',
         'ruta',
+        'uuid',
+        'sello',
         'rfc_emisor',
         'rfc_receptor',
         'total',
         'fecha',
         'tipo_comprobante',
         'estatus',
+        'fecha_envio_sat',
+        'respuesta_sat',
+        'token_sat',
+        'intento_envio_sat',
     ];
+    
 
     public function user()
     {
