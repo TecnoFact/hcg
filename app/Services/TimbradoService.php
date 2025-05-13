@@ -31,8 +31,6 @@ class TimbradoService
         $tfd->setAttribute('NoCertificadoSAT', $certificadoSAT);
         $tfd->setAttribute('RfcProvCertif', $rfcPAC);
         //$tfd->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-        $tfd->setAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'xsi:schemaLocation',
-            'http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd');
 
         $doc->appendChild($tfd);
         $tfdXml = $doc->saveXML($tfd);
@@ -118,4 +116,3 @@ class TimbradoService
         }
     }
 }
-

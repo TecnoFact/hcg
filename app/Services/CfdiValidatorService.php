@@ -24,6 +24,10 @@ class CfdiValidatorService
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
 
+        if (!file_exists($this->mainXsd)) {
+            throw new \Exception("XSD no encontrado en: $this->mainXsd");
+        }
+
         if (!$dom->loadXML($xmlContent)) {
             $errors = libxml_get_errors();
             return [

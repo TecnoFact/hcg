@@ -67,5 +67,3 @@ class ComplementoXmlService
         return $dom->saveXML();
     }
 }
-
-

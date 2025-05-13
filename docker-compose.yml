@@ -1,0 +1,37 @@
+services:
+    # Servicio para la aplicación Laravel
+    web:
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+        image: apitimbrado/latest
+        container_name: apitimbrado-app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        networks:
+            - apitimbrado-network
+        ports:
+            - "5173:5173"
+
+    # Nginx Service
+    nginx:
+        image: nginx:alpine
+        container_name: apitimbrado_nginx
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - .:/var/www
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - apitimbrado-network
+
+
+# Red para conectar los servicios
+networks:
+    apitimbrado-network:
+        driver: bridge
