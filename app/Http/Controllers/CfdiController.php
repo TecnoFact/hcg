@@ -73,8 +73,6 @@ class CfdiController extends Controller
                 ], 422);
             }
 
-
-
             // 4. Generar cadena original y sello
             $cadenaService = new CfdiCadenaOriginalService();
             $cadenaOriginal = $cadenaService->generar($xmlContent);
@@ -144,7 +142,7 @@ class CfdiController extends Controller
             // 11. Enviar al SAT (SOAP + Blob)
             // app(\App\Services\EnvioSatCfdiService::class)->enviar($registro);
 
-            // 12. Actualizar base de datos despues del envio 
+            // 12. Actualizar base de datos despues del envio
 
             // 13. Enviar al SAT y Azure
             try {
@@ -159,7 +157,7 @@ class CfdiController extends Controller
                     'uuid' => $registro->uuid,
                     'error' => $e->getMessage()
                 ]);
-            }       
+            }
 
 
 

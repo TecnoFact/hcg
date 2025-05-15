@@ -3,11 +3,18 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use DOMDocument;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\CfdiArchivo;
 use GuzzleHttp\Client;
 use Exception;
+use PhpCfdi\SatWsDescargaMasiva\RequestBuilder\FielRequestBuilder\Fiel;
+use PhpCfdi\SatWsDescargaMasiva\RequestBuilder\FielRequestBuilder\FielRequestBuilder;
+use PhpCfdi\SatWsDescargaMasiva\Service;
+use PhpCfdi\SatWsDescargaMasiva\WebClient\GuzzleWebClient;
+use RobRichards\XMLSecLibs\XMLSecurityDSig;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
 
 class EnvioSatCfdiService
 {
@@ -21,14 +28,16 @@ class EnvioSatCfdiService
         $fecha = Carbon::now()->format('Y-m-d\TH:i:s');
         $cadena = "||{$rfc}|{$fecha}||";
 
+        $cadena = base64_encode(hash('sha256', $cadena, true));
+
         $sello = $this->firmarCadenaConHsmPkcs7($cadena);
         Log::debug('Sello generado', ['sello' => $sello]);
 
-        $token = $this->autenticarseEnSat($rfc, $fecha, $sello);
+        $token = $this->autenticarseEnSat();
         Log::debug('Token recibido del SAT', ['token' => $token]);
 
-        $this->probarConexionSoap();
-        $this->probarConexionBlob();
+      //  $this->probarConexionSoap();
+      //  $this->probarConexionBlob();
 
         $this->enviarSoapSat($token, $cfdi, $xml);
         Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
@@ -37,22 +46,26 @@ class EnvioSatCfdiService
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
     }
 
-    private function firmarCadenaConHsmPkcs7(string $cadena): string
+    static function firmarCadenaConHsmPkcs7(string $cadena): string
     {
         $url = 'http://35.208.215.143/akval-firma/api/FirmaHsm/FirmaCxi';
-        
-        $ch = curl_init($url . '?cadena=' . urlencode($cadena));
+
+        $ch = curl_init($url . '?hash=' . urlencode($cadena));
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
-    
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
-    
+
+        Log::debug("Respuesta");
+        Log::debug($response);
+
+
         if ($httpCode !== 200 || empty($response)) {
             Log::error('Error en firma PKCS#7 con HSM', [
                 'http_code' => $httpCode,
@@ -61,12 +74,12 @@ class EnvioSatCfdiService
             ]);
             throw new \Exception("Error al firmar PKCS#7 con HSM: $error");
         }
-    
+
         return $response; // base64 sin headers
     }
-    
 
-    private function firmarConHSM(string $url, string $hash): string
+
+    static function firmarConHSM(string $url, string $hash): string
     {
         $ch = curl_init($url . '?hash=' . urlencode($hash));
         curl_setopt_array($ch, [
@@ -92,53 +105,76 @@ class EnvioSatCfdiService
         return $response;
     }
 
-    private function autenticarseEnSat(string $rfc, string $fecha, string $sello): string
+
+    /**
+     * Genera el XML de autenticación para el SAT.
+     *
+     * @return string
+     */
+    private function generateXml()
     {
-        $url = 'https://recepcion.facturaelectronica.sat.gob.mx/Seguridad/Autenticacion.svc';
+        $dateCreated = Carbon::now()->format('Y-m-d\TH:i:s');
+        $dateExpires = Carbon::now()->addMinutes(50)->format('Y-m-d\TH:i:s');
 
         $soapEnvelope = <<<XML
         <?xml version="1.0" encoding="utf-8"?>
         <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                       xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                       xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                       xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                       >
+
+          <soap:Header>
+            <u:Timestamp u:Id="uuid-1">
+              <u:Created>{$dateCreated}</u:Created>
+              <u:Expires>{$dateExpires}</u:Expires>
+            </u:Timestamp>
+             <o:Security s:mustUnderstand="1"
+            xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+            <!-- Aquí puedes agregar nodos adicionales de seguridad si es necesario -->
+            </o:Security>
+          </soap:Header>
+
+
           <soap:Body>
-            <Autentica xmlns="http://tempuri.org/">
-              <Rfc>{$rfc}</Rfc>
-              <Fecha>{$fecha}</Fecha>
-              <Sello>{$sello}</Sello>
-            </Autentica>
+            <Autentica xmlns="http://tempuri.org/"></Autentica>
           </soap:Body>
         </soap:Envelope>
         XML;
 
-        $headers = [
-            'Content-Type: text/xml; charset=utf-8',
-            'SOAPAction: "http://tempuri.org/IAutenticacion/Autentica"',
-            'Content-Length: ' . strlen($soapEnvelope),
-        ];
+        return $soapEnvelope;
 
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $soapEnvelope,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
+    }
 
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
 
-        if (!$response) {
-            throw new Exception("Error en conexión con SAT: $error");
-        }
+    private function autenticarseEnSat(): string
+    {
+        $certificado = Storage::disk('certi')->path('certs/00001000000710981021.cer');
+        $privateKeyContents = Storage::disk('certi')->path('certs/00001000000710981021.key');
+        $passPhrase = 'cPRM2379';
 
-        if (preg_match('/<AutenticaResult>([^<]+)<\/AutenticaResult>/', $response, $match)) {
-            return $match[1];
-        }
+        $token = "";
 
-        throw new Exception("Token no recibido del SAT. Respuesta: $response");
+        $fiel = Fiel::create(
+            file_get_contents($certificado),
+            file_get_contents($privateKeyContents),
+            $passPhrase
+        );
+
+        $webClient = new GuzzleWebClient();
+
+        // creación del objeto encargado de crear las solicitudes firmadas usando una FIEL
+        $requestBuilder = new FielRequestBuilder($fiel);
+
+        // Creación del servicio
+        $service = new Service($requestBuilder, $webClient);
+
+         Log::debug('Token generado DESDE METODO', ['token' => $service->obtainCurrentToken()->getValue()]);
+
+        $token = $service->obtainCurrentToken()->getValue();
+
+        return $token;
+
     }
 
     private function enviarSoapSat(string $token, CfdiArchivo $cfdi, string $xml): void
@@ -256,7 +292,7 @@ class EnvioSatCfdiService
         $sas = config('pac.SharedAccesSignature');
         $baseUrl = config('pac.BlobStorageEndpoint');
         $url = "{$baseUrl}{$container}/{$uuid}.xml{$sas}";
-    
+
         try {
             $client = new Client();
             $client->put($url, [

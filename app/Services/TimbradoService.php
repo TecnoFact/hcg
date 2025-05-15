@@ -81,7 +81,7 @@ class TimbradoService
         ];
     }
 
-    private function firmarConHSM(string $url, string $hash): string
+    static function firmarConHSM(string $url, string $hash): string
     {
         $ch = curl_init($url . '?hash=' . urlencode($hash));
         curl_setopt_array($ch, [

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use DOMDocument;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class CfdiValidatorService
 {
@@ -12,7 +13,8 @@ class CfdiValidatorService
     public function __construct()
     {
         // Ruta al XSD principal descargado del SAT
-        $this->mainXsd = resource_path('xsd/cfdv40.xsd');
+       // $this->mainXsd = resource_path('xsd/cfdv40.xsd');
+       $this->mainXsd = Storage::disk('public')->path('xsd/cfdi40.xsd');
     }
 
     public function validate(string $xmlContent): array
@@ -28,6 +30,7 @@ class CfdiValidatorService
             throw new \Exception("XSD no encontrado en: $this->mainXsd");
         }
 
+
         if (!$dom->loadXML($xmlContent)) {
             $errors = libxml_get_errors();
             return [
@@ -36,6 +39,9 @@ class CfdiValidatorService
                 'detalle' => $this->formatErrors($errors),
             ];
         }
+        // Validar el XML contra el XSD principal
+
+
 
         if (!$dom->schemaValidate($this->mainXsd)) {
             $errors = libxml_get_errors();
