@@ -330,7 +330,7 @@ class EnvioSatCfdiService
                 // Acceder al nodo AcuseRecepcionCFDI
         $acuse = $body->children('http://recibecfdi.sat.gob.mx')->AcuseRecepcion->AcuseRecepcionCFDI;
 
-                dd($acuse->attributes()['UUID']);
+
 
 
         // Extraer los datos del acuse
