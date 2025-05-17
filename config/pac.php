@@ -22,4 +22,8 @@ return [
 
     // URL base del Blob Storage
     'BlobStorageEndpoint' => 'https://cfdipac08.blob.core.windows.net/',
+
+    'VersionComprobante' => '4.0',
+
+    'NumeroCertificado' => '00001000000710051653',
 ];

@@ -34,7 +34,7 @@ class CfdiController extends Controller
         $xmlContent = file_get_contents($file);
 
         // 1. Validar estructura
-        $validador = new CfdiValidatorService();
+      /*   $validador = new CfdiValidatorService();
         $validacion = $validador->validate($xmlContent);
 
         if (!$validacion['valido']) {
@@ -43,7 +43,7 @@ class CfdiController extends Controller
                 'detalles' => $validacion['detalle'],
             ], 422);
         }
-
+       */
         // 2. Validar complementos
         $xml = simplexml_load_string($xmlContent);
         $complementValidator = new CfdiComplementValidatorService();

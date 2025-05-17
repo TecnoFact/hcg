@@ -107,6 +107,33 @@ class TimbradoService
         return $response;
     }
 
+    static function firmarConHSMOther(string $url, string $hash): string
+    {
+       $ch = curl_init($url . '?hash=' . $hash);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || empty($response)) {
+            Log::error('Error en comunicación con HSM', [
+                'http_code' => $httpCode,
+                'error' => $error,
+                'hash_enviado' => $hash
+            ]);
+            throw new Exception("Error al firmar con HSM: $error");
+        }
+
+
+        return $response;
+    }
+
     private function validarSelloSAT(string $selloSAT, string $cadenaOriginal, string $rfcPAC): void
     {
         $certPath = storage_path("app/certs/{$rfcPAC}.cer");

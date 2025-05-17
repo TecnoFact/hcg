@@ -47,6 +47,22 @@ return [
             'report' => false,
         ],
 
+        'csd' => [
+            'driver' => 'local',
+            'root' => storage_path('csd'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'azure' => [
+            'driver'    => 'azure',
+            'endpoint'  => env('AZURE_BLOB_ENDPOINT'), // Blob endpoint + SAS
+            'container' => env('AZURE_CONTAINER'),
+            'sas'       => env('AZURE_SAS'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

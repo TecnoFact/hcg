@@ -8,14 +8,17 @@
     "require": {
         "php": "^8.2",
         "ext-openssl": "*",
+        "azure-oss/storage-blob-flysystem": "^1.2",
         "eclipxe/cfdiutils": "^3.0",
         "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.23",
+        "league/flysystem-azure-blob-storage": "^3.28",
         "phpcfdi/credentials": "^1.3",
         "phpcfdi/sat-ws-descarga-masiva": "^1.0",
+        "robrichards/wse-php": "^2.0",
         "robrichards/xmlseclibs": "^3.1"
     },
     "require-dev": {
