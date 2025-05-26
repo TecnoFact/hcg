@@ -42,8 +42,8 @@ class EnvioSatCfdiService
         $this->subirABlob($cfdi->uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
 
-        $this->enviarSoapSat($token, $cfdi, $nameXml);
-        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+       // $this->enviarSoapSat($token, $cfdi, $nameXml);
+       // Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
 
 
     }
