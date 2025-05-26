@@ -19,7 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/timbrar', [TimbradoController::class, 'timbrar']);
 
-// Route::post('/timbrar-publico', [TimbradoController::class, 'timbrar']);
+Route::middleware('auth:sanctum')->post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
 
 
 Route::middleware('auth:sanctum')->get('/perfil', function (Request $request) {

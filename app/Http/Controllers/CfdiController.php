@@ -193,5 +193,93 @@ class CfdiController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Maneja la subida y envío de un CFDI al SAT.(SOLO XML YA TIMBRADO
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadAndSendSat(Request $request)
+    {
+        $request->validate([
+            'xml' => 'required|file|mimes:xml|max:1024',
+        ]);
+
+        $file = $request->file('xml');
+        $xmlContent = file_get_contents($file);
+
+
+        $acuseService = new AcuseJsonService();
+        $acuse = $acuseService->generarDesdeXml($xmlContent);
+
+        // 2. Validar complementos
+        $xml = simplexml_load_string($xmlContent);
+
+        try {
+
+            // 8. Guardar archivo final
+            $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
+            Storage::disk('local')->put($nombre, $xmlContent);
+
+            // 10. Guardar en base de datos
+            $registro = CfdiArchivo::create([
+                'user_id' => Auth::id(),
+                'nombre_archivo' => $file->getClientOriginalName(),
+                'ruta' => $nombre,
+                'uuid' => $acuse['uuid'],
+                'sello' => $acuse['sello'],
+                'rfc_emisor' => $acuse['rfcEmisor'],
+                'rfc_receptor' => $acuse['rfcReceptor'] ? (string) $acuse['rfcReceptor'] : null,
+                'total' => (float) $acuse['Total'],
+                'fecha' => (string) $acuse['Fecha'],
+                'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
+                'estatus' => 'timbrado',
+            ]);
+
+           // dd($registro);
+            // Enviar al SAT y Azure
+            try {
+                $envio = new EnvioSatCfdiService();
+                $envio->onlyUploadAndSendSat($xmlContent, $acuse['uuid']); // Este método ya actualiza los campos necesarios
+            } catch (\Exception $e) {
+                $registro->update([
+                    'respuesta_sat' => 'Error: ' . $e->getMessage(),
+                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
+                ]);
+                \Log::error('Error al enviar CFDI al SAT', [
+                    'uuid' => $registro->uuid,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+
+            return response()->json([
+                'mensaje' => 'CFDI recibido y registrado correctamente',
+                'archivo_id' => $registro->id,
+                'datos_extraidos' => [
+                    'uuid' => $acuse['uuid'],
+                    'emisor_rfc' => $registro->rfc_emisor,
+                    'receptor_rfc' => $registro->rfc_receptor,
+                    'total' => $registro->total,
+                    'fecha' => $registro->fecha,
+                    'tipo' => $registro->tipo_comprobante,
+                    //'cadena_original' => $cadenaOriginal,
+                    'sello' => $acuse['sello'],
+                    'certificado' => $acuse['certificado'],
+                    'no_certificado' => $acuse['noCertificadoSAT'],
+                    'acuse' => $acuse,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error interno',
+                'mensaje' => $e->getMessage(),
+                'archivo' => $e->getFile(),
+                'linea' => $e->getLine()
+            ], 500);
+        }
+
+    }
 }
 
