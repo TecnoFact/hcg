@@ -213,8 +213,11 @@ class CfdiController extends Controller
         $acuseService = new AcuseJsonService();
         $acuse = $acuseService->generarDesdeXml($xmlContent);
 
+
+
         // 2. Validar complementos
         $xml = simplexml_load_string($xmlContent);
+      //  dd($xml);
 
         try {
 
@@ -228,11 +231,11 @@ class CfdiController extends Controller
                 'nombre_archivo' => $file->getClientOriginalName(),
                 'ruta' => $nombre,
                 'uuid' => $acuse['uuid'],
-                'sello' => $acuse['sello'],
+                'sello' => $xml['Sello'],
                 'rfc_emisor' => $acuse['rfcEmisor'],
                 'rfc_receptor' => $acuse['rfcReceptor'] ? (string) $acuse['rfcReceptor'] : null,
-                'total' => (float) $acuse['Total'],
-                'fecha' => (string) $acuse['Fecha'],
+                'total' => (float) $xml['Total'],
+                'fecha' => (string) $xml['Fecha'],
                 'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
                 'estatus' => 'timbrado',
             ]);
@@ -265,9 +268,9 @@ class CfdiController extends Controller
                     'fecha' => $registro->fecha,
                     'tipo' => $registro->tipo_comprobante,
                     //'cadena_original' => $cadenaOriginal,
-                    'sello' => $acuse['sello'],
-                    'certificado' => $acuse['certificado'],
-                    'no_certificado' => $acuse['noCertificadoSAT'],
+                    'sello' => $xml['Sello'],
+                    'certificado' => $xml['Certificado'],
+                    'no_certificado' => $xml['NoCertificado'],
                     'acuse' => $acuse,
                 ],
             ], 201);

@@ -712,13 +712,21 @@ class EnvioSatCfdiService
         $this->subirABlob($uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $uuid]);
 
+
         $token = $this->autenticarseEnSat();
         Log::debug('Token recibido del SAT', ['token' => $token]);
 
+        $nameXml = $uuid . '.xml';
+        $cfdi = CfdiArchivo::where('uuid', $uuid)->first();
 
+        if (!$cfdi) {
+            Log::error('CFDI no encontrado', ['uuid' => $uuid]);
+            throw new Exception("CFDI no encontrado con UUID: $uuid");
+        }
 
        $this->enviarSoapSat($token, $cfdi, $nameXml);
         Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+
     }
 
 }
