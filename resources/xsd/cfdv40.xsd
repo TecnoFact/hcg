@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.sat.gob.mx/cfd/4"
+           xmlns="http://www.sat.gob.mx/cfd/4"
+           elementFormDefault="qualified"
+           version="4.0">
+  <xs:element name="Comprobante" type="ComprobanteType"/>
+  <xs:complexType name="ComprobanteType">
+    <xs:sequence>
+      <xs:element name="Emisor" minOccurs="1"/>
+      <xs:element name="Receptor" minOccurs="1"/>
+      <xs:element name="Conceptos" minOccurs="1"/>
+    </xs:sequence>
+    <xs:attribute name="Version" type="xs:string" use="required"/>
+    <xs:attribute name="Total" type="xs:decimal" use="required"/>
+    <xs:attribute name="Fecha" type="xs:dateTime" use="required"/>
+    <xs:attribute name="TipoDeComprobante" type="xs:string" use="required"/>
+  </xs:complexType>
+</xs:schema>
