@@ -24,12 +24,15 @@ class Cfdi extends Model
         'exportacion',
         'lugar_expedicion',
     ];
+
     public function emisor()
     {
         return $this->belongsTo(CfdiEmisor::class, 'emisor_id');
     }
+
     public function receptor()
     {
         return $this->belongsTo(CfdiReceptor::class, 'receptor_id');
     }
+
 }

@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('catalogo_pais', function (Blueprint $table) {
-$table->string('clave')->primary();
+                $table->string('clave')->primary();
                 $table->string('nombre');
                 $table->string('nacionalidad');
                 $table->date('vigencia_desde')->nullable();
                 $table->date('vigencia_hasta')->nullable();
-            $table->timestamps();
+                $table->timestamps();
         });
     }
 
