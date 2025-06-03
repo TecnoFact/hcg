@@ -7,6 +7,7 @@ use App\Filament\Resources\CfdiResource\RelationManagers;
 
 use App\Models\Models\Cfdi;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Resources\Resource;
@@ -21,27 +22,15 @@ class CfdiResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                Section::class('CFDI')->schema([
-                    Forms\Components\TextInput::make('emisor_id')->required(),
-                    Forms\Components\TextInput::make('receptor_id')->required(),
-                    Forms\Components\TextInput::make('serie')->maxLength(10),
-                    Forms\Components\TextInput::make('folio')->maxLength(20),
-                    Forms\Components\DateTimePicker::make('fecha')->required(),
-                    Forms\Components\TextInput::make('subtotal')->numeric()->required(),
-                    Forms\Components\TextInput::make('descuento')->numeric(),
-                    Forms\Components\TextInput::make('total')->numeric()->required(),
-                    Forms\Components\TextInput::make('forma_pago')->maxLength(10),
-                    Forms\Components\TextInput::make('metodo_pago')->maxLength(10),
-                    Forms\Components\TextInput::make('moneda')->maxLength(5),
-                    Forms\Components\TextInput::make('tipo_de_comprobante')->maxLength(5),
-                    Forms\Components\TextInput::make('exportacion')->maxLength(5),
-                    Forms\Components\TextInput::make('lugar_expedicion')->maxLength(10),
-                ])
-            ]);
+            ->schema([]);
     }
 
     public static function table(Table $table): Table
@@ -105,8 +94,9 @@ class CfdiResource extends Resource
     {
         return [
             'index' => Pages\ListCfdis::route('/'),
-            'create' => Pages\CreateCfdi::route('/create'),
-            'edit' => Pages\EditCfdi::route('/{record}/edit'),
+            //'create' => Pages\CreateCfdi::route('/create'),
+            //'create' => \App\Filament\Pages\Cfdi::class,
+           // 'edit' => Pages\EditCfdi::route('/{record}/edit'),
         ];
     }
 }

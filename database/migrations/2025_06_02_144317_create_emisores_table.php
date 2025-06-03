@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('name');
-            $table->unique('rfc');
+            $table->string('rfc')->unique();
             $table->string('reason_social')->nullable();
             $table->string('website')->nullable();
             $table->string('phone')->nullable();

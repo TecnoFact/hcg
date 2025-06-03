@@ -2,15 +2,19 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use League\Csv\Reader;
 
-class CatalogoFormaPagoSeeder extends Seeder
+class CitySeed extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        $path = storage_path('app/catalogos/cfdi40/c_FormaPago.csv');
+         $path = storage_path('app/catalogos/cfdi40/C_Localidad.csv');
 
         if (!file_exists($path)) {
             $this->command->error("Archivo no encontrado: $path");
@@ -23,24 +27,20 @@ class CatalogoFormaPagoSeeder extends Seeder
 
         foreach ($csv->getRecords() as $record) {
             // Validar que sea un valor de clave válida (ej: "01", "03", etc.)
-            if (!isset($record['c_FormaPago']) || !is_numeric($record['c_FormaPago'])) {
+            if (!isset($record['c_Localidad']) || !is_numeric($record['c_Localidad'])) {
                 continue; // saltar registros inválidos
             }
 
-            DB::table('catalogo_forma_pago')->updateOrInsert([
-                'clave' => $record['c_FormaPago'],
+            DB::table('ciudades')->updateOrInsert([
+                'clave' => $record['c_Localidad'],
             ], [
+                'id_estado' => $record['c_Estado'] ?: null,
                 'descripcion' => $record['Descripción'],
-                'requiere_banco_ordenante' => strtolower($record['Patrón para cuenta ordenante']) === 'si',
-                'requiere_banco_beneficiario' => strtolower($record['Patrón para cuenta Beneficiaria']) === 'si',
-                'vigencia_desde' => $record['Fecha inicio de vigencia'] ?: null,
-                'vigencia_hasta' => $record['Fecha fin de vigencia'] ?: null,
+                'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
+                'vigencia_hasta' => $record['Fecha de fin de vigencia'] ?: null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
-
     }
 }
-
-

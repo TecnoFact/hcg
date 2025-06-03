@@ -28,7 +28,8 @@ class Emisor extends Model
         'file_key',
         'password_key',
         'user_id',
-        'logo'
+        'logo',
+        'regimen_fiscal_id'
     ];
 
     public function user()
@@ -48,4 +49,6 @@ class Emisor extends Model
     {
         return $this->belongsTo(Country::class, 'country_id');
     }
+
+
 }

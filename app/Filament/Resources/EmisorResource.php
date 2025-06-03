@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmisorResource\Pages;
 use App\Filament\Resources\EmisorResource\RelationManagers;
+use App\Forms\Components\CertificateView;
 use App\Models\Emisor;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -65,7 +66,7 @@ class EmisorResource extends Resource
                             ->label('Logo')
                             ->disk('local')
                             ->directory(fn($get) => 'certificates' . DIRECTORY_SEPARATOR . $get('rfc'))
-                            ->required()->avatar(),
+                            ->avatar(),
 
                         Section::make('Domicilio')
                             ->description('Datos del domicilio del emisor')
@@ -124,7 +125,6 @@ class EmisorResource extends Resource
                                         ->relationship('country', 'nombre')
                                         ->searchable()
                                         ->preload()
-                                        ->default(1)
                                         ->getSearchResultsUsing(fn (string $search) =>
                                         \App\Models\Country::where('nombre', 'like', "%{$search}%")
                                             ->limit(20)
@@ -138,10 +138,9 @@ class EmisorResource extends Resource
                             ->description('Datos del certificado y llave del emisor')
                             ->columns(3)
                             ->schema([
-                                ViewField::make('file_certificate')->label('Certificado')->view('forms.components.certificate-view'),
-                                    ViewField::make('file_key')->view('forms.components.private-key-view')
-                                        ->label('Llave privada'),
-                                        TextInput::make('password_key')
+                                    ViewField::make('file_certificate')->label('Certificado')->view('forms.components.certificate-view'),
+                                    ViewField::make('file_key')->view('forms.components.private-key-view')->label('Llave privada'),
+                                    TextInput::make('password_key')
                                         ->password()
                                         ->label('Contraseña llave')
                                         ->required(),
