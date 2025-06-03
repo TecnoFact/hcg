@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Emisor;
 use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Support\Facades\Storage;
@@ -27,8 +28,10 @@ class EnvioSatCfdiService
 
         Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
 
-        $rfc = config('pac.Rfc');
-        $fecha = Carbon::now()->format('Y-m-d\TH:i:s');
+       // $rfc = config('pac.Rfc');
+        $rfc = $cfdi->rfc_emisor;
+
+        $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
         $cadena = "||{$rfc}|{$fecha}||";
 
         $cadena = base64_encode(hash('sha256', $cadena, true));
@@ -42,8 +45,8 @@ class EnvioSatCfdiService
         $this->subirABlob($cfdi->uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
 
-       // $this->enviarSoapSat($token, $cfdi, $nameXml);
-       // Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+        $this->enviarSoapSat($token, $cfdi, $nameXml);
+        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
 
 
     }
@@ -231,11 +234,22 @@ class EnvioSatCfdiService
             throw new Exception("Token no válido");
         }
 
+        $emisor = Emisor::where('rfc', $cfdi->rfc_emisor)->first();
+
+        $numeroCertificado = '00001000000710051653';
+
+        if ($emisor && $emisor->path_certificado) {
+            $certificate = new \CfdiUtils\Certificado\Certificado($emisor->path_certificado);
+            $numeroCertificado = $certificate->getSerial();
+        } elseif (!$emisor) {
+            Log::warning('Emisor no encontrado para el CFDI', ['rfc' => $cfdi->rfc_emisor]);
+        }
+
         $data = [
             'RfcEmisor' => $cfdi->rfc_emisor,
             'UUID' => $cfdi->uuid,
             'Fecha' => $cfdi->fecha,
-            'NumeroCertificado' => "00001000000710051653",
+            'NumeroCertificado' => $numeroCertificado,
             'VersionComprobante' => "4.0",
             'RutaCFDI' => config('pac.BlobStorageEndpoint') . "asf180914ky5/$nameXml",
         ];
@@ -369,6 +383,7 @@ class EnvioSatCfdiService
             'respuesta_sat' => $response, // Guardamos la respuesta completa
             'token_sat' => $token,
             'intento_envio_sat' => $cfdi->intento_envio_sat + 1,
+            'estatus' => $estado === 'aceptado' ? 'publicado' : 'rechazado',
             'estado_sat' => $estado,
             'codigo_estatus_sat' => $codigo,
             'mensaje_sat' => $codigo,
@@ -726,6 +741,40 @@ class EnvioSatCfdiService
 
        $this->enviarSoapSat($token, $cfdi, $nameXml);
         Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+
+    }
+
+
+
+     public function enviarXml(CfdiArchivo $cfdi): void
+    {
+
+        $xml = Storage::disk('local')->get($cfdi->ruta);
+        $nameXml = $cfdi->uuid . '.xml';
+
+        Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
+
+       // $rfc = config('pac.Rfc');
+        $rfc = $cfdi->rfc_emisor;
+
+        $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
+        $cadena = "||{$rfc}|{$fecha}||";
+
+        $cadena = base64_encode(hash('sha256', $cadena, true));
+
+        $sello = $this->firmarCadenaConHsmPkcs7($cadena);
+        Log::debug('Sello generado', ['sello' => $sello]);
+
+        $token = $this->autenticarseEnSat();
+        Log::debug('Token recibido del SAT', ['token' => $token]);
+
+
+        $this->subirABlob($cfdi->uuid, $xml);
+        Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
+
+        $this->enviarSoapSat($token, $cfdi, $nameXml);
+        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+
 
     }
 

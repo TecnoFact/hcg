@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\CfdiArchivo;
+use App\Models\Emisor;
+use Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use DOMDocument;
@@ -160,5 +164,204 @@ class TimbradoService
         if ($result !== 1) {
             throw new Exception("Validación de sello fallida: " . openssl_error_string());
         }
+    }
+
+
+    /**
+     * Método para timbrar un CFDI desde un archivo XML.
+     *
+     * @param string $xml Ruta del archivo XML a timbrar.
+     * @param Emisor $emisor Objeto Emisor con los datos del emisor.
+     * @return \Illuminate\Http\JsonResponse
+     */
+    static function timbraSellarXml($xml, Emisor $emisor)
+    {
+         $file = $xml;
+         $registro = null;
+         $xmlContent = file_get_contents($file);
+
+
+        // 2. Validar complementos
+        $xml = simplexml_load_string($xmlContent);
+        $complementValidator = new CfdiComplementValidatorService();
+        $complementValidation = $complementValidator->validateComplements($xml);
+
+        if (!$complementValidation['valido']) {
+            $errorMsg = $complementValidation['error'] ?? 'Error de complemento';
+            $detalles = $complementValidation['detalles'] ?? null;
+            $msg = $errorMsg . ($detalles ? (': ' . json_encode($detalles)) : '');
+            throw new \Exception($msg, 422);
+        }
+
+        try {
+            $namespaces = $xml->getNamespaces(true);
+            $xml->registerXPathNamespace('cfdi', $namespaces['cfdi'] ?? '');
+            $emisorXml = $xml->xpath('//cfdi:Emisor')[0] ?? null;
+            $receptor = $xml->xpath('//cfdi:Receptor')[0] ?? null;
+
+            $rfcEmisor = $emisorXml ? (string) $emisorXml['Rfc'] : null;
+
+            // 3. Validar CSD vs RFC
+            $validadorCert = new CertificadoValidatorService();
+
+            $certificateFromEditor = Storage::disk('local')->path($emisor->file_certificate);
+
+            $keyFromEditor = Storage::disk('local')->path($emisor->file_key);
+
+            if( !file_exists($certificateFromEditor) || !file_exists($keyFromEditor)) {
+                throw new \Exception('Los archivos de certificado o llave no existen.', 422);
+            }
+
+            $keyDerFile = $keyFromEditor;
+            $keyPemFile = $keyDerFile . '.pem';
+            $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
+            $keyDerPass = $emisor->password_key;
+
+            $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+          //  dd($keyDerFile, $keyPemFileUnprotected, $keyDerPass);
+            if( !file_exists($keyPemFileUnprotected)) {
+                // Convertir clave DER a PEM
+                 $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+            }
+
+
+            $fileKeyPem = $keyPemFileUnprotected;
+
+
+           // $coincide = $validadorCert->validarRfcConCertificado(storage_path('csd/00001000000708268982.cer'), $rfcEmisor);
+            $coincide = $validadorCert->validarRfcConCertificado($certificateFromEditor, $rfcEmisor);
+
+            if (!$coincide) {
+               throw new \Exception('El RFC del emisor no coincide con el certificado CSD.', 422);
+            }
+
+            // 4. Generar cadena original y sello
+            $cadenaService = new CfdiCadenaOriginalService();
+            $cadenaOriginal = $cadenaService->generar($xmlContent);
+
+
+
+            $signer = new CfdiSignerService();
+            $firma = $signer->firmarCadena(
+                $cadenaOriginal,
+                $keyPemFileUnprotected,
+                $certificateFromEditor,
+                $keyDerPass
+            );
+
+
+
+            $sello = $firma['sello'];
+            $certificado = $firma['certificado'];
+            $noCertificado = $firma['no_certificado'];
+
+            // 5. Insertar sello en XML
+            $injector = new CfdiXmlInjectorService();
+            $xmlFirmado = $injector->insertarDatosEnXml($xmlContent, $sello, $certificado, $noCertificado);
+
+            // 6. Asegurar atributos de namespace requeridos
+            $doc = new DOMDocument();
+            $doc->preserveWhiteSpace = false;
+            $doc->formatOutput = true;
+            $doc->loadXML($xmlFirmado);
+
+            $comprobante = $doc->getElementsByTagName('Comprobante')->item(0);
+            $comprobante->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+            $comprobante->setAttribute('xsi:schemaLocation', 'http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd');
+
+            $xmlFirmado = $doc->saveXML();
+
+            // 7. Generar Timbre Fiscal Digital
+            $uuid = (string) Str::uuid();
+            $timbrador = new TimbradoService();
+            $timbreData = $timbrador->generarTimbre([
+                'uuid' => $uuid,
+                'selloCFD' => $sello
+            ], $xmlFirmado, Carbon::parse((string) $xml['Fecha']));
+
+            $complementador = new ComplementoXmlService();
+            $xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
+
+            // 8. Guardar archivo final
+            $nombre = 'cfdis/timbrado_' .$emisor->rfc. '_'. $uuid .'.xml';
+            Storage::disk('local')->put($nombre, $xmlFirmado);
+
+            // copy file to public folder
+            Storage::disk('public')->put($nombre, $xmlFirmado);
+            $ruta = $nombre;
+
+
+
+            // 9. Generar Acuse
+            $acuseService = new AcuseJsonService();
+            $acuse = $acuseService->generarDesdeXml($xmlFirmado);
+
+            // 10. Guardar en base de datos
+            $registro = CfdiArchivo::create([
+                'user_id' => Auth::id(),
+                'nombre_archivo' => $nombre,
+                'ruta' => $ruta,
+                'uuid' => $uuid,
+                'sello' => $sello,
+                'rfc_emisor' => $rfcEmisor,
+                'rfc_receptor' => $receptor ? (string) $receptor['Rfc'] : null,
+                'total' => (float) $xml['Total'],
+                'fecha' => (string) $xml['Fecha'],
+                'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
+                'estatus' => 'timbrado',
+            ]);
+
+
+            \Log::info('CFDI timbrado exitosamente', [
+                'uuid' => $timbreData['uuid'],
+                'archivo' => $nombre,
+                'cadena original' => $cadenaOriginal
+            ]);
+
+            return $registro;
+
+        } catch (\Exception $e) {
+
+            Log::error('Error al procesar el CFDI', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'files' => $file,
+                'emisor_rfc' => $emisor->rfc,
+            ]);
+
+            // Si ocurre un error, se puede lanzar una excepción o retornar un error
+           throw new \Exception('Error al procesar el CFDI: ' . $e->getMessage(), 500);
+        }
+    }
+
+
+    static function envioxml($registro)
+    {
+
+            $data = ['success' => false, 'message' => ''];
+
+            try {
+                $envio = new EnvioSatCfdiService();
+                $envio->enviarXml($registro); // Este método ya actualiza los campos necesarios
+                $data['success'] = true;
+                $data['message'] = 'CFDI enviado al SAT correctamente';
+
+                return $data;
+            } catch (\Exception $e) {
+                $registro->update([
+                    'respuesta_sat' => 'Error: ' . $e->getMessage(),
+                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
+                ]);
+                \Log::error('Error al enviar CFDI al SAT', [
+                    'uuid' => $registro->uuid,
+                    'error' => $e->getMessage()
+                ]);
+
+                $data['message'] = 'Error al enviar CFDI al SAT: ' . $e->getMessage();
+                $data['success'] = false;
+
+                throw new \Exception('Error al enviar CFDI al SAT: ' . $e->getMessage(), 500);
+            }
     }
 }

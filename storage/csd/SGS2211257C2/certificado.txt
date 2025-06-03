@@ -1,0 +1,4 @@
+RFC: SGS2211257C2
+Número de serie: 00001000000518866723
+Fecha de expiración: 31/03/2027
+Pass: erick1234

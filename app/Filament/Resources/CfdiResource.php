@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CfdiResource\Pages;
 use App\Filament\Resources\CfdiResource\RelationManagers;
 
+use App\Models\CfdiArchivo;
 use App\Models\Models\Cfdi;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CfdiResource extends Resource
 {
-    protected static ?string $model = Cfdi::class;
+    protected static ?string $model = CfdiArchivo::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -37,44 +38,27 @@ class CfdiResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('emisor.rfc')
+                Tables\Columns\TextColumn::make('rfc_emisor')
                     ->label('RFC Emisor'),
-                Tables\Columns\TextColumn::make('receptor.rfc')
+                Tables\Columns\TextColumn::make('rfc_receptor')
                     ->label('RFC Receptor'),
-                Tables\Columns\TextColumn::make('serie')
-                    ->label('Serie'),
-                Tables\Columns\TextColumn::make('folio')
-                    ->label('Folio'),
+                Tables\Columns\TextColumn::make('uuid')
+                    ->label('UUID'),
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
-                Tables\Columns\TextColumn::make('subtotal')
-                    ->numeric()
-                    ->label('Subtotal'),
-                Tables\Columns\TextColumn::make('descuento')
-                    ->numeric()
-                    ->label('Descuento'),
+
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
                     ->label('Total'),
-                Tables\Columns\TextColumn::make('forma_pago')
-                    ->label('Forma de Pago'),
-                Tables\Columns\TextColumn::make('metodo_pago')
-                    ->label('Método de Pago'),
-                Tables\Columns\TextColumn::make('moneda')
-                    ->label('Moneda'),
-                Tables\Columns\TextColumn::make('tipo_de_comprobante')
-                    ->label('Tipo de Comprobante'),
-                Tables\Columns\TextColumn::make('exportacion')
-                    ->label('Exportación'),
-                Tables\Columns\TextColumn::make('lugar_expedicion')
-                    ->label('Lugar de Expedición'),
+                Tables\Columns\TextColumn::make('estatus')
+                    ->label('Estatus'),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                //Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

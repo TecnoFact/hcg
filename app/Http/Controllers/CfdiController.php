@@ -66,12 +66,28 @@ class CfdiController extends Controller
 
             // 3. Validar CSD vs RFC
             $validadorCert = new CertificadoValidatorService();
-            $coincide = $validadorCert->validarRfcConCertificado(storage_path('csd/00001000000708268982.cer'), $rfcEmisor);
+
+            //$certificadoPath = storage_path('csd/00001000000708268982.cer');
+
+            $certificadoPath = storage_path('csd/SGS2211257C2/SGS2211257C2.cer');
+
+            $coincide = $validadorCert->validarRfcConCertificado( $certificadoPath, $rfcEmisor);
+
             if (!$coincide) {
                 return response()->json([
                     'error' => 'El RFC del certificado no coincide con el RFC del emisor en el XML.',
                 ], 422);
             }
+
+            $keyDerFile = storage_path('csd/SGS2211257C2/SGS2211257C2.key');
+            $keyPemFile = $keyDerFile . '.pem';
+            $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
+            $keyDerPass = 'erick1234';
+
+            $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+
+            // convertir la llave original DER a formato PEM sin contraseña, guardar en $keyPemFileUnprotected
+          //  $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
 
             // 4. Generar cadena original y sello
             $cadenaService = new CfdiCadenaOriginalService();
@@ -80,9 +96,9 @@ class CfdiController extends Controller
             $signer = new CfdiSignerService();
             $firma = $signer->firmarCadena(
                 $cadenaOriginal,
-                storage_path('csd/CSD_PULSARIX_SA_DE_CV_PUL230626UV4_20240626_212117.pem'),
-                storage_path('csd/00001000000708268982.cer'),
-                'brenda01'
+                storage_path('csd/SGS2211257C2/SGS2211257C2.key.unprotected.pem'),
+                $certificadoPath,
+                $keyDerPass
             );
 
             $sello = $firma['sello'];
@@ -145,6 +161,7 @@ class CfdiController extends Controller
             // 12. Actualizar base de datos despues del envio
 
             // 13. Enviar al SAT y Azure
+           // dd($registro);
             try {
                 $envio = new EnvioSatCfdiService();
                 $envio->enviar($registro); // Este método ya actualiza los campos necesarios
