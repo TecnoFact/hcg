@@ -6,6 +6,7 @@ use App\Models\CfdiArchivo;
 use App\Models\Emisor;
 use Auth;
 use Carbon\Carbon;
+use CfdiUtils\Cfdi;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -363,5 +364,74 @@ class TimbradoService
 
                 throw new \Exception('Error al enviar CFDI al SAT: ' . $e->getMessage(), 500);
             }
+    }
+
+    static function generatePdfFromXml($xmlsat)
+    {
+        // Aquí puedes implementar la lógica para generar un PDF a partir del XML
+        // Por ejemplo, usando una librería como Snappy o Dompdf
+
+        $xmlResponse = simplexml_load_string($xmlsat);
+
+         if ($xmlResponse === false) {
+            throw new Exception("Respuesta XML inválida del SAT");
+        }
+
+        // Registrar respuesta completa para depuración
+        Log::debug('Respuesta completa del SAT', ['response' => $xmlsat]);
+
+        // Registrar namespaces encontrados
+        $namespaces = $xmlResponse->getNamespaces(true);
+        Log::debug('Namespaces en la respuesta', ['namespaces' => $namespaces]);
+
+        // Registrar estructura XML para diagnóstico
+        Log::debug('Estructura XML recibida', ['xml' => $xmlResponse->asXML()]);
+
+        // Registrar el cuerpo del SOAP
+        $body = $xmlResponse->children('s', true)->Body;
+        if (!$body) {
+            throw new Exception("No se encontró el elemento Body en la respuesta SOAP");
+        }
+
+        // Registrar contenido del Body
+        Log::debug('Contenido del Body SOAP', ['body' => $body->asXML()]);
+
+        // Acceder al nodo AcuseRecepcionCFDI
+        $acuse = $body->children('http://recibecfdi.sat.gob.mx')->AcuseRecepcion->AcuseRecepcionCFDI;
+
+        // Extraer los datos del acuse
+        $uuid = (string)$acuse->attributes()['UUID'];
+        $codigo = (string)$acuse->attributes()['CodEstatus'];
+        $fechaAcuse = (string)$acuse->attributes()['Fecha'];
+        $noCertificadoSAT = (string)($acuse->attributes()['NoCertificadoSAT'] ?? '');
+
+        // Extraer datos de incidencia si existen
+        $incidencia = $acuse->Incidencia;
+        $incidenciaData = null;
+        if ($incidencia) {
+            $incidenciaData = [
+                'mensaje' => (string)($incidencia->MensajeIncidencia ?? ''),
+                'codigo_error' => (string)($incidencia->CodigoError ?? ''),
+                'rfc_emisor' => (string)($incidencia->RfcEmisor ?? ''),
+                'id_incidencia' => (string)($incidencia->IdIncidencia ?? ''),
+                'fecha_registro' => (string)($incidencia->FechaRegistro ?? '')
+            ];
+        }
+
+        // Usar el wrapper de Laravel para DomPDF
+        $pdfPath = storage_path('app/public/acuse_cfdi_' . $uuid . '.pdf');
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('template.pdf-acuse', [
+            'uuid' => $uuid,
+            'codigo' => $codigo,
+            'fechaAcuse' => Carbon::parse($fechaAcuse)->format('Y-m-d H:i:s'),
+            'noCertificadoSAT' => $noCertificadoSAT,
+            'incidenciaData' => $incidenciaData
+        ]);
+        $pdf->setPaper('A4', 'portrait');
+        file_put_contents($pdfPath, $pdf->output());
+        Log::info('PDF generado correctamente', ['pdf_path' => $pdfPath]);
+
+        return $pdfPath;
     }
 }

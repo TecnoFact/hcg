@@ -214,12 +214,59 @@ class Cfdi extends Page
 
         $data = TimbradoService::envioxml($registro);
 
+
+        if($data['status'] !== 'success') {
+            Notification::make()
+                ->title('Error al timbrar')
+                ->danger()
+                ->body('Ocurrió un error al timbrar el XML: ' . $data['message'])
+                ->send();
+            return;
+        }
+
+        if(!$registro->respuesta_sat) {
+            Notification::make()
+                ->title('Error al timbrar')
+                ->danger()
+                ->body('No se pudo obtener la respuesta del SAT.')
+                ->send();
+            return;
+        }
+
+        // generate pdf from xml  from registro
+        $pdf = TimbradoService::generatePdfFromXml($registro->respuesta_sat);
+
         // Aquí va la lógica para timbrar el XML
         Notification::make()
             ->title('Timbrado')
             ->success()
             ->body('El XML ha sido timbrado (simulado).')
             ->send();
+
+        return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf');
+    }
+
+    /**
+     * function for test generate pdf from xml
+     * @return void
+     */
+    public function convertXmlToPdf()
+    {
+        $ID = 62; // Cambia esto al ID del registro que deseas convertir a PDF
+
+        $registro = CfdiArchivo::find($ID);
+
+        $pdf = TimbradoService::generatePdfFromXml($registro->respuesta_sat);
+
+        Log::info('PDF generado correctamente: ' . $pdf);
+
+        Notification::make()
+            ->title('PDF Generado')
+            ->success()
+            ->body('El PDF ha sido generado exitosamente.')
+            ->send();
+
+        return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf');
     }
 
 }
