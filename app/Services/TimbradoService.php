@@ -61,6 +61,12 @@ class TimbradoService
 
         // Generar cadena original del TFD
         $builder = new TfdCadenaDeOrigen();
+
+        $myLocalResourcePath = '/tmp/sat';
+
+        $myResolver = new \CfdiUtils\XmlResolver\XmlResolver($myLocalResourcePath);
+        $builder->setXmlResolver($myResolver);
+
         $cadenaOriginalTFD = $builder->build($tfdXml);
 
         Log::debug('Cadena original del Timbre generada', ['cadena' => $cadenaOriginalTFD]);
