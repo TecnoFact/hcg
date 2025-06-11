@@ -31,8 +31,8 @@ class CatalogoFormaPagoSeeder extends Seeder
                 'clave' => $record['c_FormaPago'],
             ], [
                 'descripcion' => $record['Descripción'],
-                'requiere_banco_ordenante' => strtolower($record['Patrón para cuenta ordenante']) === 'si',
-                'requiere_banco_beneficiario' => strtolower($record['Patrón para cuenta Beneficiaria']) === 'si',
+                'requiere_cuenta_ordenante' => strtolower($record['Patrón para cuenta ordenante']) === 'si',
+                'requiere_cuenta_beneficiario' => strtolower($record['Patrón para cuenta Beneficiaria']) === 'si',
                 'vigencia_desde' => $record['Fecha inicio de vigencia'] ?: null,
                 'vigencia_hasta' => $record['Fecha fin de vigencia'] ?: null,
                 'created_at' => now(),

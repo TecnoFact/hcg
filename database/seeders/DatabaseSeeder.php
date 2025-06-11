@@ -13,6 +13,13 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
+            CatalogoFormaPagoSeeder::class,
+            CatalogoMetodoPagoSeeder::class,
+            CitySeed::class,
+            CountrySeed::class,
+            RegimenFiscalSeed::class,
+            StateSeed::class,
+          //  UserSeeder::class,
         ]);
     }
 }

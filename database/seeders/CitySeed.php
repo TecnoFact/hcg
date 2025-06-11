@@ -32,12 +32,12 @@ class CitySeed extends Seeder
             }
 
             DB::table('ciudades')->updateOrInsert([
-                'clave' => $record['c_Localidad'],
+                'id' => $record['c_Localidad'],
             ], [
                 'id_estado' => $record['c_Estado'] ?: null,
                 'descripcion' => $record['Descripción'],
-                'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
-                'vigencia_hasta' => $record['Fecha de fin de vigencia'] ?: null,
+                //'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
+                //'vigencia_hasta' => $record['Fecha de fin de vigencia'] ?: null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
