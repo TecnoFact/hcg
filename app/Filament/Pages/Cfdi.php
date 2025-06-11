@@ -180,6 +180,7 @@ class Cfdi extends Page
 
         } catch (\Exception $e) {
             Log::error('Error al procesar el XML: ' . $e->getMessage());
+            Log::error($e->getFile() . ':' . $e->getLine());
             Notification::make()
                 ->title('Error al subir el CFDI')
                 ->danger()
