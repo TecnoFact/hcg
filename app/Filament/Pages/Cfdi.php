@@ -169,6 +169,7 @@ class Cfdi extends Page
 
 
         try {
+
             $xmlPath = Storage::disk('local')->path('cfdi/' . $pathXml);
             $processXml = TimbradoService::timbraSellarXml($xmlPath, $emisor);
 

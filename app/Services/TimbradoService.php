@@ -208,6 +208,7 @@ class TimbradoService
             $certificateFromEditor = Storage::disk('local')->path($emisor->file_certificate);
 
             $keyFromEditor = Storage::disk('local')->path($emisor->file_key);
+           // dd($certificateFromEditor, $keyFromEditor);
 
             if( !file_exists($certificateFromEditor) || !file_exists($keyFromEditor)) {
                 throw new \Exception('Los archivos de certificado o llave no existen.', 422);
@@ -239,7 +240,6 @@ class TimbradoService
             // 4. Generar cadena original y sello
             $cadenaService = new CfdiCadenaOriginalService();
             $cadenaOriginal = $cadenaService->generar($xmlContent);
-
 
 
             $signer = new CfdiSignerService();
@@ -280,8 +280,8 @@ class TimbradoService
                 'selloCFD' => $sello
             ], $xmlFirmado, Carbon::parse((string) $xml['Fecha']));
 
-            $complementador = new ComplementoXmlService();
-            $xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
+            //$complementador = new ComplementoXmlService();
+            //$xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
 
             // 8. Guardar archivo final
             $nombre = 'cfdis/timbrado_' .$emisor->rfc. '_'. $uuid .'.xml';
