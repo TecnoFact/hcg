@@ -280,8 +280,8 @@ class TimbradoService
                 'selloCFD' => $sello
             ], $xmlFirmado, Carbon::parse((string) $xml['Fecha']));
 
-            //$complementador = new ComplementoXmlService();
-            //$xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
+            $complementador = new ComplementoXmlService();
+            $xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
 
             // 8. Guardar archivo final
             $nombre = 'cfdis/timbrado_' .$emisor->rfc. '_'. $uuid .'.xml';
