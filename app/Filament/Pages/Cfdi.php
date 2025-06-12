@@ -279,6 +279,9 @@ class Cfdi extends Page
 
         list($inicioVigencia, $finVigencia) = TimbradoService::obtenerFechasVigenciaCertificado( $certificado);
 
+        Log::info('Fecha CFDI: ' . $fechaCfdi);
+        Log::info('Inicio Vigencia: ' . $inicioVigencia);
+        Log::info('Fin Vigencia: ' . $finVigencia);
 
 
         if ($fechaCfdi->lt($inicioVigencia) || $fechaCfdi->gt($finVigencia)) {
