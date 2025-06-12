@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
+use DateTime;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Forms;
@@ -184,7 +185,6 @@ class Cfdi extends Page
             return;
         }
 
-
         // Emitir evento para Alpine.js
         $this->subido = true;
        $this->estado = '
@@ -264,8 +264,32 @@ class Cfdi extends Page
             return;
         }
 
+        $xmlFile = $xmlPath;
+        $xmlPath = Storage::disk('public')->get($xmlPath);
+
+
+        $comprobante = \CfdiUtils\Cfdi::newFromString($xmlPath)->getQuickReader();
+
+        //dd($comprobante);
+
+        $fechaCfdi = new DateTime($comprobante['Fecha']);
+
+        $certificado = Storage::disk('local')->path($emisor->file_certificate);
+
+        list($inicioVigencia, $finVigencia) = TimbradoService::obtenerFechasVigenciaCertificado( $certificado);
+
+        if ($fechaCfdi < $inicioVigencia || $fechaCfdi > $finVigencia) {
+              Notification::make()
+                ->title('Error al timbrar el XML')
+                ->danger()
+                ->body('La fecha de emisión no está dentro de la vigencia del CSD del Emisor')
+                ->send();
+            return;
+        }
+
+
         $processXml = TimbradoService::timbraXML(
-            $xmlPath,
+            $xmlFile,
             $emisor,
             $sello,
             $this->rfcReceptor

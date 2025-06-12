@@ -33,18 +33,18 @@
                 <template x-if="subido && !sellado">
                     <form wire:submit.prevent="sellarXml">
                         <x-filament::button type="submit" color="warning" wire:loading.attr="disabled" wire:target="sellarXml">
-                              <span class="flex items-center"  wire:loading.remove>
-                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 0a2 2 0 002 2h8a2 2 0 002-2v-4a2 2 0 00-2-2H8a2 2 0 00-2 2v4zm10-6V7a4 4 0 10-8 0v4"/>
-                            </svg>
-                            Sellar
-                        </span>
-                         <span wire:loading wire:target="subirXml" class="flex items-center">
-                            <svg class="animate-spin w-5 h-5 mr-2 -ml-1 text-white" fill="none" viewBox="0 0 24 24">
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                            </svg>
-                            Sellando...
-                        </span>
+                               <span class="flex items-center"  wire:loading.remove>
+                                    <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 0a2 2 0 002 2h8a2 2 0 002-2v-4a2 2 0 00-2-2H8a2 2 0 00-2 2v4zm10-6V7a4 4 0 10-8 0v4"/>
+                                    </svg>
+                                    Sellar
+                                </span>
+                            <span wire:loading wire:target="sellarXml" class="flex items-center">
+                                <svg class="animate-spin w-5 h-5 mr-2 -ml-1 text-white" fill="none" viewBox="0 0 24 24">
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                </svg>
+                                Sellando...
+                            </span>
                         </x-filament::button>
                     </form>
                 </template>
@@ -53,15 +53,13 @@
                     <form wire:submit.prevent="timbrarXml">
                         <x-filament::button type="submit" color="success" wire:loading.attr="disabled" wire:target="timbrarXml">
                               <span class="flex items-center" wire:loading.remove>
-                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2l4-4" />
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>
-                            </svg>
-                            Timbrar
-                        </span>
+                                <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2l4-4" />
+                                </svg>
+                                Timbrar
+                            </span>
                             <span wire:loading wire:target="timbrarXml" class="flex items-center">
                                 <svg class="animate-spin w-5 h-5 mr-2 -ml-1 text-white" fill="none" viewBox="0 0 24 24">
-
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                                 </svg>
                                 Timbrando...
@@ -75,16 +73,15 @@
                 <template x-if="timbrado && !depositado">
                     <form wire:submit.prevent="publicacion">
                         <x-filament::button type="submit" color="danger" wire:loading.attr="disabled" wire:target="publicacion">
-                              <span class="flex items-center" wire:loading.remove>
-                            <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01.88-7.88A5 5 0 1117 9h-1" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 12v6m0 0l-3-3m3 3l3-3" />
-                            </svg>
-                            DEPOSITO
-                        </span>
+                             <span class="flex items-center" wire:loading.remove>
+                                <svg class="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01.88-7.88A5 5 0 1117 9h-1" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 12v6m0 0l-3-3m3 3l3-3" />
+                                </svg>
+                                DEPOSITO
+                            </span>
                             <span wire:loading wire:target="publicacion" class="flex items-center">
                                 <svg class="animate-spin w-5 h-5 mr-2 -ml-1 text-white" fill="none" viewBox="0 0 24 24">
-
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                                 </svg>
                                 Depositando...

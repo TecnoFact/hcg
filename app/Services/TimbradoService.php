@@ -7,6 +7,7 @@ use App\Models\Emisor;
 use Auth;
 use Carbon\Carbon;
 use CfdiUtils\Cfdi;
+use DateTime;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -321,6 +322,7 @@ class TimbradoService
     {
          $xmlFirmado = Storage::disk('public')->path($xml);
          $registro = null;
+
          $xmlContent = file_get_contents($xmlFirmado);
 
 
@@ -498,5 +500,26 @@ class TimbradoService
         Log::info('PDF generado correctamente', ['pdf_path' => $pdfPath]);
 
         return $pdfPath;
+    }
+
+
+    /**
+     * Método para obtener las fechas de vigencia de un certificado.
+     *
+     * @param string $rutaCer Ruta del archivo .cer del certificado.
+     * @return array Array con las fechas de inicio y fin de vigencia.
+     */
+    static function obtenerFechasVigenciaCertificado($rutaCer)
+    {
+        $output = [];
+
+        exec("openssl x509 -in $rutaCer -inform DER -noout -startdate -enddate", $output);
+
+       // dd($output);
+
+        $inicio = DateTime::createFromFormat('M d H:i:s Y T', str_replace('notBefore=', '', $output[0]));
+        $fin    = DateTime::createFromFormat('M d H:i:s Y T', str_replace('notAfter=', '', $output[1]));
+
+        return [$inicio, $fin];
     }
 }
