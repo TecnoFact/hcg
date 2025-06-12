@@ -24,9 +24,23 @@ class Cfdi extends Page
 
     public $subido = false;
 
+    public $sellado = false;
+    public $timbrado = false;
+    public $depositado = false;
+
     public $xmlPath = '';
+    public $pathXml = '';
+
+    public $sello = '';
+
+    public $rfcReceptor = '';
 
     public $registerFirst = null;
+
+    public $estado = '
+        <span style="background-color: #f3f4f6; color: #6b7280; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+            -
+        </span>';
 
      public function mount()
     {
@@ -138,6 +152,8 @@ class Cfdi extends Page
             'xml_file' => 'required',
         ]);
 
+
+
         $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
 
         if (!$emisor) {
@@ -156,6 +172,7 @@ class Cfdi extends Page
         if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
             $pathXml = $emisor->rfc . DIRECTORY_SEPARATOR . $emisor->rfc . '_' . time() . '.xml';
             $file->storeAs('cfdi', $pathXml, 'local');
+           $this->pathXml = Storage::disk('local')->path('cfdi/' . $pathXml);
         } else {
             // Manejar el caso de error
             Notification::make()
@@ -168,30 +185,16 @@ class Cfdi extends Page
         }
 
 
-        try {
-
-            $xmlPath = Storage::disk('local')->path('cfdi/' . $pathXml);
-            $processXml = TimbradoService::timbraSellarXml($xmlPath, $emisor);
-
-            Log::info('XML procesado correctamente: ' . $processXml);
-
-            $this->xmlPath = $processXml->ruta;
-            $this->registerFirst = $processXml->id;
-
-
-        } catch (\Exception $e) {
-            Log::error('Error al procesar el XML: ' . $e->getMessage());
-            Log::error($e->getFile() . ':' . $e->getLine());
-            Notification::make()
-                ->title('Error al subir el CFDI')
-                ->danger()
-                ->body('Ocurrió un error al procesar el archivo XML: ' . $e->getMessage())
-                ->send();
-            return;
-        }
-
         // Emitir evento para Alpine.js
         $this->subido = true;
+       $this->estado = '
+            <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Subido
+            </span>
+        ';
 
         Notification::make()
             ->title('Archivo subido')
@@ -200,8 +203,106 @@ class Cfdi extends Page
             ->send();
     }
 
+    public function sellarXml()
+    {
+
+        try {
+            $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
+
+            $xmlPath = $this->pathXml;
+            $processXml = TimbradoService::sellarCfdi($xmlPath, $emisor);
+
+            Log::info('XML sellado correctamente: ' . json_encode($processXml));
+
+
+            $this->sello = $processXml['sello'];
+            $this->rfcReceptor = $processXml['rfc_receptor'] ?? '';
+            $this->sellado = true;
+            $this->estado = '
+            <span style="background-color:rgb(250, 209, 209); color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Sellado
+            </span>
+            ';
+            $this->xmlPath = $processXml['ruta'];
+
+            Notification::make()
+                ->title('XML Sellado')
+                ->success()
+                ->body('El XML ha sido sellado exitosamente.')
+                ->send();
+
+
+
+        } catch (\Exception $e) {
+            Log::error('Error al procesar el XML: ' . $e->getMessage());
+            Log::error($e->getFile() . ':' . $e->getLine());
+            Notification::make()
+                ->title('Error al sellar el XML')
+                ->danger()
+                ->body('Ocurrió un error al procesar el archivo XML: ' . $e->getMessage())
+                ->send();
+            return;
+        }
+
+    }
+
     public function timbrarXml()
     {
+
+        $sello = $this->sello;
+        $xmlPath = $this->xmlPath;
+        $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
+        if (!$emisor) {
+            Notification::make()
+                ->title('Emisor no encontrado')
+                ->danger()
+                ->body('El emisor seleccionado no existe.')
+                ->send();
+            return;
+        }
+
+        $processXml = TimbradoService::timbraXML(
+            $xmlPath,
+            $emisor,
+            $sello,
+            $this->rfcReceptor
+        );
+        if (!$processXml) {
+            Notification::make()
+                ->title('Error al timbrar el XML')
+                ->danger()
+                ->body('Ocurrió un error al timbrar el archivo XML.')
+                ->send();
+            return;
+        }
+
+        $this->registerFirst = $processXml['id'];
+        $this->timbrado = true;
+        $this->xmlPath = $processXml['ruta'];
+
+        $this->estado = '
+            <span style="background-color:rgb(249, 250, 209); color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Timbrado
+            </span>
+        ';
+
+        Notification::make()
+            ->title('XML Timbrado')
+            ->success()
+            ->body('El XML ha sido timbrado exitosamente.')
+            ->send();
+
+    }
+
+    public function publicacion()
+    {
+
         if( !$this->registerFirst) {
             Notification::make()
                 ->title('Registro no encontrado')
@@ -238,11 +339,20 @@ class Cfdi extends Page
         // generate pdf from xml  from registro
         $pdf = TimbradoService::generatePdfFromXml($registro->respuesta_sat);
 
+        $this->depositado = true;
+        $this->estado = '
+            <span style="background-color:rgb(209, 212, 250) 209, 250); color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Depositado
+            </span>
+        ';
         // Aquí va la lógica para timbrar el XML
         Notification::make()
             ->title('Timbrado')
             ->success()
-            ->body('El XML ha sido timbrado (simulado).')
+            ->body('El XML ha sido subido correctamente y enviado.')
             ->send();
 
         return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf');

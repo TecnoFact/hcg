@@ -15,6 +15,8 @@ class ComplementoXmlService
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
 
+        $xml = file_get_contents($xml);
+
         if (!$dom->loadXML($xml)) {
             throw new Exception("No se pudo cargar el CFDI XML");
         }

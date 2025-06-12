@@ -173,18 +173,18 @@ class TimbradoService
         }
     }
 
-
     /**
-     * Método para timbrar un CFDI desde un archivo XML.
+     * Método para sellar un xml desde un objeto Cfdi.
      *
-     * @param string $xml Ruta del archivo XML a timbrar.
+     * @param Cfdi $cfdi Objeto Cfdi a sellar.
      * @param Emisor $emisor Objeto Emisor con los datos del emisor.
      * @return \Illuminate\Http\JsonResponse
      */
-    static function timbraSellarXml($xml, Emisor $emisor)
+    static function sellarCfdi($xml, Emisor $emisor)
     {
-         $file = $xml;
-         $registro = null;
+        // Lógica para sellar el CFDI
+          $file = $xml;
+
          $xmlContent = file_get_contents($file);
 
 
@@ -200,13 +200,16 @@ class TimbradoService
             throw new \Exception($msg, 422);
         }
 
+
         try {
+
             $namespaces = $xml->getNamespaces(true);
             $xml->registerXPathNamespace('cfdi', $namespaces['cfdi'] ?? '');
             $emisorXml = $xml->xpath('//cfdi:Emisor')[0] ?? null;
-            $receptor = $xml->xpath('//cfdi:Receptor')[0] ?? null;
+            $receptorXml = $xml->xpath('//cfdi:Receptor')[0] ?? null;
 
             $rfcEmisor = $emisorXml ? (string) $emisorXml['Rfc'] : null;
+            $rfcReceptor = $receptorXml ? (string) $receptorXml['Rfc'] : null;
 
             // 3. Validar CSD vs RFC
             $validadorCert = new CertificadoValidatorService();
@@ -214,29 +217,23 @@ class TimbradoService
             $certificateFromEditor = Storage::disk('local')->path($emisor->file_certificate);
 
             $keyFromEditor = Storage::disk('local')->path($emisor->file_key);
-           // dd($certificateFromEditor, $keyFromEditor);
+
 
             if( !file_exists($certificateFromEditor) || !file_exists($keyFromEditor)) {
                 throw new \Exception('Los archivos de certificado o llave no existen.', 422);
             }
 
             $keyDerFile = $keyFromEditor;
-            $keyPemFile = $keyDerFile . '.pem';
             $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
             $keyDerPass = $emisor->password_key;
 
             $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
-          //  dd($keyDerFile, $keyPemFileUnprotected, $keyDerPass);
+
             if( !file_exists($keyPemFileUnprotected)) {
                 // Convertir clave DER a PEM
                  $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
             }
 
-
-            $fileKeyPem = $keyPemFileUnprotected;
-
-
-           // $coincide = $validadorCert->validarRfcConCertificado(storage_path('csd/00001000000708268982.cer'), $rfcEmisor);
             $coincide = $validadorCert->validarRfcConCertificado($certificateFromEditor, $rfcEmisor);
 
             if (!$coincide) {
@@ -247,7 +244,6 @@ class TimbradoService
             $cadenaService = new CfdiCadenaOriginalService();
             $cadenaOriginal = $cadenaService->generar($xmlContent);
 
-
             $signer = new CfdiSignerService();
             $firma = $signer->firmarCadena(
                 $cadenaOriginal,
@@ -255,8 +251,6 @@ class TimbradoService
                 $certificateFromEditor,
                 $keyDerPass
             );
-
-
 
             $sello = $firma['sello'];
             $certificado = $firma['certificado'];
@@ -278,6 +272,73 @@ class TimbradoService
 
             $xmlFirmado = $doc->saveXML();
 
+             $uuid = (string) Str::uuid();
+            $nombre = 'cfdis/sellado_' . $emisor->rfc . '_' . $uuid . '.xml';
+            Storage::disk('public')->put($nombre, $xmlFirmado);
+
+            $ruta = $nombre;
+
+           // $ruta = Storage::disk('local')->path('cfdis/sellado_' . $emisor->rfc . '_' . Str::uuid() . '.xml');
+
+            // objeto xml devolver xmlFirmado y sello
+            return [
+                'xml' => $xmlFirmado,
+                'sello' => $sello,
+                'rfcReceptor' => $rfcReceptor,
+                'ruta' => $ruta
+            ];
+
+        }catch(\Exception $e) {
+            Log::error('Error al sellar el CFDI', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'files' => $file,
+                'emisor_rfc' => $emisor->rfc,
+            ]);
+
+            // Si ocurre un error, se puede lanzar una excepción o retornar un error
+            throw new \Exception('Error al sellar el CFDI: ' . $e->getMessage(), 500);
+        }
+
+         return [
+                'xml' => "",
+                'sello' => "",
+                'rfcReceptor' => null,
+            ];
+
+    }
+
+
+    /**
+     * Método para timbrar un CFDI desde un archivo XML.
+     *
+     * @param string $xml Ruta del archivo XML a timbrar.
+     * @param Emisor $emisor Objeto Emisor con los datos del emisor.
+     * @return \Illuminate\Http\JsonResponse
+     */
+    static function timbraXML($xml, Emisor $emisor, $sello, $receptor = null)
+    {
+         $xmlFirmado = Storage::disk('public')->path($xml);
+         $registro = null;
+         $xmlContent = file_get_contents($xmlFirmado);
+
+
+        // 2. Validar complementos
+        $xml = simplexml_load_string($xmlContent);
+        $complementValidator = new CfdiComplementValidatorService();
+        $complementValidation = $complementValidator->validateComplements($xml);
+
+        if (!$complementValidation['valido']) {
+            $errorMsg = $complementValidation['error'] ?? 'Error de complemento';
+            $detalles = $complementValidation['detalles'] ?? null;
+            $msg = $errorMsg . ($detalles ? (': ' . json_encode($detalles)) : '');
+            throw new \Exception($msg, 422);
+        }
+
+        try {
+
+
             // 7. Generar Timbre Fiscal Digital
             $uuid = (string) Str::uuid();
             $timbrador = new TimbradoService();
@@ -286,18 +347,18 @@ class TimbradoService
                 'selloCFD' => $sello
             ], $xmlFirmado, Carbon::parse((string) $xml['Fecha']));
 
+           // dd($xmlFirmado);
+
             $complementador = new ComplementoXmlService();
             $xmlFirmado = $complementador->insertarTimbreFiscalDigital($xmlFirmado, $timbreData['xml']);
 
             // 8. Guardar archivo final
-            $nombre = 'cfdis/timbrado_' .$emisor->rfc. '_'. $uuid .'.xml';
+            $nombre = 'cfdis/timbrado_' . $emisor->rfc . '_' . $uuid . '.xml';
             Storage::disk('local')->put($nombre, $xmlFirmado);
 
-            // copy file to public folder
+            // Copiar archivo a la carpeta pública para descarga
             Storage::disk('public')->put($nombre, $xmlFirmado);
             $ruta = $nombre;
-
-
 
             // 9. Generar Acuse
             $acuseService = new AcuseJsonService();
@@ -310,7 +371,7 @@ class TimbradoService
                 'ruta' => $ruta,
                 'uuid' => $uuid,
                 'sello' => $sello,
-                'rfc_emisor' => $rfcEmisor,
+                'rfc_emisor' => $emisor->rfc,
                 'rfc_receptor' => $receptor ? (string) $receptor['Rfc'] : null,
                 'total' => (float) $xml['Total'],
                 'fecha' => (string) $xml['Fecha'],
@@ -321,8 +382,7 @@ class TimbradoService
 
             \Log::info('CFDI timbrado exitosamente', [
                 'uuid' => $timbreData['uuid'],
-                'archivo' => $nombre,
-                'cadena original' => $cadenaOriginal
+                'archivo' => $nombre
             ]);
 
             return $registro;
@@ -333,7 +393,6 @@ class TimbradoService
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
-                'files' => $file,
                 'emisor_rfc' => $emisor->rfc,
             ]);
 
