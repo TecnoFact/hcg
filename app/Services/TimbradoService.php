@@ -515,11 +515,16 @@ class TimbradoService
 
         exec("openssl x509 -in $rutaCer -inform DER -noout -startdate -enddate", $output);
 
-       // dd($output);
+        $inicioStr = str_replace('notBefore=', '', $output[0]);
+        $finStr    = str_replace('notAfter=', '', $output[1]);
 
-        $inicio = DateTime::createFromFormat('M d H:i:s Y T', str_replace('notBefore=', '', $output[0]));
-        $fin    = DateTime::createFromFormat('M d H:i:s Y T', str_replace('notAfter=', '', $output[1]));
+        // Convertir string a DateTime (formato RFC2822 del openssl)
+        $inicio = DateTime::createFromFormat('M d H:i:s Y T', $inicioStr);
+        $fin    = DateTime::createFromFormat('M d H:i:s Y T', $finStr);
 
-        return [$inicio, $fin];
+        return [
+            Carbon::instance($inicio)->utc(),
+            Carbon::instance($fin)->utc(),
+        ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
+use Carbon\Carbon;
 use DateTime;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -272,13 +273,15 @@ class Cfdi extends Page
 
         //dd($comprobante);
 
-        $fechaCfdi = new DateTime($comprobante['Fecha']);
+        $fechaCfdi = Carbon::parse($comprobante['Fecha'])->utc();
 
         $certificado = Storage::disk('local')->path($emisor->file_certificate);
 
         list($inicioVigencia, $finVigencia) = TimbradoService::obtenerFechasVigenciaCertificado( $certificado);
 
-        if ($fechaCfdi < $inicioVigencia || $fechaCfdi > $finVigencia) {
+
+
+        if ($fechaCfdi->lt($inicioVigencia) || $fechaCfdi->gt($finVigencia)) {
               Notification::make()
                 ->title('Error al timbrar el XML')
                 ->danger()
