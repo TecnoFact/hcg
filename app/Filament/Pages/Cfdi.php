@@ -275,11 +275,11 @@ class Cfdi extends Page
 
         // vaalidr si la fecha del $comprobante es un dia lunes, de ser asi devuelve un notification de error
         $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('l');
-        if ($fechaEmision === 'Monday') {
+        if ($fechaEmision !== 'Tuesday') {
             Notification::make()
                 ->title('Error al timbrar el XML')
                 ->danger()
-                ->body('La fecha de emisión no puede ser un lunes.')
+                ->body('La fecha de emisión debe ser un martes.')
                 ->send();
             return;
         }
