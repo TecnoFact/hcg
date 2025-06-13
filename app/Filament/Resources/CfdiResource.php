@@ -7,6 +7,9 @@ use App\Filament\Resources\CfdiResource\RelationManagers;
 
 use App\Models\CfdiArchivo;
 use App\Models\Models\Cfdi;
+use Filament\Tables\Actions\Action;
+
+
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
@@ -59,6 +62,15 @@ class CfdiResource extends Resource
             ])
             ->actions([
                 //Tables\Actions\EditAction::make(),
+                Action::make('descargar_xml')
+                ->label('Descargar XML')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->url(fn($record) => route('facturas.descargar-xml', $record))
+                ->color('success')
+                ->openUrlInNewTab(false)
+                ->visible(fn($record) => !empty($record->ruta)),
+
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
