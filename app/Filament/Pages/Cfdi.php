@@ -273,6 +273,28 @@ class Cfdi extends Page
 
         //dd($comprobante);
 
+        // vaalidr si la fecha del $comprobante es un dia lunes, de ser asi devuelve un notification de error
+        $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('l');
+        if ($fechaEmision === 'Monday') {
+            Notification::make()
+                ->title('Error al timbrar el XML')
+                ->danger()
+                ->body('La fecha de emisión no puede ser un lunes.')
+                ->send();
+            return;
+        }
+
+        // valida que la fecha del comprobante no sea segundo :00 si es asi devuelve un notification de error
+        $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('s');
+        if ($fechaEmision === '00') {
+            Notification::make()
+                ->title('Error al timbrar el XML')
+                ->danger()
+                ->body('La fecha de emisión no puede tener segundos en 00.')
+                ->send();
+            return;
+        }
+
         $fechaCfdi = Carbon::parse($comprobante['Fecha'])->utc();
 
         $certificado = Storage::disk('local')->path($emisor->file_certificate);
