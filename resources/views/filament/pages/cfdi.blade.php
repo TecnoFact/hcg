@@ -110,3 +110,10 @@
 
     </div>
 </x-filament-panels::page>
+
+
+<script>
+    document.addEventListener('FilePond:processfilerevert', function() {
+        window.location.reload();
+    });
+</script>
