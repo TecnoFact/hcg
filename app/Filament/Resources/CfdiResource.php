@@ -85,7 +85,7 @@ class CfdiResource extends Resource
                 ->url(fn($record) => route('filament.admin.pages.cfdi-continues', $record))
                 ->color('success')
                 ->openUrlInNewTab(false)
-                ->visible(fn($record) => $record->estatus === 'timbrado' && $record->status_upload === 'depositado'),
+                ->visible(fn($record) => $record->estatus === 'pendiente' && $record->status_upload !== 'depositado'),
 
 
             ])
