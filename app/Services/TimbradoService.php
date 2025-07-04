@@ -323,9 +323,11 @@ class TimbradoService
      *
      * @param string $xml Ruta del archivo XML a timbrar.
      * @param Emisor $emisor Objeto Emisor con los datos del emisor.
+     * @param string $sello Sello del CFDI.
+     * @param CfdiArchivo $id Objeto CfdiArchivo con los datos del CFDI.
      * @return \Illuminate\Http\JsonResponse
      */
-    static function timbraXML($xml, Emisor $emisor, $sello, $id = null, $receptor = null)
+    static function timbraXML($xml, Emisor $emisor, $sello, CfdiArchivo $id)
     {
          $xmlFirmado = Storage::disk('public')->path($xml);
          $registro = null;
@@ -350,6 +352,7 @@ class TimbradoService
 
             // 7. Generar Timbre Fiscal Digital
             $uuid = (string) Str::uuid();
+
             $timbrador = new TimbradoService();
             $timbreData = $timbrador->generarTimbre([
                 'uuid' => $uuid,
@@ -374,13 +377,13 @@ class TimbradoService
             $acuse = $acuseService->generarDesdeXml($xmlFirmado);
 
             // 10. Guardar en base de datos
-           $cfdi = CfdiArchivo::find($id);
-           $cfdi->uuid = $uuid;
-           $cfdi->sello = $sello;
-           $cfdi->ruta = $ruta;
-           $cfdi->status_upload = CfdiArchivo::ESTATUS_TIMBRADO;
-           $cfdi->estatus = 'timbrado';
-           $cfdi->save();
+
+           $id->uuid = $timbreData['uuid'] ?? '';
+           $id->sello = $sello;
+           $id->ruta = $ruta;
+           $id->status_upload = CfdiArchivo::ESTATUS_TIMBRADO;
+           $id->estatus = 'timbrado';
+           $id->save();
 
 
             Log::info('CFDI timbrado exitosamente', [
@@ -388,7 +391,7 @@ class TimbradoService
                 'archivo' => $nombre
             ]);
 
-            return $registro;
+            return $id;
 
         } catch (\Exception $e) {
 

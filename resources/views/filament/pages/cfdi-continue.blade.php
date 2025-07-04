@@ -27,11 +27,10 @@
                 <x-filament::button
                     type="submit"
                     x-bind:color="subido ? 'success' : 'primary'"
-                    x-bind:disabled="subido"
+                    x-bind:disabled="true"
                     wire:loading.attr="disabled"
                     wire:target="subirXml"
-                    class="transition-all duration-300"
-                    x-bind:class="subido ? 'opacity-75' : ''"
+                    class="transition-all duration-300 opacity-50 cursor-not-allowed"
                 >
                     <span class="flex items-center" wire:loading.remove>
                         <template x-if="!subido">
@@ -107,7 +106,7 @@
                         wire:loading.attr="disabled"
                         wire:target="timbrarXml"
                         class="transition-all duration-300"
-                        x-bind:class="!sellado ? 'opacity-50 cursor-not-allowed' : (timbrado ? 'opacity-75' : '')"
+                        x-bind:class="(!sellado || timbrado) ? 'opacity-50 cursor-not-allowed' : (timbrado ? 'opacity-75' : '')"
                     >
                         <span class="flex items-center" wire:loading.remove>
                             <template x-if="!timbrado">

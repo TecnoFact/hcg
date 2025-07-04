@@ -228,9 +228,11 @@ class Cfdi extends Page
     {
 
         try {
-            $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
-
             $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+
+            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
+
+
 
             $xmlPath = $cfdiArchivo->ruta;
             $processXml = TimbradoService::sellarCfdi($xmlPath, $emisor);

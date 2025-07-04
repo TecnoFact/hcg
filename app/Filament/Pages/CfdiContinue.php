@@ -192,11 +192,13 @@ class CfdiContinue extends Page
     {
 
         try {
-            $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
-
             $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
 
-            $xmlPath = $cfdiArchivo->ruta;
+            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
+
+
+
+            $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
             $processXml = TimbradoService::sellarCfdi($xmlPath, $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
@@ -255,7 +257,7 @@ class CfdiContinue extends Page
         $sello = $cfdiArchivo->sello;
         $xmlPath = $cfdiArchivo->ruta;
 
-        $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
+        $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
         if (!$emisor) {
             Notification::make()
@@ -321,8 +323,7 @@ class CfdiContinue extends Page
             $xmlFile,
             $emisor,
             $sello,
-            $this->rfcReceptor,
-            $this->cfdiArchivo->id
+            $cfdiArchivo
         );
         if (!$processXml) {
             Notification::make()
