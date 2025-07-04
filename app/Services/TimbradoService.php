@@ -2,17 +2,17 @@
 
 namespace App\Services;
 
-use App\Models\CfdiArchivo;
-use App\Models\Emisor;
-use Auth;
+use DateTime;
+use Exception;
+use DOMDocument;
 use Carbon\Carbon;
 use CfdiUtils\Cfdi;
-use DateTime;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Emisor;
+use App\Models\CfdiArchivo;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use DOMDocument;
-use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen;
 
 class TimbradoService
@@ -240,12 +240,17 @@ class TimbradoService
             if (!$coincide) {
                throw new \Exception('El RFC del emisor no coincide con el certificado CSD.', 422);
             }
+            $signer = new CfdiSignerService();
+
+            // agregar el nro certificado al xmlContent
+            $noCertificado = $signer->getNoCertificado($keyPemFileUnprotected, $certificateFromEditor, $keyDerPass);
+            $xmlContent = $signer->agregarNoCertificado($xmlContent, $noCertificado);
 
             // 4. Generar cadena original y sello
             $cadenaService = new CfdiCadenaOriginalService();
             $cadenaOriginal = $cadenaService->generar($xmlContent);
 
-            $signer = new CfdiSignerService();
+
             $firma = $signer->firmarCadena(
                 $cadenaOriginal,
                 $keyPemFileUnprotected,
@@ -259,6 +264,7 @@ class TimbradoService
 
             // 5. Insertar sello en XML
             $injector = new CfdiXmlInjectorService();
+
             $xmlFirmado = $injector->insertarDatosEnXml($xmlContent, $sello, $certificado, $noCertificado);
 
             // 6. Asegurar atributos de namespace requeridos
@@ -273,20 +279,21 @@ class TimbradoService
 
             $xmlFirmado = $doc->saveXML();
 
-             $uuid = (string) Str::uuid();
+            $total = $comprobante->getAttribute('Total');
+            $fecha = $comprobante->getAttribute('Fecha');
+
+            $uuid = (string) Str::uuid();
             $nombre = 'cfdis/sellado_' . $emisor->rfc . '_' . $uuid . '.xml';
             Storage::disk('public')->put($nombre, $xmlFirmado);
 
-            $ruta = $nombre;
-
-           // $ruta = Storage::disk('local')->path('cfdis/sellado_' . $emisor->rfc . '_' . Str::uuid() . '.xml');
-
-            // objeto xml devolver xmlFirmado y sello
             return [
                 'xml' => $xmlFirmado,
                 'sello' => $sello,
                 'rfcReceptor' => $rfcReceptor,
-                'ruta' => $ruta
+                'ruta' => $nombre,
+                'total' => $total,
+                'fecha' => $fecha,
+                'uuid' => $uuid,
             ];
 
         }catch(\Exception $e) {
@@ -318,7 +325,7 @@ class TimbradoService
      * @param Emisor $emisor Objeto Emisor con los datos del emisor.
      * @return \Illuminate\Http\JsonResponse
      */
-    static function timbraXML($xml, Emisor $emisor, $sello, $receptor = null)
+    static function timbraXML($xml, Emisor $emisor, $sello, $id = null, $receptor = null)
     {
          $xmlFirmado = Storage::disk('public')->path($xml);
          $registro = null;
@@ -367,22 +374,16 @@ class TimbradoService
             $acuse = $acuseService->generarDesdeXml($xmlFirmado);
 
             // 10. Guardar en base de datos
-            $registro = CfdiArchivo::create([
-                'user_id' => Auth::id(),
-                'nombre_archivo' => $nombre,
-                'ruta' => $ruta,
-                'uuid' => $uuid,
-                'sello' => $sello,
-                'rfc_emisor' => $emisor->rfc,
-                'rfc_receptor' => $receptor ? (string) $receptor['Rfc'] : null,
-                'total' => (float) $xml['Total'],
-                'fecha' => (string) $xml['Fecha'],
-                'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
-                'estatus' => 'timbrado',
-            ]);
+           $cfdi = CfdiArchivo::find($id);
+           $cfdi->uuid = $uuid;
+           $cfdi->sello = $sello;
+           $cfdi->ruta = $ruta;
+           $cfdi->status_upload = CfdiArchivo::ESTATUS_TIMBRADO;
+           $cfdi->estatus = 'timbrado';
+           $cfdi->save();
 
 
-            \Log::info('CFDI timbrado exitosamente', [
+            Log::info('CFDI timbrado exitosamente', [
                 'uuid' => $timbreData['uuid'],
                 'archivo' => $nombre
             ]);
@@ -413,7 +414,13 @@ class TimbradoService
                 $envio = new EnvioSatCfdiService();
                 $envio->enviarXml($registro); // Este método ya actualiza los campos necesarios
                 $data['success'] = true;
-                $data['message'] = 'CFDI enviado al SAT correctamente';
+                $data['message'] = 'CFDI depositado al SAT correctamente';
+
+                $registro->update([
+                    'respuesta_sat' => 'CFDI depositado al SAT correctamente',
+                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
+                    'estatus' => CfdiArchivo::ESTATUS_DEPOSITADO
+                ]);
 
                 return $data;
             } catch (\Exception $e) {
@@ -421,15 +428,15 @@ class TimbradoService
                     'respuesta_sat' => 'Error: ' . $e->getMessage(),
                     'intento_envio_sat' => $registro->intento_envio_sat + 1,
                 ]);
-                \Log::error('Error al enviar CFDI al SAT', [
+                Log::error('Error al depositar CFDI al SAT', [
                     'uuid' => $registro->uuid,
                     'error' => $e->getMessage()
                 ]);
 
-                $data['message'] = 'Error al enviar CFDI al SAT: ' . $e->getMessage();
+                $data['message'] = 'Error al depositar CFDI al SAT: ' . $e->getMessage();
                 $data['success'] = false;
 
-                throw new \Exception('Error al enviar CFDI al SAT: ' . $e->getMessage(), 500);
+                throw new \Exception('Error al depositar CFDI al SAT: ' . $e->getMessage(), 500);
             }
     }
 

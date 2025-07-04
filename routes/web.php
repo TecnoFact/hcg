@@ -18,13 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/cfdi-continue/{id}', \App\Filament\Pages\CfdiContinue::class)->name('filament.admin.pages.cfdi-continues');
 
-Route::get('/descargar-xml/{factura}', [CfdiController::class, 'descargarXml'])->name('facturas.descargar-xml');
-
-
-
-
+    Route::get('/descargar-xml/{factura}', [CfdiController::class, 'descargarXml'])->name('facturas.descargar-xml');
 });
-
 
 require __DIR__.'/auth.php';

@@ -26,4 +26,5 @@ class CfdiXmlInjectorService
 
         return $dom->saveXML();
     }
+
 }

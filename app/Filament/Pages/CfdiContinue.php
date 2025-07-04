@@ -2,9 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use DateTime;
 use Carbon\Carbon;
-use Filament\Forms;
 use Filament\Pages\Page;
 use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
@@ -13,14 +11,31 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
 
-
-class Cfdi extends Page
+class CfdiContinue extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = null;
 
-    protected static string $view = 'filament.pages.cfdi';
+    protected static string $view = 'filament.pages.cfdi-continue';
 
-    protected static ?string $title =  'Subir CFDI';
+
+    protected static ?string $navigationGroup = null;
+
+    protected static bool $shouldRegisterNavigation = false;
+
+
+
+    public static function getUriKey(): string
+    {
+        return 'cfdi-continue';
+    }
+
+    public static function getParameters(): array
+    {
+        return [
+            'id' => ['required'],
+        ];
+    }
+
 
     public $rfc;
     public $xml_file;
@@ -47,107 +62,56 @@ class Cfdi extends Page
 
     public $cfdiArchivo = null;
 
-     public function mount()
+    public function mount($id)
     {
-        $this->form->fill();
+        $this->cfdiArchivo = CfdiArchivo::find($id);
+        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_SUBIDO){
+            $this->subido = true;
+            $this->estado = '
+            <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Subido
+            </span>
+            ';
+        }
+        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_SELLADO){
+            $this->sellado = true;
+            $this->estado = '
+            <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Sellado
+            </span>
+            ';
+        }
+        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_TIMBRADO){
+            $this->timbrado = true;
+            $this->estado = '
+            <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Timbrado
+            </span>
+            ';
+        }
+        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_DEPOSITADO){
+            $this->depositado = true;
+            $this->estado = '
+            <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
+                <svg class="w-4 h-4 mr-1" style="color: #10b981;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Depositado
+            </span>
+            ';
+        }
+        Log::info("LOADED CFDI ARCHIVO: " . json_encode($this->cfdiArchivo));
     }
 
-    protected function getFormSchema(): array
-    {
-        return [
-            Forms\Components\Section::make('Subir CFDI')
-                ->schema([
-                    Forms\Components\Select::make('rfc')
-                        ->label('Emisor')
-                        ->searchable()
-                        ->options(\App\Models\Emisor::all()->pluck('rfc', 'rfc'))
-                        ->placeholder('Seleccione un emisor')
-                        ->getOptionLabelUsing(fn ($value) =>
-                                            \App\Models\Emisor::find($value)?->rfc
-                                        )
-                        ->reactive()
-                        ->required(),
-                    Forms\Components\FileUpload::make('xml_file')
-                        ->label('Archivo XML')
-                        ->acceptedFileTypes(['application/xml', 'text/xml'])
-                        ->disk('local')
-                        ->directory(fn($get) => 'xml' . DIRECTORY_SEPARATOR . $get('rfc'))
-                        ->required(),
-                ]),
-        ];
-    }
-
-    public function submit()
-    {
-
-        $this->validate([
-            'rfc' => 'required',
-            'xml_file' => 'required', // Max 2MB
-        ]);
-
-
-        $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
-
-        if (!$emisor) {
-            Notification::make()
-                ->title('Emisor no encontrado')
-                ->danger()
-                ->body('El emisor seleccionado no existe.')
-                ->send();
-
-            session()->flash('error', 'El emisor seleccionado no existe.');
-            return redirect()->back();
-        }
-
-        // Obtener el primer archivo subido
-        $file = is_array($this->xml_file) ? reset($this->xml_file) : $this->xml_file;
-        $pathXml = '';
-
-        // Validar que es un TemporaryUploadedFile
-        if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-            $pathXml = $emisor->rfc . DIRECTORY_SEPARATOR . $emisor->rfc . '_' . time() . '.xml';
-            $file->storeAs('cfdi', $pathXml, 'local');
-        } else {
-            // Manejar el caso de error
-            Notification::make()
-                ->title('Archivo no válido')
-                ->danger()
-                ->body('No se pudo procesar el archivo XML.')
-                ->send();
-            return redirect()->back();
-        }
-
-
-        try{
-
-            $xmlPath = Storage::disk('local')->path('cfdi/' . $pathXml);
-
-            $processXml = TimbradoService::timbraSellarXml($xmlPath, $emisor);
-
-        }catch (\Exception $e) {
-            Log::error('Error al procesar el XML: ' . $e->getMessage());
-            Notification::make()
-                ->title('Error al subir el CFDI')
-                ->danger()
-                ->body('Ocurrió un error al procesar el archivo XML: ' . $e->getMessage())
-                ->send();
-            session()->flash('error', 'Ocurrió un error al procesar el archivo XML: ' . $e->getMessage());
-            return redirect()->back();
-        }
-
-
-        // Process the XML file as needed, e.g., parsing, saving to database, etc.
-
-        Notification::make()
-            ->title('CFDI Uploaded')
-            ->success()
-            ->body('El CFDI ha sido subido exitosamente.')
-            ->send();
-
-        session()->flash('success', 'El CFDI ha sido subido exitosamente.');
-
-        return redirect()->route('filament.admin.pages.cfdi');
-    }
 
     public function subirXml()
     {
@@ -204,7 +168,7 @@ class Cfdi extends Page
         $registro = CfdiArchivo::create([
             'user_id' => Auth::id(),
             'nombre_archivo' => "",
-            'ruta' => 'cfdi/' . $pathXml,
+            'ruta' => $this->pathXml,
             'uuid' => "",
             'sello' => "",
             'rfc_emisor' => $emisor->rfc,
@@ -471,5 +435,4 @@ class Cfdi extends Page
 
         return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf');
     }
-
 }

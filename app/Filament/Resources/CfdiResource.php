@@ -56,6 +56,15 @@ class CfdiResource extends Resource
                     ->label('Total'),
                 Tables\Columns\TextColumn::make('estatus')
                     ->label('Estatus'),
+                Tables\Columns\TextColumn::make('status_upload')
+                    ->label('Status Upload')
+                    ->badge(fn($record): string => match ($record->status_upload) {
+                        'subido' => 'success',
+                        'sellado' => 'warning',
+                        'timbrado' => 'info',
+                        'depositado' => 'success',
+                        default => 'danger',
+                    }),
             ])
             ->filters([
                 //
@@ -69,6 +78,14 @@ class CfdiResource extends Resource
                 ->color('success')
                 ->openUrlInNewTab(false)
                 ->visible(fn($record) => !empty($record->ruta)),
+
+                Action::make('continuar')
+                ->label('Continuar')
+                ->icon('heroicon-o-arrow-right')
+                ->url(fn($record) => route('filament.admin.pages.cfdi-continues', $record))
+                ->color('success')
+                ->openUrlInNewTab(false)
+                ->visible(fn($record) => $record->estatus === 'timbrado' && $record->status_upload === 'depositado'),
 
 
             ])

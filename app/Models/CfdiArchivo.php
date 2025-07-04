@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class CfdiArchivo extends Model
 {
+    const ESTATUS_SUBIDO = 'subido';
+    const ESTATUS_SELLADO = 'sellado';
+    const ESTATUS_TIMBRADO = 'timbrado';
+    const ESTATUS_DEPOSITADO = 'depositado';
     use HasFactory;
 
     protected $fillable = [
@@ -25,8 +29,9 @@ class CfdiArchivo extends Model
         'respuesta_sat',
         'token_sat',
         'intento_envio_sat',
+        'status_upload'
     ];
-    
+
 
     public function user()
     {
