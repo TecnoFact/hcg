@@ -235,13 +235,13 @@ class Cfdi extends Page
 
 
             $xmlPath = $cfdiArchivo->ruta;
-            $processXml = TimbradoService::sellarCfdi($xmlPath, $emisor);
+            $processXml = TimbradoService::sellarCfdi(Storage::disk('local')->path($xmlPath), $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
 
 
             $this->sello = $processXml['sello'];
-            $this->rfcReceptor = $processXml['rfc_receptor'] ?? '';
+            $this->rfcReceptor = $processXml['rfcReceptor'] ?? '';
             $this->sellado = true;
             $this->estado = '
             <span style="background-color:rgb(250, 209, 209); color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
@@ -254,7 +254,7 @@ class Cfdi extends Page
             $this->xmlPath = $processXml['ruta'];
 
             $cfdiArchivo->sello = $processXml['sello'];
-            $cfdiArchivo->rfc_receptor = $processXml['rfc_receptor'] ?? '';
+            $cfdiArchivo->rfc_receptor = $processXml['rfcReceptor'] ?? '';
             $cfdiArchivo->status_upload = CfdiArchivo::ESTATUS_SELLADO;
             $cfdiArchivo->ruta = $processXml['ruta'];
             $cfdiArchivo->total = $processXml['total'];

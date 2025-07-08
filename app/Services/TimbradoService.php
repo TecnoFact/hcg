@@ -184,9 +184,7 @@ class TimbradoService
     static function sellarCfdi($xml, Emisor $emisor)
     {
         // Lógica para sellar el CFDI
-          $file = $xml;
-
-         $xmlContent = file_get_contents($file);
+         $xmlContent = file_get_contents($xml);
 
 
         // 2. Validar complementos
@@ -301,7 +299,7 @@ class TimbradoService
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
-                'files' => $file,
+                'files' => $xml,
                 'emisor_rfc' => $emisor->rfc,
             ]);
 
