@@ -417,10 +417,12 @@ class TimbradoService
                 $data['success'] = true;
                 $data['message'] = 'CFDI depositado al SAT correctamente';
 
+                 $registro = CfdiArchivo::find($registro->id);
+
                 $registro->update([
                     'respuesta_sat' => 'CFDI depositado al SAT correctamente',
                     'intento_envio_sat' => $registro->intento_envio_sat + 1,
-                    'estatus' => CfdiArchivo::ESTATUS_DEPOSITADO
+                    'status_upload' => CfdiArchivo::ESTATUS_DEPOSITADO
                 ]);
 
                 return $data;
@@ -428,7 +430,7 @@ class TimbradoService
                 $registro = CfdiArchivo::find($registro->id);
                 $registro->update([
                     'respuesta_sat' => 'Error: ' . $e->getMessage(),
-                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
+                    'intento_envio_sat' => $registro->intento_envio_sat + 1
                 ]);
                 Log::error('Error al depositar CFDI al SAT', [
                     'uuid' => $registro->uuid,
