@@ -425,6 +425,7 @@ class TimbradoService
 
                 return $data;
             } catch (\Exception $e) {
+                $registro = CfdiArchivo::find($registro->id);
                 $registro->update([
                     'respuesta_sat' => 'Error: ' . $e->getMessage(),
                     'intento_envio_sat' => $registro->intento_envio_sat + 1,
