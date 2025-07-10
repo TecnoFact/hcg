@@ -313,6 +313,7 @@ class Cfdi extends Page
         //dd($comprobante);
 
         // vaalidr si la fecha del $comprobante es un dia lunes, de ser asi devuelve un notification de error
+       /*
         $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('l');
         if ($fechaEmision !== 'Tuesday') {
             Notification::make()
@@ -333,6 +334,7 @@ class Cfdi extends Page
                 ->send();
             return;
         }
+            */
 
         $fechaCfdi = Carbon::parse($comprobante['Fecha'])->utc();
 
