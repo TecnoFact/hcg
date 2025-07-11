@@ -229,12 +229,25 @@ class Cfdi extends Page
 
         try {
             $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+            $xmlPath = $cfdiArchivo->ruta;
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
+            $comprobante = \CfdiUtils\Cfdi::newFromString($xmlPath)->getQuickReader();
+
+            $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('s');
+
+            if ($fechaEmision === '00') {
+               // change seconds random diferent 00 from fecha
+                $fechaEmision = Carbon::parse($comprobante['Fecha'])->addSecond()->format('Y-m-d\TH:i:s');
+                $comprobante['Fecha'] = $fechaEmision;
+                $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
+                $xmlContent = file_get_contents($xmlPath);
+                $xmlContent = str_replace($comprobante['Fecha'], $fechaEmision, $xmlContent);
+                file_put_contents($xmlPath, $xmlContent);
+            }
 
 
-            $xmlPath = $cfdiArchivo->ruta;
             $processXml = TimbradoService::sellarCfdi(Storage::disk('local')->path($xmlPath), $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
