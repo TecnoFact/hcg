@@ -227,7 +227,7 @@ class EnvioSatCfdiService
      * @return void
      * @throws Exception
      */
-    private function enviarSoapSat(string $token, CfdiArchivo $cfdi, string $nameXml): void
+    private function enviarSoapSat(string $token, CfdiArchivo $cfdi, string $nameXml): array
     {
 
         if(!$token) {
@@ -403,6 +403,8 @@ class EnvioSatCfdiService
             'mensaje' => $codigo,
             'incidencia' => $incidenciaData
         ]);
+
+        return ['xml' => $xmlResponse->asXML()];
     }
 
      private function enviarSoapSatFromXml(string $token, CfdiArchivo $cfdi, string $nameXml): void
@@ -746,34 +748,49 @@ class EnvioSatCfdiService
 
 
 
-     public function enviarXml(CfdiArchivo $cfdi): void
+     public function enviarXml(CfdiArchivo $cfdi): array
     {
+        $response = ['xml' => ''];
 
-        $xml = Storage::disk('local')->get($cfdi->ruta);
-        $nameXml = $cfdi->uuid . '.xml';
+        try
+        {
+            $xml = Storage::disk('local')->get($cfdi->ruta);
+            $nameXml = $cfdi->uuid . '.xml';
 
-        Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
+            Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
 
-       // $rfc = config('pac.Rfc');
-        $rfc = $cfdi->rfc_emisor;
+        // $rfc = config('pac.Rfc');
+            $rfc = $cfdi->rfc_emisor;
 
-        $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
-        $cadena = "||{$rfc}|{$fecha}||";
+            $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
+            $cadena = "||{$rfc}|{$fecha}||";
 
-        $cadena = base64_encode(hash('sha256', $cadena, true));
+            $cadena = base64_encode(hash('sha256', $cadena, true));
 
-        $sello = $this->firmarCadenaConHsmPkcs7($cadena);
-        Log::debug('Sello generado', ['sello' => $sello]);
+            $sello = $this->firmarCadenaConHsmPkcs7($cadena);
+            Log::debug('Sello generado', ['sello' => $sello]);
 
-        $token = $this->autenticarseEnSat();
-        Log::debug('Token recibido del SAT', ['token' => $token]);
+            $token = $this->autenticarseEnSat();
+            Log::debug('Token recibido del SAT', ['token' => $token]);
 
 
-        $this->subirABlob($cfdi->uuid, $xml);
-        Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
+            $this->subirABlob($cfdi->uuid, $xml);
+            Log::info('CFDI almacenado en Azure Blob', ['uuid' => $cfdi->uuid]);
 
-        $this->enviarSoapSat($token, $cfdi, $nameXml);
-        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+            $response = $this->enviarSoapSat($token, $cfdi, $nameXml);
+            Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+
+            return $response;
+
+
+        }catch (\Exception $e) {
+            Log::error('Error al enviar CFDI al SAT', [
+                'uuid' => $cfdi->uuid,
+                'error' => $e->getMessage()
+            ]);
+
+            return $response;
+         }
 
 
     }

@@ -77,7 +77,7 @@ class CfdiResource extends Resource
                 ->url(fn($record) => route('facturas.descargar-xml', $record))
                 ->color('success')
                 ->openUrlInNewTab(false)
-                ->visible(fn($record) => !empty($record->ruta)),
+                ->visible(fn($record) => $record->status_upload !== 'subido'),
 
                 Action::make('continuar')
                 ->label('Continuar')

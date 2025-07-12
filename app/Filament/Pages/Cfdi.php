@@ -229,26 +229,35 @@ class Cfdi extends Page
 
         try {
             $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+
             $xmlPath = $cfdiArchivo->ruta;
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
-            $comprobante = \CfdiUtils\Cfdi::newFromString($xmlPath)->getQuickReader();
+            $contentXml = Storage::disk('local')->get($xmlPath);
 
-            $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('s');
+            $comprobante = \CfdiUtils\Cfdi::newFromString($contentXml)->getQuickReader();
 
-            if ($fechaEmision === '00') {
-               // change seconds random diferent 00 from fecha
-                $fechaEmision = Carbon::parse($comprobante['Fecha'])->addSecond()->format('Y-m-d\TH:i:s');
-                $comprobante['Fecha'] = $fechaEmision;
-                $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
-                $xmlContent = file_get_contents($xmlPath);
-                $xmlContent = str_replace($comprobante['Fecha'], $fechaEmision, $xmlContent);
-                file_put_contents($xmlPath, $xmlContent);
+
+            $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
+
+            if ($segundos === '00') {
+                // Cambiar los segundos a un valor diferente de 00
+                $fechaOriginal = $comprobante['Fecha'];
+                $nuevaFecha = Carbon::parse($fechaOriginal)->addSecond()->format('Y-m-d\TH:i:s');
+
+                $xmlPathAbs = Storage::disk('local')->path($cfdiArchivo->ruta);
+                $xmlContent = file_get_contents($xmlPathAbs);
+                // Reemplaza solo la primera ocurrencia de la fecha original
+                $xmlContent = preg_replace('/Fecha="' . preg_quote($fechaOriginal, '/') . '"/', 'Fecha="' . $nuevaFecha . '"', $xmlContent, 1);
+                file_put_contents($xmlPathAbs, $xmlContent);
+
+                $contentXml = $xmlPathAbs;
             }
+            // Continúa con el proceso normalmente
 
 
-            $processXml = TimbradoService::sellarCfdi(Storage::disk('local')->path($xmlPath), $emisor);
+            $processXml = TimbradoService::sellarCfdi($contentXml, $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
 
@@ -288,7 +297,7 @@ class Cfdi extends Page
 
         } catch (\Exception $e) {
             Log::error('Error al procesar el XML: ' . $e->getMessage());
-            Log::error($e->getFile() . ':' . $e->getLine());
+            Log::error($e->getFile() . ':' . $e->getLine() . ' - ' . $e->getMessage());
             Notification::make()
                 ->title('Error al sellar el XML')
                 ->danger()
@@ -421,6 +430,11 @@ class Cfdi extends Page
             return;
         }
 
+       $xmlPath = Storage::disk('public')->path($cfdiArchivo->ruta);
+
+        //TimbradoService::createCfdiToPDF($xmlPath);
+        //dd('PDF generado correctamente');
+
 
         $data = TimbradoService::envioxml($cfdiArchivo);
 
@@ -443,7 +457,7 @@ class Cfdi extends Page
             return;
         }
 
-        // generate pdf from xml  from registro
+        // generate pdf from xml acuse from registro
         $pdf = TimbradoService::generatePdfFromXml($cfdiArchivo->respuesta_sat);
 
         $this->depositado = true;

@@ -194,12 +194,32 @@ class CfdiContinue extends Page
         try {
             $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
 
+              $xmlPath = $cfdiArchivo->ruta;
+
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
+             $contentXml = Storage::disk('local')->get($xmlPath);
 
+            $comprobante = \CfdiUtils\Cfdi::newFromString($contentXml)->getQuickReader();
 
-            $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
-            $processXml = TimbradoService::sellarCfdi($xmlPath, $emisor);
+              $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
+
+            if ($segundos === '00') {
+                // Cambiar los segundos a un valor diferente de 00
+                $fechaOriginal = $comprobante['Fecha'];
+                $nuevaFecha = Carbon::parse($fechaOriginal)->addSecond()->format('Y-m-d\TH:i:s');
+
+                $xmlPathAbs = Storage::disk('local')->path($cfdiArchivo->ruta);
+                $xmlContent = file_get_contents($xmlPathAbs);
+                // Reemplaza solo la primera ocurrencia de la fecha original
+                $xmlContent = preg_replace('/Fecha="' . preg_quote($fechaOriginal, '/') . '"/', 'Fecha="' . $nuevaFecha . '"', $xmlContent, 1);
+                file_put_contents($xmlPathAbs, $xmlContent);
+
+                $contentXml = $xmlPathAbs;
+            }
+            // Continúa con el proceso normalmente
+
+            $processXml = TimbradoService::sellarCfdi($contentXml, $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
 
@@ -361,6 +381,11 @@ class CfdiContinue extends Page
     {
 
         $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+
+
+
+       // TimbradoService::createCfdiToPDF($cfdiArchivo);
+        //dd('PDF generado correctamente');
 
         if( !$cfdiArchivo) {
             Notification::make()
