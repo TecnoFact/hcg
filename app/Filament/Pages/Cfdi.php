@@ -242,9 +242,11 @@ class Cfdi extends Page
             $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
 
             if ($segundos === '00') {
-                // Cambiar los segundos a un valor diferente de 00
+                // Generar un segundo aleatorio entre 1 y 59 (diferente de 00)
+                $segundoRandom = str_pad(strval(random_int(1, 59)), 2, '0', STR_PAD_LEFT);
                 $fechaOriginal = $comprobante['Fecha'];
-                $nuevaFecha = Carbon::parse($fechaOriginal)->addSecond()->format('Y-m-d\TH:i:s');
+                // Reemplazar los segundos en la fecha original por el valor aleatorio
+                $nuevaFecha = preg_replace('/:\d{2}$/', ':' . $segundoRandom, $fechaOriginal);
 
                 $xmlPathAbs = Storage::disk('local')->path($cfdiArchivo->ruta);
                 $xmlContent = file_get_contents($xmlPathAbs);
@@ -255,9 +257,10 @@ class Cfdi extends Page
                 $contentXml = $xmlPathAbs;
             }
             // Continúa con el proceso normalmente
+            $xml = file_get_contents($contentXml);
 
 
-            $processXml = TimbradoService::sellarCfdi($contentXml, $emisor);
+            $processXml = TimbradoService::sellarCfdi($xml, $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
 
