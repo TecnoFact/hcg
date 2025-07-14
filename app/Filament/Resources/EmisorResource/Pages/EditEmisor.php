@@ -29,7 +29,7 @@ class EditEmisor extends EditRecord
         return 'El Emisor a sido creado con exito';
     }
 
-    protected function mutateFormDataBeforeCreate(array $data): array
+    protected function mutateFormDataBeforeSave(array $data): array
     {
         $data['user_id'] = auth()->id();
 
