@@ -657,7 +657,8 @@ class TimbradoService
 
 
             // Generar cadena original
-            $resolver = new XmlResolver();
+            $myLocalResourcePath = '/tmp/sat';
+            $resolver = new XmlResolver($myLocalResourcePath);
             $location = $resolver->resolveCadenaOrigenLocation('4.0');
             $builder = new DOMBuilder();
             $cadenaOrigen = $builder->build($xmlContent, $location);
