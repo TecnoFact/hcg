@@ -314,7 +314,7 @@
                             <td width="18%" class="" style="vertical-align: top; padding-top: 12px;">
                                Tipo:<br>
                                 Fecha de Entrada:<br>
-                               
+
 
                                 Fecha de Timbrado:<br>
                                 Certificado:<br>
@@ -328,7 +328,7 @@
                             <td width="" class="" style="vertical-align: top; padding-top: 12px;">
                                 {{ $customer_invoice->documentType->cfdiType->name_sat ?? '' }}<br>
                                 {{ $fecha }}<br>
-                               
+
                                 {{ str_replace('T',' ',$fechaTimbrado) }}<br>
                                 {{ $data['NoCertificado'] }}<br>
                                 {{ $data['complemento']['timbreFiscalDigital']['NoCertificadoSAT'] }}<br>

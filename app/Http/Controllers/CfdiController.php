@@ -346,7 +346,8 @@ class CfdiController extends Controller
     public function descargarPdf($factura)
     {
         $cfdi = CfdiArchivo::find($factura);
-        $pdfPath = $cfdi->pdf_path;
+
+        TimbradoService::createCfdiToPDF($cfdi);
 
         if (empty($pdfPath)) {
             Notification::make()
@@ -357,6 +358,8 @@ class CfdiController extends Controller
 
             return redirect()->back();
         }
+
+        $pdfPath = $cfdi->pdf_path;
 
         $path = Storage::disk('public')->path($pdfPath);
 
