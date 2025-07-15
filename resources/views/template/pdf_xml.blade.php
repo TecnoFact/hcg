@@ -55,7 +55,7 @@
 
 <section class="header" style="top: -257px;">
 
-    <h2 style="position: absolute; left: 0; top: -25px; color: red;">*** Prueba CFDI ***</h2>
+
 
     <div>
     <table cellpadding="0" cellspacing="0" class="" width="100%" style="">
@@ -314,7 +314,7 @@
                             <td width="18%" class="" style="vertical-align: top; padding-top: 12px;">
                                Tipo:<br>
                                 Fecha de Entrada:<br>
-                                Fecha de Vencimiento:<br>
+                               
 
                                 Fecha de Timbrado:<br>
                                 Certificado:<br>
@@ -328,8 +328,7 @@
                             <td width="" class="" style="vertical-align: top; padding-top: 12px;">
                                 {{ $customer_invoice->documentType->cfdiType->name_sat ?? '' }}<br>
                                 {{ $fecha }}<br>
-                                {{ $customer_invoice->created_at }}<br>
-
+                               
                                 {{ str_replace('T',' ',$fechaTimbrado) }}<br>
                                 {{ $data['NoCertificado'] }}<br>
                                 {{ $data['complemento']['timbreFiscalDigital']['NoCertificadoSAT'] }}<br>
