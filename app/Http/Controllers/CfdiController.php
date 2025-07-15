@@ -349,6 +349,8 @@ class CfdiController extends Controller
 
         TimbradoService::createCfdiToPDF($cfdi);
 
+           $pdfPath = $cfdi->pdf_path;
+
         if (empty($pdfPath)) {
             Notification::make()
                 ->title('Error al descargar PDF')
@@ -359,7 +361,7 @@ class CfdiController extends Controller
             return redirect()->back();
         }
 
-        $pdfPath = $cfdi->pdf_path;
+
 
         $path = Storage::disk('public')->path($pdfPath);
 
