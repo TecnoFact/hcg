@@ -347,6 +347,7 @@ class CfdiController extends Controller
     {
         $cfdi = CfdiArchivo::find($factura);
 
+
         TimbradoService::createCfdiToPDF($cfdi);
 
            $pdfPath = $cfdi->pdf_path;
