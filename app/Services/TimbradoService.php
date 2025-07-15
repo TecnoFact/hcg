@@ -229,12 +229,22 @@ class TimbradoService
             $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
             $keyDerPass = $emisor->password_key;
 
-            $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
-
-            if( !file_exists($keyPemFileUnprotected)) {
-                // Convertir clave DER a PEM
-                 $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+            if(is_null($emisor->password_key) || $emisor->password_key === '') {
+               throw new \Exception('La contraseña de la llave es requerida.', 422);
             }
+
+           try{
+
+                $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+
+                if( !file_exists($keyPemFileUnprotected)) {
+                    // Convertir clave DER a PEM
+                    $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+                }
+           }catch(\Exception $e) {
+               Log::error($e->getMessage() . ' ' . $e->getLine() . ' ' . $e->getFile());
+               throw new \Exception('Error al convertir la clave DER a PEM: ' . $e->getMessage(), 422);
+           }
 
             $coincide = $validadorCert->validarRfcConCertificado($certificateFromEditor, $rfcEmisor);
 
@@ -584,6 +594,11 @@ class TimbradoService
             $tipoDeComprobante = $comprobante['TipoDeComprobante'];
             $lugarExpedicion = $comprobante['LugarExpedicion'];
             $noCertificado = $comprobante['NoCertificado'];
+
+            // validar si existe el nodo Complemento
+            if (!$comprobante->searchNode('cfdi:Complemento')) {
+                throw new \Exception("El nodo Complemento no existe en el CFDI");
+            }
 
             // Obtener TimbreFiscalDigital
             $timbreFiscal = $comprobante->searchNode('cfdi:Complemento')->searchNode('tfd:TimbreFiscalDigital');

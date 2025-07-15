@@ -388,7 +388,7 @@ class Cfdi extends Page
             $xmlFile,
             $emisor,
             $sello,
-            $this->cfdiArchivo
+            $cfdiArchivo
         );
         if (!$processXml) {
             Notification::make()
