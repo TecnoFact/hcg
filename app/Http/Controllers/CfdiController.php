@@ -346,7 +346,8 @@ class CfdiController extends Controller
     public function descargarPdf($factura)
     {
         $cfdi = CfdiArchivo::find($factura);
-
+        $cfdi->pdf_path = null;
+        $cfdi->save();
 
         TimbradoService::createCfdiToPDF($cfdi);
 
