@@ -25,6 +25,8 @@ class Cfdi extends Page
     public $rfc;
     public $xml_file;
 
+    public $pdf_file;
+
     public $subido = false;
 
     public $sellado = false;
@@ -417,6 +419,12 @@ class Cfdi extends Page
             ->body('El XML ha sido timbrado exitosamente.')
             ->send();
 
+
+
+        TimbradoService::createCfdiToPDF($cfdiArchivo);
+
+        $this->pdf_file = Storage::disk('public')->url($cfdiArchivo->pdf_path);
+
     }
 
     public function publicacion()
@@ -432,12 +440,6 @@ class Cfdi extends Page
                 ->send();
             return;
         }
-
-       $xmlPath = Storage::disk('public')->path($cfdiArchivo->ruta);
-
-        //TimbradoService::createCfdiToPDF($xmlPath);
-        //dd('PDF generado correctamente');
-
 
         $data = TimbradoService::envioxml($cfdiArchivo);
 

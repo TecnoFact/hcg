@@ -13,6 +13,8 @@ class CfdiArchivo extends Model
     const ESTATUS_DEPOSITADO = 'depositado';
     use HasFactory;
 
+    protected $table = 'cfdi_archivos';
+
     protected $fillable = [
         'user_id',
         'nombre_archivo',
@@ -29,7 +31,8 @@ class CfdiArchivo extends Model
         'respuesta_sat',
         'token_sat',
         'intento_envio_sat',
-        'status_upload'
+        'status_upload',
+        'pdf_path',
     ];
 
 

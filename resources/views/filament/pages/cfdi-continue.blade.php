@@ -7,7 +7,7 @@
     </x-slot>
 
     <div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md"
-    x-data="{ cfdiArchivo: @entangle('cfdiArchivo'), subido: @entangle('subido'), sellado: @entangle('sellado'), timbrado: @entangle('timbrado'), depositado: @entangle('depositado'), xmlPath: @entangle('xmlPath'), estado: @entangle('estado') }">
+    x-data="{ cfdiArchivo: @entangle('cfdiArchivo'), subido: @entangle('subido'), sellado: @entangle('sellado'), timbrado: @entangle('timbrado'), depositado: @entangle('depositado'), xmlPath: @entangle('xmlPath'), estado: @entangle('estado'), pdf_file: @entangle('pdf_file')}">
 
 
     <div class="flex items-center">

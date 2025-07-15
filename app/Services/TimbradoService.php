@@ -607,11 +607,19 @@ class TimbradoService
                 ]
             ];
 
-            // Obtener datos del emisor
             $emisorNode = $comprobante->searchNode('cfdi:Emisor');
             $emisorRfc = $emisorNode['Rfc'];
             $emisorNombre = $emisorNode['Nombre'];
             $emisorRegimenFiscal = $emisorNode['RegimenFiscal'];
+
+            $emisor = Emisor::where('rfc', $emisorRfc)->first();
+
+            if($emisor === null) {
+                throw new \Exception("Emisor no encontrado para el RFC: " . $emisorRfc);
+            }
+
+            // Obtener datos del emisor
+
 
             // Obtener datos del receptor
             $receptorNode = $comprobante->searchNode('cfdi:Receptor');
@@ -658,7 +666,21 @@ class TimbradoService
             $image = QrCode::format('png')->size(150)->margin(0)->generate($cadenaOrigen);
             $qr = 'data:image/png;base64,' . base64_encode($image);
 
+            $customer_invoice = CfdiArchivo::where('id', $cfdiArchivo->id)->first();
 
+            $logo = null;
+            if ($emisor->logo) {
+                $logoPath = Storage::disk('local')->path($emisor->logo);
+                Log::debug('RUTA LOGO: ' . $logoPath);
+                if (file_exists($logoPath)) {
+                    $logo = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+                } else {
+                    Log::warning('Logo del emisor no encontrado', [
+                        'emisor_rfc' => $emisorRfc,
+                        'logo_path' => $logoPath
+                    ]);
+                }
+            }
 
             // Cargar vista y generar PDF
             $viewTemplate = 'template.pdf_xml';
@@ -683,12 +705,18 @@ class TimbradoService
                 'cadenaOrigen',
                 'qr',
                 'data',
-                'timbreFiscal'
+                'timbreFiscal',
+                'customer_invoice',
+                'logo'
             ));
 
             // Guardar PDF
             $pdf_path = 'pdf/' . $uuid . '.pdf';
             \Storage::disk('public')->put($pdf_path, $pdf->output());
+
+            $customer_invoice->update([
+                'pdf_path' => $pdf_path
+            ]);
 
             $pathPdf = \Storage::disk('public')->path($pdf_path);
             Log::info('PDF generado correctamente', [

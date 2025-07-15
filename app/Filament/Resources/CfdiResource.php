@@ -79,6 +79,15 @@ class CfdiResource extends Resource
                 ->openUrlInNewTab(false)
                 ->visible(fn($record) => $record->status_upload !== 'subido'),
 
+                Action::make('descargar_pdf')
+                ->label('Descargar PDF')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->url(fn($record) => route('facturas.descargar-pdf', $record))
+                ->color('success')
+                ->openUrlInNewTab(false)
+                ->visible(fn($record) => $record->status_upload === 'timbrado' && $record->pdf_path !== null),
+
+
                 Action::make('continuar')
                 ->label('Continuar')
                 ->icon('heroicon-o-arrow-right')

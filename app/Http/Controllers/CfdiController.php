@@ -342,5 +342,43 @@ class CfdiController extends Controller
             'Content-Type' => 'application/xml',
         ]);
     }
+
+    public function descargarPdf($factura)
+    {
+        $cfdi = CfdiArchivo::find($factura);
+        $pdfPath = $cfdi->pdf_path;
+
+        if (empty($pdfPath)) {
+            Notification::make()
+                ->title('Error al descargar PDF')
+                ->danger()
+                ->body('El archivo PDF no está disponible.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        $path = Storage::disk('public')->path($pdfPath);
+
+        if (!file_exists($path)) {
+            Notification::make()
+                ->title('Error al descargar PDF')
+                ->danger()
+                ->body('El archivo PDF no se encuentra en el servidor.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        Notification::make()
+            ->title('Descarga exitosa')
+            ->success()
+            ->body('El archivo PDF se ha descargado correctamente.')
+            ->send();
+
+        return response()->download($path, basename($pdfPath), [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
 }
 

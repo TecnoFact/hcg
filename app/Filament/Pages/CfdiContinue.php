@@ -40,6 +40,8 @@ class CfdiContinue extends Page
     public $rfc;
     public $xml_file;
 
+    public $pdf_file;
+
     public $subido = false;
 
     public $sellado = false;
@@ -198,6 +200,15 @@ class CfdiContinue extends Page
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
+            if(file_exists(Storage::disk('local')->path($xmlPath)) === false) {
+                Notification::make()
+                    ->title('Archivo no encontrado')
+                    ->danger()
+                    ->body('El archivo XML no existe en la ruta especificada.')
+                    ->send();
+                return;
+            }
+
              $contentXml = Storage::disk('local')->get($xmlPath);
 
             $comprobante = \CfdiUtils\Cfdi::newFromString($contentXml)->getQuickReader();
@@ -256,8 +267,6 @@ class CfdiContinue extends Page
                 ->success()
                 ->body('El XML ha sido sellado exitosamente.')
                 ->send();
-
-
 
         } catch (\Exception $e) {
             Log::error('Error al procesar el XML: ' . $e->getMessage());
@@ -377,17 +386,18 @@ class CfdiContinue extends Page
             ->body('El XML ha sido timbrado exitosamente.')
             ->send();
 
+
+        TimbradoService::createCfdiToPDF($cfdiArchivo);
+
+        $this->pdf_file = Storage::disk('public')->url($cfdiArchivo->pdf_path);
+
+
     }
 
     public function publicacion()
     {
 
         $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
-
-
-
-       // TimbradoService::createCfdiToPDF($cfdiArchivo);
-        //dd('PDF generado correctamente');
 
         if( !$cfdiArchivo) {
             Notification::make()

@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/cfdi-continue/{id}', \App\Filament\Pages\CfdiContinue::class)->name('filament.admin.pages.cfdi-continues');
 
     Route::get('/descargar-xml/{factura}', [CfdiController::class, 'descargarXml'])->name('facturas.descargar-xml');
+    Route::get('/descargar-pdf/{factura}', [CfdiController::class, 'descargarPdf'])->name('facturas.descargar-pdf');
 });
 
 require __DIR__.'/auth.php';

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\EmisorResource\Pages;
 
 use App\Filament\Resources\EmisorResource;
+use App\Models\Emisor;
 use CfdiUtils\OpenSSL\OpenSSL;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -34,7 +35,9 @@ class EditEmisor extends EditRecord
         $data['user_id'] = auth()->id();
 
         // subir el archivo cer y key al Storage disk local dentro de la carpeta certificates y con el nombre del rfc y que el nombre del archivo sea el rfc con su extension
-        if (isset($data['file_certificate'])) {
+
+
+        if (isset($data['file_certificate']) && $data['file_certificate'] instanceof \Illuminate\Http\UploadedFile) {
 
             $data['file_certificate'] = $data['file_certificate']->storeAs(
                 'certificates/' . $data['rfc'],
@@ -52,7 +55,8 @@ class EditEmisor extends EditRecord
             Storage::disk('local')->put('certificates/' . $nameCerPem, $pemCertificate);
         }
 
-        if (isset($data['file_key'])) {
+
+        if (isset($data['file_key']) && $data['file_key'] instanceof \Illuminate\Http\UploadedFile) {
             $data['file_key'] = $data['file_key']->storeAs(
                 'certificates/' . $data['rfc'],
                 $data['rfc'] . '.key',
