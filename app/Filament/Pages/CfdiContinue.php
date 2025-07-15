@@ -209,9 +209,9 @@ class CfdiContinue extends Page
                 return;
             }
 
-             $contentXml = Storage::disk('local')->get($xmlPath);
+             $contentXml = Storage::disk('local')->path($xmlPath);
 
-            $comprobante = \CfdiUtils\Cfdi::newFromString($contentXml)->getQuickReader();
+            $comprobante = \CfdiUtils\Cfdi::newFromString(file_get_contents($contentXml))->getQuickReader();
 
               $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
 
@@ -231,8 +231,9 @@ class CfdiContinue extends Page
                 $contentXml = $xmlPathAbs;
             }
             // Continúa con el proceso normalmente
+            $xml = file_get_contents($contentXml);
 
-            $processXml = TimbradoService::sellarCfdi($contentXml, $emisor);
+            $processXml = TimbradoService::sellarCfdi($xml, $emisor);
 
             Log::info('XML sellado correctamente: ' . json_encode($processXml));
 
