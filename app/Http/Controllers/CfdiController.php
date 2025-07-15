@@ -350,7 +350,18 @@ class CfdiController extends Controller
 
         TimbradoService::createCfdiToPDF($cfdi);
 
-           $pdfPath = $cfdi->pdf_path;
+        $cfdiPathPdf = CfdiArchivo::find($factura);
+        if (!$cfdiPathPdf) {
+            Notification::make()
+                ->title('Error al descargar PDF')
+                ->danger()
+                ->body('No se encontró el CFDI con el ID proporcionado.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        $pdfPath = $cfdiPathPdf->pdf_path;
 
         if (empty($pdfPath)) {
             Notification::make()
