@@ -330,7 +330,7 @@
                                 {{ $fecha }}<br>
 
                                 {{ str_replace('T',' ',$fechaTimbrado) }}<br>
-                                {{ $data['NoCertificado'] }}<br>
+                                {{ $noCertificado }}<br>
                                 {{ $data['complemento']['timbreFiscalDigital']['NoCertificadoSAT'] }}<br>
 
                                 {{ $data['FormaPago'] }}<br>
