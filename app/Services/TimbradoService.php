@@ -681,6 +681,10 @@ class TimbradoService
             $builder = new DOMBuilder();
             $cadenaOrigen = $builder->build($xmlContent, $location);
 
+
+            $data = CfdiSignerService::getQuickArrayCfdi($cfdi);
+
+
             // Generar QR
             $image = QrCode::format('png')->size(150)->margin(0)->generate($cadenaOrigen);
             $qr = 'data:image/png;base64,' . base64_encode($image);

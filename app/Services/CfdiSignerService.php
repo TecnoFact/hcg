@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use CfdiUtils\XmlResolver\XmlResolver;
 
 class CfdiSignerService
 {
@@ -95,6 +96,42 @@ class CfdiSignerService
         $comprobante->setAttribute("NoCertificado", $noCertificado);
 
         return $dom->saveXML();
+    }
+
+    public static function getQuickArrayCfdi($cfdi)
+    {
+        $data = [];
+        $data['cfdi33'] = $cfdi->getQuickReader();
+        $data['qr_cadena'] = self::getCadenaQr($cfdi);
+        $data['tfd_cadena_origen'] = self::getTfdCadenaOrigen($cfdi);
+
+        return $data;
+    }
+
+    public static function getCadenaQr($cfdi)
+    {
+        $comprobante = $cfdi->getNode();
+        $parameters = new \CfdiUtils\ConsultaCfdiSat\RequestParameters(
+            $comprobante['Version'],
+            $comprobante->searchAttribute('cfdi:Emisor', 'Rfc'),
+            $comprobante->searchAttribute('cfdi:Receptor', 'Rfc'),
+            $comprobante['Total'],
+            $comprobante->searchAttribute('cfdi:Complemento', 'tfd:TimbreFiscalDigital', 'UUID'),
+            $comprobante['Sello']
+        );
+        return $parameters->expression();
+    }
+
+    public static function getTfdCadenaOrigen($cfdi)
+    {
+        $tfd = $cfdi->getNode()->searchNode('cfdi:Complemento', 'tfd:TimbreFiscalDigital');
+        $tfd_xml_string = \CfdiUtils\Nodes\XmlNodeUtils::nodeToXmlString($tfd);
+        //$builder->setXsltBuilder($myXsltBuilder);
+        $builder = new \CfdiUtils\TimbreFiscalDigital\TfdCadenaDeOrigen();
+        $myLocalResourcePath = '/tmp/sat';
+        $resolver = new XmlResolver($myLocalResourcePath);
+        $builder->setXmlResolver($resolver);
+        return $builder->build($tfd_xml_string);
     }
 
 }
