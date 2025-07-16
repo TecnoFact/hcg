@@ -77,7 +77,8 @@ class CfdiResource extends Resource
                 ->url(fn($record) => route('facturas.descargar-xml', $record))
                 ->color('success')
                 ->openUrlInNewTab(false)
-                ->visible(fn($record) => $record->status_upload !== 'subido'),
+                 ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
+
 
                 Action::make('descargar_pdf')
                 ->label('Descargar PDF')
@@ -85,7 +86,7 @@ class CfdiResource extends Resource
                 ->url(fn($record) => route('facturas.descargar-pdf', $record))
                 ->color('success')
                 ->openUrlInNewTab(false)
-                ->visible(fn($record) => $record->status_upload === 'timbrado' && $record->pdf_path !== null),
+                ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
 
 
                 Action::make('continuar')
