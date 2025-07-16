@@ -730,7 +730,8 @@ class TimbradoService
                 'data',
                 'timbreFiscal',
                 'customer_invoice',
-                'logo'
+                'logo',
+                'noCertificado'
             ));
 
             // Guardar PDF
