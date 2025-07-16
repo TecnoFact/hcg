@@ -236,14 +236,13 @@ class Cfdi extends Page
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
 
-            $contentXml = Storage::disk('local')->get($xmlPath);
+             $contentXml = Storage::disk('local')->path($xmlPath);
 
-            $comprobante = \CfdiUtils\Cfdi::newFromString($contentXml)->getQuickReader();
+            $comprobante = \CfdiUtils\Cfdi::newFromString(file_get_contents($contentXml))->getQuickReader();
 
+              $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
 
-            $segundos = Carbon::parse($comprobante['Fecha'])->format('s');
-
-            if ($segundos === '00') {
+           if ($segundos === '00') {
                 // Generar un segundo aleatorio entre 1 y 59 (diferente de 00)
                 $segundoRandom = str_pad(strval(random_int(1, 59)), 2, '0', STR_PAD_LEFT);
                 $fechaOriginal = $comprobante['Fecha'];
