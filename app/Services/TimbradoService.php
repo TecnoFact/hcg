@@ -422,7 +422,7 @@ class TimbradoService
     static function envioxml($registro)
     {
 
-            $data = ['success' => false, 'message' => ''];
+            $data = ['success' => false, 'message' => '', 'status' => ''];
 
             try {
                 $envio = new EnvioSatCfdiService();
@@ -431,11 +431,13 @@ class TimbradoService
                 if (!$envioService) {
                      $data['success'] = false;
                      $data['message'] = 'Error al enviar el CFDI al SAT';
+                        $data['status'] = 'error';
                      return $data;
                 }
 
                 $data['success'] = true;
                 $data['message'] = 'CFDI depositado al SAT correctamente';
+                $data['status'] = 'success';
 
                 $registro = CfdiArchivo::find($registro->id);
 
@@ -460,6 +462,7 @@ class TimbradoService
 
                 $data['message'] = 'Error al depositar CFDI al SAT: ' . $e->getMessage();
                 $data['success'] = false;
+                $data['status'] = 'error';
 
                 throw new \Exception('Error al depositar CFDI al SAT: ' . $e->getMessage(), 500);
             }
