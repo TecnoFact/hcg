@@ -682,11 +682,11 @@ class TimbradoService
             $cadenaOrigen = $builder->build($xmlContent, $location);
 
 
-            $data = CfdiSignerService::getQuickArrayCfdi($cfdi);
+            $dataCadena = CfdiSignerService::getQuickArrayCfdi($cfdi);
 
 
             // Generar QR
-            $image = QrCode::format('png')->size(150)->margin(0)->generate($cadenaOrigen);
+            $image = QrCode::format('png')->size(150)->margin(0)->generate($dataCadena['qr_cadena']);
             $qr = 'data:image/png;base64,' . base64_encode($image);
 
             $customer_invoice = CfdiArchivo::where('id', $cfdiArchivo->id)->first();
