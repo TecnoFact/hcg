@@ -2,19 +2,20 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms;
+use Filament\Tables;
+use App\Models\Emision;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\EmisionResource\Pages;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\EmisionResource\RelationManagers;
 use App\Filament\Resources\EmisionResource\RelationManagers\EmisionesRelationManager;
-use App\Models\Emision;
-use Filament\Forms;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Actions\Action;
 
 class EmisionResource extends Resource
 {
@@ -142,6 +143,54 @@ class EmisionResource extends Resource
                                     ])
                                 ->default('G03'),
                         ])->columns(3),
+
+                Forms\Components\Section::make('Conceptos')
+                    ->schema([
+                        Forms\Components\Repeater::make('detalles')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\TextInput::make('clave_prod_serv')
+                                    ->label('Clave Prod/Serv')
+                                    ->required()
+                                    ->maxLength(20),
+                                Forms\Components\TextInput::make('numero_identificacion')
+                                    ->label('Número Identificación')
+                                    ->maxLength(50),
+                                Forms\Components\TextInput::make('cantidad')
+                                    ->label('Cantidad')
+                                    ->numeric()
+                                    ->required(),
+                                Forms\Components\Select::make('clave_unidad')
+                                    ->label('Clave Unidad')
+                                    ->searchable()
+                                    ->options(DB::table('catalogo_clave_unidad')->pluck('nombre', 'clave')),
+                                Forms\Components\TextInput::make('unidad')
+                                    ->label('Unidad')
+                                    ->maxLength(20),
+                                Forms\Components\TextInput::make('valor_unitario')
+                                    ->label('Valor Unitario')
+                                    ->numeric()
+                                    ->required(),
+                                Forms\Components\TextInput::make('descripcion')
+                                    ->label('Descripción')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Select::make('tipo_impuesto')
+                                    ->label('Tipo de Impuesto')
+                                    ->options([
+                                        'IVA' => 'IVA',
+                                        'IEPS' => 'IEPS',
+                                        'ISR' => 'ISR',
+                                    ])
+                                    ->required(),
+                                Forms\Components\TextInput::make('importe')
+                                    ->label('Importe')
+                                    ->numeric()
+                                    ->required(),
+                            ])
+                            ->columns(3)
+                            ->createItemButtonLabel('Agregar Concepto'),
+                    ]),
             ]);
     }
 
@@ -205,7 +254,7 @@ class EmisionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            EmisionesRelationManager::class,
+           // EmisionesRelationManager::class,
         ];
     }
 
