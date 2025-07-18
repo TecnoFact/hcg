@@ -19,7 +19,7 @@ class EmisionesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                 Forms\Components\TextInput::make('clave_prod_serv')
+            Forms\Components\TextInput::make('clave_prod_serv')
                 ->label('Clave Prod/Serv')
                 ->required()
                 ->maxLength(20),
