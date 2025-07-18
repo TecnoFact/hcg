@@ -51,9 +51,13 @@ class RoleResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
-                Forms\Components\TextInput::make('guard_name')->label('Guard')
-                    ->required()
-                    ->maxLength(255),
+               Forms\Components\Select::make('guard_name')->label('Guard')
+                   ->required()
+                   ->options([
+                       'web' => 'Web',
+                       'api' => 'API',
+                   ])
+                   ->default('web'),
                 Select::make('permissions')
                     ->multiple()
                     ->label("Permisos")
