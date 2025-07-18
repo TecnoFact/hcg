@@ -29,7 +29,9 @@ class Emision extends Model
         'iva',
         'total',
         'estado',
-        'user_id'
+        'user_id',
+        'path_xml',
+        'path_pdf',
     ];
 
     public function detalles()

@@ -7,12 +7,14 @@ use App\Filament\Resources\EmisionResource\RelationManagers;
 use App\Filament\Resources\EmisionResource\RelationManagers\EmisionesRelationManager;
 use App\Models\Emision;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action;
 
 class EmisionResource extends Resource
 {
@@ -24,128 +26,180 @@ class EmisionResource extends Resource
     {
         return $form
             ->schema([
-               Forms\Components\Section::make('Datos Generales del Comprobante')
-                ->schema([
-                    Forms\Components\TextInput::make('serie')
-                        ->label('Serie')
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('folio')
-                        ->label('Folio')
-                        ->maxLength(255),
-                    Forms\Components\DateTimePicker::make('fecha')
-                        ->label('Fecha y Hora'),
-                    Forms\Components\Select::make('forma_pago')
-                        ->label('Forma de Pago')
-                        ->options([
-                            '01' => '01 - Efectivo',
-                            '02' => '02 - Cheque nominativo',
-                            '03' => '03 - Transferencia electrónica',
-                            '04' => '04 - Tarjeta de crédito',
-                        ])
-                        ->default('03'),
-                    Forms\Components\Select::make('metodo_pago')
-                        ->label('Método de Pago')
-                        ->options([
-                            'PUE' => 'PUE - Pago en una sola exhibición',
-                            'PPD' => 'PPD - Pago en parcialidades o diferido',
-                        ])
-                        ->default('PUE'),
-                    Forms\Components\Select::make('tipo_comprobante')
-                        ->label('Tipo de Comprobante')
-                        ->options([
-                            'I' => 'I - Ingreso',
-                            'E' => 'E - Egreso',
-                            'T' => 'T - Traslado',
-                        ])
-                        ->default('I'),
-                    Forms\Components\TextInput::make('lugar_expedicion')
-                        ->label('Código Postal')
-                        ->maxLength(5),
-                    Forms\Components\Select::make('moneda')
-                        ->label('Moneda')
-                        ->options([
-                            'MXN' => 'MXN - Peso Mexicano',
-                            'USD' => 'USD - Dólar Americano',
-                        ])
-                        ->default('MXN'),
-                ])->columns(3),
+                Forms\Components\Section::make('Datos Generales del Comprobante')
+                    ->schema([
+                        Forms\Components\TextInput::make('serie')
+                            ->label('Serie')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('folio')
+                            ->label('Folio')
+                            ->maxLength(255),
+                        Forms\Components\DateTimePicker::make('fecha')
+                            ->label('Fecha y Hora'),
 
-            Forms\Components\Section::make('Datos del Emisor')
-                ->schema([
-                    Forms\Components\TextInput::make('emisor_rfc')
-                        ->label('RFC')
-                        ->maxLength(13),
-                    Forms\Components\TextInput::make('emisor_nombre')
-                        ->label('Nombre o Razón Social'),
-                    Forms\Components\Select::make('emisor_regimen_fiscal')
-                        ->label('Régimen Fiscal')
-                        ->options([
-                            '601' => '601 - General de Ley Personas Morales',
-                            '612' => '612 - Personas Físicas con Actividades Empresariales',
-                        ])
-                        ->default('601'),
-                ])->columns(3),
+                        TextInput::make('sub_total')
+                            ->label('Subtotal')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required(),
 
-            Forms\Components\Section::make('Datos del Receptor')
-                ->schema([
-                    Forms\Components\TextInput::make('receptor_rfc')
-                        ->label('RFC')
-                        ->maxLength(13),
-                    Forms\Components\TextInput::make('receptor_nombre')
-                        ->label('Nombre o Razón Social'),
-                    Forms\Components\TextInput::make('receptor_domicilio')
-                        ->label('Código Postal')
-                        ->maxLength(5),
-                    Forms\Components\Select::make('receptor_regimen_fiscal')
-                        ->label('Régimen Fiscal')
-                        ->options([
-                            '601' => '601 - General de Ley Personas Morales',
-                            '612' => '612 - Personas Físicas con Actividades Empresariales',
-                        ])
-                        ->default('601'),
-                    Forms\Components\Select::make('receptor_uso_cfdi')
-                        ->label('Uso del CFDI')
-                        ->options([
-                            'G01' => 'G01 - Adquisición de mercancías',
-                            'G03' => 'G03 - Gastos en general',
-                        ])
-                        ->default('G03'),
-                ])->columns(3),
-        ]);
+                        TextInput::make('iva')
+                            ->label('IVA')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required(),
+
+                        TextInput::make('total')
+                            ->label('Total')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required(),
+
+                        Forms\Components\Select::make('metodo_pago')
+                            ->label('Método de Pago')
+                            ->options([
+                                'PUE' => 'PUE - Pago en una sola exhibición',
+                                'PPD' => 'PPD - Pago en parcialidades o diferido',
+                            ])
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state === 'PPD') {
+                                    $set('forma_pago', '99');
+                                }
+                            })
+                            ->default('PUE'),
+
+                        Forms\Components\Select::make('forma_pago')
+                            ->label('Forma de Pago')
+                            ->options([
+                                    '01' => '01 - Efectivo',
+                                    '02' => '02 - Cheque nominativo',
+                                    '03' => '03 - Transferencia electrónica',
+                                    '04' => '04 - Tarjeta de crédito',
+                                    '99' => '99 - Por definir',
+                                ])
+                            ->disabled(fn($get) => $get('metodo_pago') === 'PPD')
+                            ->default('03'),
+
+                        Forms\Components\Select::make('tipo_comprobante')
+                            ->label('Tipo de Comprobante')
+                            ->options([
+                                    'I' => 'I - Ingreso',
+                                    'E' => 'E - Egreso',
+                                    'T' => 'T - Traslado',
+                                ])
+                            ->default('I'),
+                        Forms\Components\TextInput::make('lugar_expedicion')
+                            ->label('Código Postal')
+                            ->maxLength(5),
+                        Forms\Components\Select::make('moneda')
+                            ->label('Moneda')
+                            ->options([
+                                    'MXN' => 'MXN - Peso Mexicano',
+                                    'USD' => 'USD - Dólar Americano',
+                                ])
+                            ->default('MXN'),
+                    ])->columns(3),
+
+                Forms\Components\Section::make('Datos del Emisor')
+                    ->schema([
+                            Forms\Components\TextInput::make('emisor_rfc')
+                                ->label('RFC')
+                                ->maxLength(13),
+                            Forms\Components\TextInput::make('emisor_nombre')
+                                ->label('Nombre o Razón Social'),
+                            Forms\Components\Select::make('emisor_regimen_fiscal')
+                                ->label('Régimen Fiscal')
+                                ->options([
+                                        '601' => '601 - General de Ley Personas Morales',
+                                        '612' => '612 - Personas Físicas con Actividades Empresariales',
+                                    ])
+                                ->default('601'),
+                        ])->columns(3),
+
+                Forms\Components\Section::make('Datos del Receptor')
+                    ->schema([
+                            Forms\Components\TextInput::make('receptor_rfc')
+                                ->label('RFC')
+                                ->maxLength(13),
+                            Forms\Components\TextInput::make('receptor_nombre')
+                                ->label('Nombre o Razón Social'),
+                            Forms\Components\TextInput::make('receptor_domicilio')
+                                ->label('Código Postal')
+                                ->maxLength(5),
+                            Forms\Components\Select::make('receptor_regimen_fiscal')
+                                ->label('Régimen Fiscal')
+                                ->options([
+                                        '601' => '601 - General de Ley Personas Morales',
+                                        '612' => '612 - Personas Físicas con Actividades Empresariales',
+                                    ])
+                                ->default('601'),
+                            Forms\Components\Select::make('receptor_uso_cfdi')
+                                ->label('Uso del CFDI')
+                                ->options([
+                                        'G01' => 'G01 - Adquisición de mercancías',
+                                        'G03' => 'G03 - Gastos en general',
+                                    ])
+                                ->default('G03'),
+                        ])->columns(3),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('serie'),
-                Tables\Columns\TextColumn::make('folio'),
-                Tables\Columns\TextColumn::make('fecha'),
-                Tables\Columns\TextColumn::make('forma_pago'),
-                Tables\Columns\TextColumn::make('metodo_pago'),
-                Tables\Columns\TextColumn::make('tipo_comprobante'),
-                Tables\Columns\TextColumn::make('lugar_expedicion'),
-                Tables\Columns\TextColumn::make('moneda'),
-                Tables\Columns\TextColumn::make('emisor_rfc'),
-                Tables\Columns\TextColumn::make('emisor_nombre'),
-                Tables\Columns\TextColumn::make('receptor_rfc'),
-                Tables\Columns\TextColumn::make('receptor_nombre'),
-                Tables\Columns\TextColumn::make('sub_total')->numeric(),
-                Tables\Columns\TextColumn::make('iva')->numeric(),
-                Tables\Columns\TextColumn::make('total')->numeric(),
-                Tables\Columns\TextColumn::make('estado')
-            ])
+                    Tables\Columns\TextColumn::make('serie')
+                        ->label('Serie'),
+                    Tables\Columns\TextColumn::make('folio')
+                        ->label('Folio'),
+                    Tables\Columns\TextColumn::make('fecha')
+                        ->label('Fecha'),
+                    Tables\Columns\TextColumn::make('forma_pago')
+                        ->label('Forma de Pago'),
+                    Tables\Columns\TextColumn::make('metodo_pago')
+                        ->label('Método de Pago'),
+                    Tables\Columns\TextColumn::make('tipo_comprobante')
+                        ->label('Tipo de Comprobante')->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('lugar_expedicion')
+                        ->label('Lugar de Expedición')->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('moneda')
+                        ->label('Moneda')->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('emisor_rfc')
+                        ->label('RFC del Emisor'),
+                    Tables\Columns\TextColumn::make('emisor_nombre')
+                        ->label('Nombre del Emisor'),
+                    Tables\Columns\TextColumn::make('receptor_rfc')
+                        ->label('RFC del Receptor'),
+                    Tables\Columns\TextColumn::make('receptor_nombre')
+                        ->label('Nombre del Receptor'),
+                    Tables\Columns\TextColumn::make('sub_total')->numeric()
+                        ->label('Subtotal')->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('iva')->numeric()
+                        ->label('IVA')->toggleable(isToggledHiddenByDefault: true),
+                    Tables\Columns\TextColumn::make('total')->numeric()
+                        ->label('Total'),
+                    Tables\Columns\TextColumn::make('estado')
+                        ->label('Estado'),
+                ])
             ->filters([
-                //
-            ])
+                    //
+                ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
+                    Tables\Actions\EditAction::make(),
+
+                    Action::make('descargar_xml')
+                        ->label('Descargar XML')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn($record) => route('emision.descargar-xml', $record))
+                        ->color('success')
+                        ->openUrlInNewTab(false)
+                ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+                    Tables\Actions\BulkActionGroup::make([
+                        Tables\Actions\DeleteBulkAction::make(),
+                    ]),
+                ]);
     }
 
     public static function getRelations(): array

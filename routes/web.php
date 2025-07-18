@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CfdiController;
+use App\Http\Controllers\EmisionController;
 use App\Http\Controllers\ProfileController;
 use App\Models\CfdiArchivo;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/descargar-xml/{factura}', [CfdiController::class, 'descargarXml'])->name('facturas.descargar-xml');
     Route::get('/descargar-pdf/{factura}', [CfdiController::class, 'descargarPdf'])->name('facturas.descargar-pdf');
+
+    Route::get('emision/descargar-xml/{emision}', [EmisionController::class, 'descargarXmlEmision'])->name('emision.descargar-xml');
 });
 
 require __DIR__.'/auth.php';
