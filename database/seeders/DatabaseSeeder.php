@@ -12,14 +12,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AdminUserSeeder::class,
             CatalogoFormaPagoSeeder::class,
             CatalogoMetodoPagoSeeder::class,
+            CatalogoClaveUnidadSeed::class,
             CitySeed::class,
             CountrySeed::class,
             RegimenFiscalSeed::class,
             StateSeed::class,
-          //  UserSeeder::class,
+            PermissionSeed::class,
+            RoleSeed::class,
+            AdminUserSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }
