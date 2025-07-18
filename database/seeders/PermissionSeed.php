@@ -13,64 +13,24 @@ class PermissionSeed extends Seeder
      */
     public function run(): void
     {
-          Permission::create([
-            'name' => 'create_user',
+        $permissions = [
+            'create_user',
+            'update_user',
+            'delete_user',
+            'view_user',
+            'create_role',
+            'update_role',
+            'delete_role',
+            'view_role',
+            'dashboard',
+            'profile',
+        ];
 
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'update_user',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'delete_user',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'view_user',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'create_role',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'update_role',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'delete_role',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'view_role',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'dashboard',
-
-            'guard_name' => 'web',
-        ]);
-
-        Permission::create([
-            'name' => 'profile',
-
-            'guard_name' => 'web',
-        ]);
-    }
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
+        }
+   }
 }
