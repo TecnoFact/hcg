@@ -22,6 +22,8 @@ class RoleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
 
+     protected static ?string $navigationGroup = 'Administración';
+
     protected static ?int $navigationSort = 2;
 
 
@@ -34,11 +36,6 @@ class RoleResource extends Resource
     public static function getModelLabel(): string
     {
         return "Rol";
-    }
-
-    public static function getNavigationGroup(): string
-    {
-        return "Configuracion";
     }
 
     public static function form(Form $form): Form

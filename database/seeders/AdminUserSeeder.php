@@ -10,13 +10,13 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-       $user = User::updateOrCreate(
-            ['email' => 'admin@cfdi.test'],
-            [
-                'name' => 'Admin CFDI',
-                'password' => Hash::make('12345678'),
-            ]
-        );
+       User::truncate();
+
+       $user = User::create([
+            'email' => 'admin@cfdi.test',
+            'name' => 'Admin CFDI',
+            'password' => Hash::make('12345678'),
+        ]);
         $user->assignRole('Admin');
     }
 }

@@ -15,6 +15,11 @@ class CatalogoClaveUnidadSeed extends Seeder
     {
         $db = \DB::table('catalogo_clave_unidad');
 
+        // Verificar si la tabla existe
+        if (!$db->exists()) {
+            $db->truncate(); // Limpiar la tabla si no existe
+        }
+
         $path = storage_path('app/catalogos/cfdi40/c_ClaveUnidad.csv');
 
         if (!file_exists($path)) {
