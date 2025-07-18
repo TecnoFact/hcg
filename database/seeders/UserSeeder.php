@@ -10,6 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+
+
         $user = User::create([
             'name' => 'customer CFDI',
             'email' => 'customer@cfdi.test',
