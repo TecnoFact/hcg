@@ -13,15 +13,33 @@ class RoleSeed extends Seeder
      */
     public function run(): void
     {
-        Role::create([
+      $admin = Role::create([
             'name' => 'Admin',
             'guard_name' => 'web',
         ]);
 
-        Role::create([
+      $customer = Role::create([
             'name' => 'Customer',
             'guard_name' => 'web',
         ]);
 
+        $admin->givePermissionTo([
+                'create_user',
+                'update_user',
+                'delete_user',
+                'view_user',
+                'create_role',
+                'update_role',
+                'delete_role',
+                'view_role',
+                'dashboard',
+                'profile',
+            ]);
+
+        $customer->givePermissionTo([
+            'view_user',
+            'profile',
+            'dashboard',
+        ]);
     }
 }

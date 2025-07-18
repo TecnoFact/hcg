@@ -32,5 +32,7 @@ class PermissionSeed extends Seeder
                 'guard_name' => 'web',
             ]);
         }
+
+
    }
 }
