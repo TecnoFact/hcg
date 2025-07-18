@@ -156,39 +156,20 @@
         </thead>
         <tbody>
         @if($conceptos)
-        @foreach($conceptos as $result)
-            <tr>
-                <td class="text-center">{{ $result['clave'] }}</td>
-                <td class="text-center">{{ $result['cantidad'] }}</td>
-                <td>
-                    {!! nl2br($result['descripcion']) !!}
-
-                </td>
-                <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
-                <td class="text-center">
-                            {{ $result['valorUnitario'] }}
-                        </td>
-                <td class="text-center">{{ !empty($result['descuento']) ? $result['descuento'] : 0 }}</td>
-                <td class="text-right">{{ $result['importe'] }}</td>
-            </tr>
-        @endforeach
-        @else
-            @foreach($customer_invoice->customerActiveInvoiceLines as $result)
+            @foreach($conceptos as $result)
                 <tr>
-                    <td class="text-center">{{ $result->satProduct->code }}</td>
-                    <td class="text-center">{{ $result->quantity }}</td>
+                    <td class="text-center">{{ $result['clave'] }}</td>
+                    <td class="text-center">{{ $result['cantidad'] }}</td>
                     <td>
-                        @if(!empty(setting('show_product_code_on_pdf')))
-                            {{$result->product->code ?? 'N/A'}} -
-                        @endif
-                        {!! nl2br($result->name) !!}
+                        {!! nl2br($result['descripcion']) !!}
+
                     </td>
-                    <td class="text-center">{{ $result->unitMeasure->name_sat }}</td>
+                    <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
                     <td class="text-center">
-                            {{ $result->price_unit }}
-                        </td>
-                    <td class="text-center">{{ $result->discount_type == 'A' ? $result->discount : $result->discount }}</td>
-                    <td class="text-right">{{ $result->amount_untaxed }}</td>
+                                {{ money($result['valorUnitario']) }}
+                            </td>
+                    <td class="text-center">{{ !empty($result['descuento']) ? $result['descuento'] : 0 }}</td>
+                    <td class="text-right">{{ money($result['importe']) }}</td>
                 </tr>
             @endforeach
         @endif
@@ -202,7 +183,7 @@
         <tr>
             <td colspan="4" class="text-left" style="vertical-align: top;">
                 <span style="line-height: 16px;">
-                    ***({{ $customer_invoice->total }})***
+                    ***({{ NumberToWords\NumberToWords::transformNumber('es', $customer_invoice->total) }})***
                 </span>
             </td>
             <td colspan="2" class="text-right" style="vertical-align: top; padding-right: 4px;">
@@ -217,7 +198,7 @@
                 <span style="line-height: 16px;"><strong>{{ mb_strtoupper('Total') }}</strong></span>
             </td>
             <td class="text-right">
-                {{ $customer_invoice->subTotal }}<br/>
+                {{ money($customer_invoice->subTotal) }}<br/>
                 {{--
                 @if($customer_invoice->impuestos)
                     @foreach($customer_invoice->impuestos as $result)
@@ -225,7 +206,7 @@
                     @endforeach
                 @endif
                  --}}
-                <span style="line-height: 16px;"><strong>{{ $customer_invoice->total }}</strong></span>
+                <span style="line-height: 16px;"><strong>{{ money($customer_invoice->total) }}</strong></span>
             </td>
         </tr>
         </tfoot>
