@@ -10,11 +10,13 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
+        $user = User::create([
             'name' => 'Admin CFDI',
             'email' => 'admin@cfdi.test',
             'password' => Hash::make('12345678') // nunca guardes contraseñas sin cifrar
         ]);
+
+        $user->assignRole('Customer');
     }
 }
 
