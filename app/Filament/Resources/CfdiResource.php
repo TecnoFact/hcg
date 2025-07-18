@@ -46,7 +46,7 @@ class CfdiResource extends Resource
                 Tables\Columns\TextColumn::make('rfc_receptor')
                     ->label('RFC Receptor'),
                 Tables\Columns\TextColumn::make('uuid')
-                    ->label('UUID'),
+                    ->label('UUID')->searchable(),
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
@@ -55,9 +55,9 @@ class CfdiResource extends Resource
                     ->numeric()
                     ->label('Total'),
                 Tables\Columns\TextColumn::make('estatus')
-                    ->label('Estatus'),
+                    ->label('Estado'),
                 Tables\Columns\TextColumn::make('status_upload')
-                    ->label('Status Upload')
+                    ->label('Estado Subida')
                     ->badge(fn($record): string => match ($record->status_upload) {
                         'subido' => 'success',
                         'sellado' => 'warning',
