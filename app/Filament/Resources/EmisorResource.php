@@ -38,7 +38,6 @@ class EmisorResource extends Resource
 
                         TextInput::make('name')
                             ->label('Nombre')
-                            ->required()
                             ->maxLength(255),
                         TextInput::make('email')
                             ->email()
@@ -53,6 +52,7 @@ class EmisorResource extends Resource
 
                         TextInput::make('reason_social')
                             ->label('Razon social')
+                            ->required()
                             ->maxLength(255),
                         TextInput::make('website')
                             ->label('Sitio web')

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Models\Cfdi;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -301,6 +302,54 @@ class CfdiController extends Controller
             ], 500);
         }
 
+    }
+
+    public function descargarCfdiXml($factura)
+    {
+        $cfdi = Cfdi::find($factura);
+        if (!$cfdi) {
+            Notification::make()
+                ->title('Error al descargar XML')
+                ->danger()
+                ->body('No se encontró el CFDI con el ID proporcionado.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        $ruta = $cfdi->path_xml;
+
+        if (empty($ruta)) {
+            Notification::make()
+                ->title('Error al descargar XML')
+                ->danger()
+                ->body('Error al obtener la ruta del archivo.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        $path = Storage::disk('local')->path($ruta);
+
+        if (!file_exists($path)) {
+            Notification::make()
+                ->title('Error al descargar XML')
+                ->danger()
+                ->body('El archivo XML no se encuentra en el servidor.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+         Notification::make()
+            ->title('Descarga exitosa')
+            ->success()
+            ->body('El archivo XML se ha descargado correctamente.')
+            ->send();
+
+        return response()->download($path, basename($ruta), [
+            'Content-Type' => 'application/xml',
+        ]);
     }
 
     public function descargarXml($factura)

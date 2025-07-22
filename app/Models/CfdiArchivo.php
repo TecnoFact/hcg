@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Models\CfdiConcepto;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CfdiArchivo extends Model
 {
@@ -33,11 +34,33 @@ class CfdiArchivo extends Model
         'intento_envio_sat',
         'status_upload',
         'pdf_path',
+
+        'serie',
+        'folio',
+        'forma_pago',
+        'metodo_pago',
+        'lugar_expedicion',
+        'moneda',
+        'emisor_nombre',
+        'emisor_regimen_fiscal',
+        'receptor_nombre',
+        'receptor_domicilio',
+        'receptor_regimen_fiscal',
+        'receptor_uso_cfdi',
+        'sub_total',
+        'iva',
+
+        'path_xml'
     ];
 
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function conceptos()
+    {
+        return $this->hasMany(CfdiConcepto::class, 'cfdi_id', 'id');
     }
 }

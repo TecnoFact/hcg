@@ -2,6 +2,7 @@
 
 namespace App\Models\Models;
 
+use App\Models\CfdiArchivo;
 use Illuminate\Database\Eloquent\Model;
 
 class CfdiConcepto extends Model
@@ -17,12 +18,13 @@ class CfdiConcepto extends Model
         'unidad',
         'descripcion',
         'valor_unitario',
+        'tipo_impuesto',
         'importe',
         'descuento',
     ];
 
     public function cfdi()
     {
-        return $this->belongsTo(Cfdi::class, 'cfdi_id');
+        return $this->belongsTo(CfdiArchivo::class, 'cfdi_id', 'id');
     }
 }

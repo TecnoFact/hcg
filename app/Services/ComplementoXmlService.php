@@ -6,6 +6,8 @@ use DOMXPath;
 use Exception;
 use DOMDocument;
 use App\Models\Emision;
+use App\Models\Models\CfdiEmisor;
+use App\Models\Models\CfdiReceptor;
 use Illuminate\Support\Facades\Storage;
 
 class ComplementoXmlService
@@ -62,7 +64,7 @@ class ComplementoXmlService
         return $dom->saveXML();
     }
 
-    public function buildXmlCfdi(array $datos): string
+    public static function buildXmlCfdi(array $datos): string
     {
 
          $doc = new DOMDocument('1.0', 'UTF-8');
@@ -73,39 +75,41 @@ class ComplementoXmlService
         $cfdi->setAttribute('xsi:schemaLocation', 'http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd');
 
         $cfdi->setAttribute('Version', '4.0');
-        $cfdi->setAttribute('Serie', $datos['serie']);
-        $cfdi->setAttribute('Folio', $datos['folio']);
-        $cfdi->setAttribute('Fecha', $datos['fecha']);
-        $cfdi->setAttribute('FormaPago', $datos['forma_pago']);
+        $cfdi->setAttribute('Serie', $datos['cfdi']['serie']);
+        $cfdi->setAttribute('Folio', $datos['cfdi']['folio']);
+        $cfdi->setAttribute('Fecha', $datos['cfdi']['fecha']);
+        $cfdi->setAttribute('FormaPago', $datos['cfdi']['forma_pago']);
         $cfdi->setAttribute('NoCertificado', "");
-        $cfdi->setAttribute('SubTotal', number_format($datos['sub_total'], 2, '.', ''));
-        $cfdi->setAttribute('Moneda', $datos['moneda']);
-        $cfdi->setAttribute('Total', number_format($datos['total'], 2, '.', ''));
-        $cfdi->setAttribute('TipoDeComprobante', $datos['tipo_comprobante']);
-        $cfdi->setAttribute('MetodoPago', $datos['metodo_pago']);
-        $cfdi->setAttribute('LugarExpedicion', $datos['lugar_expedicion']);
+        $cfdi->setAttribute('SubTotal', number_format($datos['cfdi']['sub_total'], 2, '.', ''));
+        $cfdi->setAttribute('Moneda', $datos['cfdi']['moneda']);
+        $cfdi->setAttribute('Total', number_format($datos['cfdi']['total'], 2, '.', ''));
+        $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_comprobante']);
+        $cfdi->setAttribute('MetodoPago', $datos['cfdi']['metodo_pago']);
+        $cfdi->setAttribute('LugarExpedicion', $datos['cfdi']['lugar_expedicion']);
         //$cfdi->setAttribute('Exportacion', '01');
 
         // Emisor
+        $emisorFind = CfdiEmisor::where('rfc', $datos['cfdi']['emisor_id'])->first();
         $emisor = $doc->createElement('cfdi:Emisor');
-        $emisor->setAttribute('Rfc', $datos['emisor_rfc']);
-        $emisor->setAttribute('Nombre', $datos['emisor_nombre']);
-        $emisor->setAttribute('RegimenFiscal', $datos['emisor_regimen_fiscal']);
+        $emisor->setAttribute('Rfc', $emisorFind->rfc);
+        $emisor->setAttribute('Nombre', $emisorFind->nombre);
+        $emisor->setAttribute('RegimenFiscal', $emisorFind->regimen_fiscal);
         $cfdi->appendChild($emisor);
 
         // Receptor
+        $receptorFind = CfdiReceptor::where('rfc', $datos['cfdi']['receptor_id'])->first();
         $receptor = $doc->createElement('cfdi:Receptor');
-        $receptor->setAttribute('Rfc', $datos['receptor_rfc']);
-        $receptor->setAttribute('Nombre', $datos['receptor_nombre']);
-        $receptor->setAttribute('DomicilioFiscalReceptor', $datos['receptor_domicilio']);
-        $receptor->setAttribute('RegimenFiscalReceptor', $datos['receptor_regimen_fiscal']);
-        $receptor->setAttribute('UsoCFDI', $datos['receptor_uso_cfdi']);
+        $receptor->setAttribute('Rfc', $receptorFind->rfc);
+        $receptor->setAttribute('Nombre', $receptorFind->nombre);
+        $receptor->setAttribute('DomicilioFiscalReceptor', $receptorFind->domicilio);
+        $receptor->setAttribute('RegimenFiscalReceptor', $receptorFind->regimen_fiscal);
+        $receptor->setAttribute('UsoCFDI', $datos['cfdi']['receptor_uso_cfdi']);
         $cfdi->appendChild($receptor);
 
         // Conceptos
         $conceptos = $doc->createElement('cfdi:Conceptos');
 
-        foreach ($datos['detalles'] as $c) {
+        foreach ($datos['conceptos'] as $c) {
             $concepto = $doc->createElement('cfdi:Concepto');
             $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
             $concepto->setAttribute('Cantidad', number_format($c['cantidad'], 6, '.', ''));
