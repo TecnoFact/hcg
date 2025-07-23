@@ -23,14 +23,13 @@ class CitySeed extends Seeder
 
         $data = json_decode(file_get_contents($path), true);
 
+
+        DB::table('ciudades')->truncate(); // Limpiar la tabla antes de insertar nuevos datos
+
         foreach ($data as $record) {
-            // Validar que sea un valor de clave válida (ej: "01", "03", etc.)
-            if (!isset($record['c_Localidad']) || !is_numeric($record['c_Localidad'])) {
-                continue; // saltar registros inválidos
-            }
-            DB::table('ciudades')->updateOrInsert([
-                'id' => $record['c_Localidad'],
-            ], [
+
+
+            DB::table('ciudades')->insert([
                 'id_estado' => $record['c_Estado'] ?: null,
                 'descripcion' => $record['Descripción'],
                 //'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,

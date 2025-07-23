@@ -136,13 +136,14 @@ class EmisorResource extends Resource
                                             $stateId = $get('state_id');
 
                                             if ($stateId) {
-                                                  dd($stateId);
-                                                return \App\Models\City::where('id_estado', $stateId)
+
+                                               $cities = \App\Models\City::where('id_estado', $stateId)
                                                     ->orderBy('descripcion')
                                                     ->pluck('descripcion', 'id')
                                                     ->toArray();
                                             }
-                                            return [];
+
+                                            return $cities ?? [];
                                         })
                                         ->getOptionLabelUsing(fn ($value) =>
                                             \App\Models\City::find($value)?->descripcion
