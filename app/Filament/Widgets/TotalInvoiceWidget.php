@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\Models\Cfdi;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
+
+class TotalInvoiceWidget extends BaseWidget
+{
+    protected function getStats(): array
+    {
+        $totalFacturado = Cfdi::sum('total');
+        $totalFacturado = number_format($totalFacturado, 2, '.', ',');
+
+        return [
+            Stat::make('Total Facturado', $totalFacturado)
+                ->description('Total Facturado')
+                ->icon('heroicon-o-currency-dollar')
+                ->color('success'),
+
+            Stat::make('Total CFDI', Cfdi::count())
+                ->description('Total de CFDI emitidos')
+                ->icon('heroicon-o-document-text')
+                ->color('primary'),
+
+            Stat::make('Total Usuarios', \App\Models\User::count())
+                ->description('Total de Usuarios registrados')
+                ->icon('heroicon-o-users')
+                ->color('warning'),
+        ];
+    }
+}
