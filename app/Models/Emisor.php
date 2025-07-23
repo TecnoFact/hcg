@@ -29,7 +29,8 @@ class Emisor extends Model
         'password_key',
         'user_id',
         'logo',
-        'regimen_fiscal_id'
+        'regimen_fiscal_id',
+        'color'
     ];
 
     public function user()

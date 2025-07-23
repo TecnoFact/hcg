@@ -2,23 +2,24 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\EmisorResource\Pages;
-use App\Filament\Resources\EmisorResource\RelationManagers;
-use App\Forms\Components\CertificateView;
-use App\Models\Emisor;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Section;
+use Filament\Tables;
+use App\Models\Emisor;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
+use App\Forms\Components\CertificateView;
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\ColorPicker;
+use App\Filament\Resources\EmisorResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\EmisorResource\RelationManagers;
 
 class EmisorResource extends Resource
 {
@@ -26,6 +27,8 @@ class EmisorResource extends Resource
 
     protected static ?string $navigationGroup = 'Administración';
     protected static ?string $navigationLabel = 'Emisores';
+
+    protected static ?string $pluralLabel = 'Emisores';
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
@@ -62,6 +65,9 @@ class EmisorResource extends Resource
                             ->label('Telefono')
                             ->tel()
                             ->maxLength(10),
+                        ColorPicker::make('color')
+                            ->label('Color PDF')
+                            ->default('#000000'),
                         FileUpload::make('logo')
                             ->label('Logo')
                             ->disk('local')
@@ -154,14 +160,15 @@ class EmisorResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('rfc')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('reason_social')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('website')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('phone')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('email')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('created_at')->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')->sortable(),
+                Tables\Columns\TextColumn::make('name')->sortable()->searchable()->label('Nombre'),
+                Tables\Columns\TextColumn::make('rfc')->sortable()->searchable()->label('RFC'),
+                Tables\Columns\TextColumn::make('reason_social')->sortable()->searchable()->label('Razón Social'),
+                Tables\Columns\TextColumn::make('website')->sortable()->searchable()->label('Página Web')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('phone')->sortable()->searchable()->label('Teléfono'),
+                Tables\Columns\ColorColumn::make('color')->label('Color PDF'),
+                Tables\Columns\TextColumn::make('email')->sortable()->searchable()->label('Correo electronico'),
+                Tables\Columns\TextColumn::make('created_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de creación'),
+                Tables\Columns\TextColumn::make('updated_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de actualización'),
             ])
             ->filters([
                 //

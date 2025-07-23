@@ -2,6 +2,7 @@
 
 namespace App\Models\Models;
 
+use App\Models\User;
 use App\Models\Models\CfdiConcepto;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,7 +26,8 @@ class Cfdi extends Model
         'exportacion',
         'lugar_expedicion',
 
-        'path_xml'
+        'path_xml',
+        'user_id',
     ];
 
     public function emisor()
@@ -41,6 +43,11 @@ class Cfdi extends Model
     public function conceptos()
     {
         return $this->hasMany(CfdiConcepto::class, 'cfdi_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
 }
