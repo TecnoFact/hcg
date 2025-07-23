@@ -98,7 +98,21 @@ class CfdiResource extends Resource
                             Forms\Components\Select::make('emisor_id')
                                 ->label('Emisor')
                                 ->searchable()
-                                ->options(DB::table('emisores')->pluck('name', 'id')->toArray()),
+                                ->reactive()
+                                ->options(DB::table('emisores')->pluck('name', 'id')->toArray())
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                        $emisor = Emisor::find($state);
+                                        $set('emisor_rfc', $emisor->rfc);
+                                        $set('emisor_nombre', $emisor->name);
+                                        $set('emisor_regimen_fiscal', $emisor->reason_social);
+                                        $set('lugar_expedicion', $emisor->postal_code);
+                                    } else {
+                                        $set('emisor_rfc', null);
+                                        $set('emisor_nombre', null);
+                                        $set('emisor_regimen_fiscal', null);
+                                    }
+                                }),
                             Forms\Components\TextInput::make('emisor_rfc')
                                 ->label('RFC')
                                 ->maxLength(13),
@@ -118,7 +132,18 @@ class CfdiResource extends Resource
                         Forms\Components\Select::make('receptor_id')
                                 ->label('Receptor')
                                 ->searchable()
-                                ->options(DB::table('emisores')->pluck('name', 'id')->toArray()),
+                                ->reactive()
+                                ->options(DB::table('emisores')->pluck('name', 'id')->toArray())
+                                 ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                        $emisor = Emisor::find($state);
+                                        $set('receptor_rfc', $emisor->rfc);
+                                        $set('receptor_nombre', $emisor->name);
+                                        $set('receptor_domicilio', $emisor->postal_code);
+                                        $set('receptor_regimen_fiscal', $emisor->reason_social);
+                                        $set('receptor_uso_cfdi', null);
+                                    }
+                                }),
                             Forms\Components\TextInput::make('receptor_rfc')
                                 ->label('RFC')
                                 ->maxLength(13),
@@ -148,7 +173,7 @@ class CfdiResource extends Resource
                         Forms\Components\Repeater::make('conceptos')
                             ->relationship()
                             ->schema([
-                                 Forms\Components\TextInput::make('no_identificacion')
+                                Forms\Components\TextInput::make('no_identificacion')
                                     ->label('Número Identificación'),
                                 Forms\Components\TextInput::make('clave_prod_serv')
                                     ->label('Clave Prod/Serv')
