@@ -40,11 +40,16 @@ class CreateCfdi extends CreateRecord
             'regimen_fiscal' => $data['emisor_regimen_fiscal'],
         ];
 
+        $total = 0;
         if (isset($data['conceptos']) && is_array($data['conceptos'])) {
             foreach ($data['conceptos'] as $i => $concepto) {
                 $data['conceptos'][$i]['no_identificacion'] = $i + 1;
+                $total += $concepto['importe'] ?? 0;
             }
         }
+
+        $data['subtotal'] = $total; // Asigna el subtotal
+        $data['total'] = $total;
 
         CfdiEmisor::create($data['emisor']);
 
