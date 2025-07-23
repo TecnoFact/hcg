@@ -197,6 +197,7 @@ class ComplementoXmlService
                 'metodo_pago' => $comprobante['MetodoPago'],
                 'lugar_expedicion' => $comprobante['LugarExpedicion'],
                 'user_id' => auth()->id(),
+                'cfdi_archivos_id' => $cfdiArchivo->id
             ]);
 
             $cfdiArchivo->rfc_receptor = $receptor['Rfc'];

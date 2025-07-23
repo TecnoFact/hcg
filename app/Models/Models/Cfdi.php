@@ -3,6 +3,7 @@
 namespace App\Models\Models;
 
 use App\Models\User;
+use App\Models\CfdiArchivo;
 use App\Models\Models\CfdiConcepto;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,6 +29,7 @@ class Cfdi extends Model
 
         'path_xml',
         'user_id',
+        'cfdi_archivos_id'
     ];
 
     public function emisor()
@@ -48,6 +50,11 @@ class Cfdi extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function cfdiArchivo()
+    {
+        return $this->belongsTo(CfdiArchivo::class, 'cfdi_archivos_id');
     }
 
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\RegimeFiscal;
 use Illuminate\Database\Eloquent\Model;
 
 class Emisor extends Model
@@ -29,7 +30,6 @@ class Emisor extends Model
         'password_key',
         'user_id',
         'logo',
-        'regimen_fiscal_id',
         'color'
     ];
 
@@ -49,6 +49,11 @@ class Emisor extends Model
     public function country()
     {
         return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    public function regimenFiscal()
+    {
+        return $this->belongsTo(RegimeFiscal::class, 'tax_regimen_id');
     }
 
 

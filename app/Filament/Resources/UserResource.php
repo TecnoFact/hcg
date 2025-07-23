@@ -6,6 +6,7 @@ use Filament\Forms;
 use App\Models\User;
 use Filament\Tables;
 use Filament\Forms\Form;
+use Filament\Pages\Page;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
@@ -14,6 +15,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\RelationManagers;
 
 class UserResource extends Resource
@@ -49,7 +51,7 @@ class UserResource extends Resource
                             ->maxLength(255)
                             ->label('Contraseña')
                             ->dehydrateStateUsing(fn ($state) => bcrypt($state))
-                            ->required(),
+                            ->required(fn (Page $livewire) => ($livewire instanceof  CreateUser)),
                         Select::make('roles')
                             ->label('Roles')
                             ->multiple()

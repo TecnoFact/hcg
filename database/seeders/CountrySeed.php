@@ -14,26 +14,20 @@ class CountrySeed extends Seeder
      */
     public function run(): void
     {
-        $path = storage_path('app/catalogos/cfdi40/c_Pais.csv');
+        $path = storage_path('app/catalogos/cfdi40/paises.json');
 
         if (!file_exists($path)) {
             $this->command->error("Archivo no encontrado: $path");
             return;
         }
 
-        // Cargar el archivo saltando las 3 primeras líneas
-        $csv = Reader::createFromPath($path, 'r');
-        $csv->setHeaderOffset(3); // encabezado real en la línea 4
 
-        foreach ($csv->getRecords() as $record) {
-            // Validar que sea un valor de clave válida (ej: "01", "03", etc.)
-            if (!isset($record['c_Pais']) || !is_numeric($record['c_Pais'])) {
-                continue; // saltar registros inválidos
-            }
+        $json = json_decode(file_get_contents($path), true);
 
-            DB::table('catalogo_pais')->updateOrInsert([
+        foreach ($json as $record) {
+
+            DB::table('catalogo_pais')->insert([
                 'clave' => $record['c_Pais'],
-            ], [
                 'nombre' => $record['Descripción'],
                 'nacionalidad' => $record['Nacionalidad'] ?? 'null',
                 'vigencia_desde' => null,

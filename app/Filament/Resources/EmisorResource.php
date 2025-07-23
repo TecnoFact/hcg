@@ -41,7 +41,8 @@ class EmisorResource extends Resource
 
                         TextInput::make('name')
                             ->label('Nombre')
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->hidden(),
                         TextInput::make('email')
                             ->email()
                             ->label('Correo electronico')
@@ -56,6 +57,10 @@ class EmisorResource extends Resource
                         TextInput::make('reason_social')
                             ->label('Razon social')
                             ->required()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('name', $state);
+                            })
                             ->maxLength(255),
                         TextInput::make('website')
                             ->label('Sitio web')
@@ -65,6 +70,18 @@ class EmisorResource extends Resource
                             ->label('Telefono')
                             ->tel()
                             ->maxLength(10),
+                            Select::make('tax_regimen_id')
+                            ->label('Régimen fiscal')
+                            ->relationship('regimenFiscal', 'descripcion')
+                            ->searchable()
+                            ->preload()
+                            ->getSearchResultsUsing(fn (string $search) =>
+                                \App\Models\RegimeFiscal::where('descripcion', 'like', "%{$search}%")
+                                    ->limit(20)
+                                    ->pluck('descripcion', 'clave')
+                            )
+                            ->reactive()
+                            ->default(2),
                         ColorPicker::make('color')
                             ->label('Color PDF')
                             ->default('#000000'),
@@ -104,41 +121,34 @@ class EmisorResource extends Resource
                                                 ->pluck('nombre', 'clave')
                                         )
                                         ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            $set('city_id', null);
+                                        })
                                         ->getOptionLabelUsing(fn ($value) =>
                                             \App\Models\State::find($value)?->nombre
                                         ),
                                     Select::make('city_id')
                                         ->label('Ciudad')
-                                        ->relationship('city', 'nombre')
                                         ->searchable()
                                         ->reactive()
-                                        ->getSearchResultsUsing(function (string $search, $get) {
-                                            $query = \App\Models\City::query();
-                                            if ($get('state_id')) {
-                                                $query->where('state_id', $get('state_id'));
+                                        ->preload()
+                                        ->options(function ($get) {
+                                            $stateId = $get('state_id');
+
+                                            if ($stateId) {
+                                                  dd($stateId);
+                                                return \App\Models\City::where('id_estado', $stateId)
+                                                    ->orderBy('descripcion')
+                                                    ->pluck('descripcion', 'id')
+                                                    ->toArray();
                                             }
-                                            if ($search) {
-                                                $query->where('nombre', 'like', "%{$search}%");
-                                            }
-                                            return $query->limit(20)->pluck('nombre', 'clave');
+                                            return [];
                                         })
                                         ->getOptionLabelUsing(fn ($value) =>
-                                            \App\Models\City::find($value)?->nombre
+                                            \App\Models\City::find($value)?->descripcion
                                         ),
 
-                                    Select::make('country_id')
-                                        ->label('Pais')
-                                        ->relationship('country', 'nombre')
-                                        ->searchable()
-                                        ->preload()
-                                        ->getSearchResultsUsing(fn (string $search) =>
-                                        \App\Models\Country::where('nombre', 'like', "%{$search}%")
-                                            ->limit(20)
-                                            ->pluck('nombre', 'clave')
-                                    )
-                                    ->getOptionLabelUsing(fn ($value) =>
-                                        \App\Models\Country::find($value)?->nombre
-                                    ),
+                                    TextInput::make('country_id')->default('MEX')->hidden(),
                                 ]),
                         Section::make('Certificado y llave')
                             ->description('Datos del certificado y llave del emisor')
