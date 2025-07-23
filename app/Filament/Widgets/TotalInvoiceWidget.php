@@ -19,8 +19,8 @@ class TotalInvoiceWidget extends BaseWidget
                 ->icon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            Stat::make('Total CFDI', Cfdi::count())
-                ->description('Total de CFDI emitidos')
+            Stat::make('Facturas Emitidas', Cfdi::count())
+                ->description('Total de Facturas emitidas')
                 ->icon('heroicon-o-document-text')
                 ->color('primary'),
 
@@ -28,6 +28,10 @@ class TotalInvoiceWidget extends BaseWidget
                 ->description('Total de Usuarios registrados')
                 ->icon('heroicon-o-users')
                 ->color('warning'),
+
+            Stat::make('Certificados Vencidos', 0)->description('Certificados que han vencido')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->color('danger'),
         ];
     }
 }

@@ -21,6 +21,10 @@ class ReceptorResource extends Resource
     protected static ?string $navigationGroup = 'CFDI';
     protected static ?string $navigationLabel = 'Receptores';
 
+    protected static ?string $label = 'Receptor';
+
+    protected static ?string $pluralLabel = 'Receptores';
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form

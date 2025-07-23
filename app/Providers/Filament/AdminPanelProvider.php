@@ -22,7 +22,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
-    public CONST COLOR = "#00B8CC";
+    public CONST COLOR = "#01A4C1";
 
     public function panel(Panel $panel): Panel
     {

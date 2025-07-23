@@ -28,6 +28,8 @@ class EmisorResource extends Resource
     protected static ?string $navigationGroup = 'Administración';
     protected static ?string $navigationLabel = 'Emisores';
 
+    protected static ?string $pluralLabel = 'Emisores';
+
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function form(Form $form): Form
@@ -158,14 +160,15 @@ class EmisorResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('rfc')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('reason_social')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('website')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('phone')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('email')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('created_at')->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')->sortable(),
+                Tables\Columns\TextColumn::make('name')->sortable()->searchable()->label('Nombre'),
+                Tables\Columns\TextColumn::make('rfc')->sortable()->searchable()->label('RFC'),
+                Tables\Columns\TextColumn::make('reason_social')->sortable()->searchable()->label('Razón Social'),
+                Tables\Columns\TextColumn::make('website')->sortable()->searchable()->label('Página Web')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('phone')->sortable()->searchable()->label('Teléfono'),
+                Tables\Columns\ColorColumn::make('color')->label('Color PDF'),
+                Tables\Columns\TextColumn::make('email')->sortable()->searchable()->label('Correo electronico'),
+                Tables\Columns\TextColumn::make('created_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de creación'),
+                Tables\Columns\TextColumn::make('updated_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de actualización'),
             ])
             ->filters([
                 //
