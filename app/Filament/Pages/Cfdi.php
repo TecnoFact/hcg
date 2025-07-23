@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Services\ComplementoXmlService;
 use DateTime;
 use Carbon\Carbon;
 use Filament\Forms;
@@ -173,10 +174,11 @@ class Cfdi extends Page
         }
 
         $file = is_array($this->xml_file) ? reset($this->xml_file) : $this->xml_file;
+        $nameFile = $emisor->rfc . '_' . time() . '.xml';
 
 
         if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-            $pathXml = $emisor->rfc . DIRECTORY_SEPARATOR . $emisor->rfc . '_' . time() . '.xml';
+            $pathXml = $emisor->rfc . DIRECTORY_SEPARATOR . $nameFile;
             $file->storeAs('cfdi', $pathXml, 'local');
            $this->pathXml = Storage::disk('local')->path('cfdi/' . $pathXml);
         } else {
@@ -205,7 +207,7 @@ class Cfdi extends Page
         // guardar el registro de subir xml a cfdiArchivo
         $registro = CfdiArchivo::create([
             'user_id' => Auth::id(),
-            'nombre_archivo' => "",
+            'nombre_archivo' => $nameFile,
             'ruta' => 'cfdi/' . $pathXml,
             'uuid' => "",
             'sello' => "",
@@ -218,6 +220,19 @@ class Cfdi extends Page
         ]);
 
         $this->cfdiArchivo = $registro;
+
+        // crear servicio para insertar datos del xml en base de datos
+        try {
+            ComplementoXmlService::insertXmlToDB($this->pathXml, $registro);
+        } catch (\Exception $e) {
+            Log::error('Error al insertar datos del XML: ' . $e->getMessage());
+            Notification::make()
+                ->title('Error al insertar datos del XML')
+                ->danger()
+                ->body('Ocurrió un error al insertar los datos del XML: ' . $e->getMessage())
+                ->send();
+            return;
+        }
 
         Notification::make()
             ->title('Archivo subido')

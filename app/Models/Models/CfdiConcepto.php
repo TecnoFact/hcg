@@ -25,6 +25,6 @@ class CfdiConcepto extends Model
 
     public function cfdi()
     {
-        return $this->belongsTo(CfdiArchivo::class, 'cfdi_id', 'id');
+        return $this->belongsTo(Cfdi::class, 'cfdi_id', 'id');
     }
 }

@@ -6,6 +6,8 @@ use DOMXPath;
 use Exception;
 use DOMDocument;
 use App\Models\Emision;
+use App\Models\CfdiArchivo;
+use App\Models\Models\Cfdi;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiReceptor;
 use Illuminate\Support\Facades\Storage;
@@ -83,13 +85,14 @@ class ComplementoXmlService
         $cfdi->setAttribute('SubTotal', number_format($datos['cfdi']['sub_total'], 2, '.', ''));
         $cfdi->setAttribute('Moneda', $datos['cfdi']['moneda']);
         $cfdi->setAttribute('Total', number_format($datos['cfdi']['total'], 2, '.', ''));
-        $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_comprobante']);
+        $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_de_comprobante']);
         $cfdi->setAttribute('MetodoPago', $datos['cfdi']['metodo_pago']);
         $cfdi->setAttribute('LugarExpedicion', $datos['cfdi']['lugar_expedicion']);
         //$cfdi->setAttribute('Exportacion', '01');
 
         // Emisor
-        $emisorFind = CfdiEmisor::where('rfc', $datos['cfdi']['emisor_id'])->first();
+
+        $emisorFind = CfdiEmisor::find( $datos['cfdi']['emisor_id']);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
         $emisor->setAttribute('Nombre', $emisorFind->nombre);
@@ -97,13 +100,13 @@ class ComplementoXmlService
         $cfdi->appendChild($emisor);
 
         // Receptor
-        $receptorFind = CfdiReceptor::where('rfc', $datos['cfdi']['receptor_id'])->first();
+        $receptorFind = CfdiReceptor::find($datos['cfdi']['receptor_id']);
         $receptor = $doc->createElement('cfdi:Receptor');
         $receptor->setAttribute('Rfc', $receptorFind->rfc);
         $receptor->setAttribute('Nombre', $receptorFind->nombre);
-        $receptor->setAttribute('DomicilioFiscalReceptor', $receptorFind->domicilio);
+        $receptor->setAttribute('DomicilioFiscalReceptor', $receptorFind->domicilio_fiscal);
         $receptor->setAttribute('RegimenFiscalReceptor', $receptorFind->regimen_fiscal);
-        $receptor->setAttribute('UsoCFDI', $datos['cfdi']['receptor_uso_cfdi']);
+        $receptor->setAttribute('UsoCFDI', $receptorFind->uso_cfdi);
         $cfdi->appendChild($receptor);
 
         // Conceptos
@@ -128,6 +131,94 @@ class ComplementoXmlService
 
         return $doc->saveXML();
 
+    }
+
+    /**
+     * Inserta el XML en la base de datos.
+     *
+     * @param string $xml Ruta al archivo XML.
+     * @return void
+     */
+    public static function insertXmlToDB(string $xml, CfdiArchivo $cfdiArchivo): void
+    {
+        // Aquí va la lógica para insertar el XML en la base de datos
+        $comprobante = \CfdiUtils\Cfdi::newFromString(file_get_contents($xml))
+            ->getQuickReader();
+
+        $comprobantes = $comprobante();
+        $emisor = $comprobantes[0];
+        $conceptos = $comprobante->conceptos;
+
+
+        if(!$emisor) {
+            throw new Exception("No se pudo obtener el emisor del CFDI");
+        }
+
+        // Aquí puedes guardar el emisor en la base de datos
+       $emisorData = CfdiEmisor::updateOrCreate(
+            ['rfc' => $emisor['Rfc']],
+            [
+                'nombre' => $emisor['Nombre'],
+                'regimen_fiscal' => $emisor['RegimenFiscal'] ?? null,
+                'domicilio_fiscal' => null,
+            ]
+        );
+
+        $receptor = $comprobantes[1] ?? null;
+
+        if (!$receptor) {
+            throw new Exception("No se pudo obtener el receptor del CFDI");
+        }
+
+        // Aquí puedes guardar el receptor en la base de datos
+        $receptorData = CfdiReceptor::updateOrCreate(
+            ['rfc' => $receptor['Rfc']],
+            [
+                'nombre' => $receptor['Nombre'],
+                'domicilio_fiscal' => $receptor['DomicilioFiscalReceptor'] ?? null,
+                'regimen_fiscal' => $receptor['RegimenFiscalReceptor'] ?? null,
+                'uso_cfdi' => $receptor['UsoCFDI'] ?? null,
+            ]
+        );
+
+             $cfdi = Cfdi::create([
+                'emisor_id' => $emisorData->id,
+                'receptor_id' => $receptorData->id,
+                'uuid' => $comprobante['UUID'],
+                'serie' => $comprobante['Serie'],
+                'folio' => $comprobante['Folio'],
+                'fecha' => $comprobante['Fecha'],
+                'forma_pago' => $comprobante['FormaPago'],
+                'no_certificado' => $comprobante['NoCertificado'],
+                'subtotal' => number_format($comprobante['SubTotal'], 2, '.', ''),
+                'moneda' => $comprobante['Moneda'],
+                'total' => number_format($comprobante['Total'], 2, '.', ''),
+                'tipo_de_comprobante' => $comprobante['TipoDeComprobante'],
+                'metodo_pago' => $comprobante['MetodoPago'],
+                'lugar_expedicion' => $comprobante['LugarExpedicion'],
+            ]);
+
+            $cfdiArchivo->rfc_receptor = $receptor['Rfc'];
+            $cfdiArchivo->total = number_format($comprobante['Total'], 2, '.', '');
+            $cfdiArchivo->fecha = $comprobante['Fecha'];
+            $cfdiArchivo->tipo_comprobante = $comprobante['TipoDeComprobante'];
+            $cfdiArchivo->save();
+
+         // insertar si hay conceptos en la bsee de datos
+         foreach($conceptos() as $concepto)
+         {
+            $cfdiConcepto = new \App\Models\Models\CfdiConcepto();
+            $cfdiConcepto->cfdi_id = $cfdi->id;
+            $cfdiConcepto->clave_prod_serv = $concepto['ClaveProdServ'];
+            $cfdiConcepto->no_identificacion = $concepto['NoIdentificacion'];
+            $cfdiConcepto->cantidad = $concepto['Cantidad'];
+            $cfdiConcepto->clave_unidad = $concepto['ClaveUnidad'];
+            $cfdiConcepto->unidad = $concepto['Unidad'];
+            $cfdiConcepto->descripcion = $concepto['Descripcion'];
+            $cfdiConcepto->valor_unitario = $concepto['ValorUnitario'];
+            $cfdiConcepto->importe = $concepto['Importe'];
+            $cfdiConcepto->save();
+         }
     }
 
 }
