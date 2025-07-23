@@ -222,21 +222,15 @@ class CfdiResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('emisor.rfc')
-                    ->label('RFC Emisor'),
+                    ->label('RFC Emisor')->searchable(),
                 Tables\Columns\TextColumn::make('receptor.rfc')
-                    ->label('RFC Receptor'),
-                Tables\Columns\TextColumn::make('uuid')
-                    ->label('UUID')->searchable(),
+                    ->label('RFC Receptor')->searchable(),
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
-
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
                     ->label('Total'),
-                Tables\Columns\TextColumn::make('estatus')
-                    ->label('Estado'),
-
             ])
             ->filters([
                 //

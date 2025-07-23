@@ -2,23 +2,24 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\EmisorResource\Pages;
-use App\Filament\Resources\EmisorResource\RelationManagers;
-use App\Forms\Components\CertificateView;
-use App\Models\Emisor;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Section;
+use Filament\Tables;
+use App\Models\Emisor;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
+use App\Forms\Components\CertificateView;
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\ColorPicker;
+use App\Filament\Resources\EmisorResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\EmisorResource\RelationManagers;
 
 class EmisorResource extends Resource
 {
@@ -62,6 +63,9 @@ class EmisorResource extends Resource
                             ->label('Telefono')
                             ->tel()
                             ->maxLength(10),
+                        ColorPicker::make('color')
+                            ->label('Color PDF')
+                            ->default('#000000'),
                         FileUpload::make('logo')
                             ->label('Logo')
                             ->disk('local')
