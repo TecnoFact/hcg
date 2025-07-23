@@ -174,7 +174,7 @@ class CfdiResource extends Resource
                             ->relationship()
                             ->schema([
                                 Forms\Components\TextInput::make('no_identificacion')
-                                    ->label('Número Identificación'),
+                                    ->label('Número Identificación')->hidden(),
                                 Forms\Components\TextInput::make('clave_prod_serv')
                                     ->label('Clave Prod/Serv')
                                     ->required()
@@ -204,6 +204,7 @@ class CfdiResource extends Resource
                                         'IVA' => 'IVA',
                                         'IEPS' => 'IEPS',
                                         'ISR' => 'ISR',
+                                        'EXENTO' => 'EXENTO',
                                     ])
                                     ->required(),
                                 Forms\Components\TextInput::make('importe')
@@ -247,6 +248,12 @@ class CfdiResource extends Resource
 
                 Tables\Actions\EditAction::make(),
             ])
+            ->headerActions([
+            Action::make('ir_a_web')
+                ->label('Importar XML')
+                ->icon('heroicon-o-link')
+                ->url(route('filament.admin.pages.cfdi')),
+        ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

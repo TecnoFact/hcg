@@ -8,6 +8,8 @@ class RegimeFiscal extends Model
 {
     protected $table = 'catalogo_regimen_fiscal';
 
+    protected $primaryKey = 'clave';
+
     protected $fillable = [
         'clave',
         'descripcion',

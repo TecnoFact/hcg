@@ -14,26 +14,22 @@ class CitySeed extends Seeder
      */
     public function run(): void
     {
-         $path = storage_path('app/catalogos/cfdi40/C_Localidad.csv');
+         $path = storage_path('app/catalogos/cfdi40/ciudad.json');
 
         if (!file_exists($path)) {
             $this->command->error("Archivo no encontrado: $path");
             return;
         }
 
-        // Cargar el archivo saltando las 3 primeras líneas
-        $csv = Reader::createFromPath($path, 'r');
-        $csv->setHeaderOffset(3); // encabezado real en la línea 4
+        $data = json_decode(file_get_contents($path), true);
 
-        foreach ($csv->getRecords() as $record) {
-            // Validar que sea un valor de clave válida (ej: "01", "03", etc.)
-            if (!isset($record['c_Localidad']) || !is_numeric($record['c_Localidad'])) {
-                continue; // saltar registros inválidos
-            }
 
-            DB::table('ciudades')->updateOrInsert([
-                'id' => $record['c_Localidad'],
-            ], [
+        DB::table('ciudades')->truncate(); // Limpiar la tabla antes de insertar nuevos datos
+
+        foreach ($data as $record) {
+
+
+            DB::table('ciudades')->insert([
                 'id_estado' => $record['c_Estado'] ?: null,
                 'descripcion' => $record['Descripción'],
                 //'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
@@ -41,6 +37,7 @@ class CitySeed extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
         }
     }
 }

@@ -6,25 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class City extends Model
 {
-    protected $table = 'catalogo_pais';
+    protected $table = 'ciudades';
 
-    protected $primaryKey = 'clave';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'nombre',
-        'nacionalidad',
-        'vigencia_desde',
-        'vigencia_hasta'
+        'id_estado',
+        'descripcion'
     ];
 
     public function state()
     {
-        return $this->belongsTo(State::class);
-    }
-
-    public function country()
-    {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(State::class, 'id_estado');
     }
 
 
