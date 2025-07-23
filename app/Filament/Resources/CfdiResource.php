@@ -252,7 +252,7 @@ class CfdiResource extends Resource
             Action::make('ir_a_web')
                 ->label('Importar XML')
                 ->icon('heroicon-o-link')
-                ->url('/admin/cfdi'),
+                ->url(route('filament.admin.pages.cfdi')),
         ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
