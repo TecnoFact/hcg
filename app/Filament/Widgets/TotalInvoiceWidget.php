@@ -10,7 +10,7 @@ class TotalInvoiceWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        $totalFacturado = Cfdi::sum('total');
+        $totalFacturado = Cfdi::where('user_id', auth()->id())->sum('total');
         $totalFacturado = number_format($totalFacturado, 2, '.', ',');
 
         return [
@@ -19,12 +19,12 @@ class TotalInvoiceWidget extends BaseWidget
                 ->icon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            Stat::make('Facturas Emitidas', Cfdi::count())
+            Stat::make('Facturas Emitidas', Cfdi::where('user_id', auth()->id())->count())
                 ->description('Total de Facturas emitidas')
                 ->icon('heroicon-o-document-text')
                 ->color('primary'),
 
-            Stat::make('Total Usuarios', \App\Models\User::count())
+            Stat::make('Total Usuarios', \App\Models\User::where('user_id', auth()->id())->count())
                 ->description('Total de Usuarios registrados')
                 ->icon('heroicon-o-users')
                 ->color('warning'),
