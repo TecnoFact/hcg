@@ -52,6 +52,10 @@ class Cfdi extends Page
 
      public function mount()
     {
+        // Verificar si el usuario tiene el rol 'Customer'
+        if (Auth::user() && Auth::user()->hasRole('Customer')) {
+            abort(403, 'No tienes permiso para acceder a esta página.');
+        }
         $this->form->fill();
     }
 
