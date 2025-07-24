@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Models\Emisor;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables;
 
 use Filament\Forms\Form;
@@ -39,6 +40,8 @@ class CfdiResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Datos Generales del Comprobante')
                     ->schema([
+                        TextInput::make('total')->hidden(),
+                        TextInput::make('subtotal')->hidden(),
                         Forms\Components\TextInput::make('serie')
                             ->label('Serie')
                             ->maxLength(255),
@@ -164,7 +167,6 @@ class CfdiResource extends Resource
                 Forms\Components\Section::make('Conceptos')
                     ->schema([
                         Forms\Components\Repeater::make('conceptos')
-                            ->relationship()
                             ->schema([
                                 Forms\Components\TextInput::make('no_identificacion')
                                     ->label('Número Identificación')->hidden(),
@@ -181,7 +183,6 @@ class CfdiResource extends Resource
                                         $valorUnitario = (float) $get('valor_unitario');
                                         $cantidad = (float) $state;
                                         $set('importe', $cantidad * $valorUnitario);
-                                         $set('importe_total', $cantidad * $valorUnitario);
                                     }),
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
@@ -199,7 +200,6 @@ class CfdiResource extends Resource
                                         $cantidad = (float) $get('cantidad');
                                         $valorUnitario = (float) $state;
                                         $set('importe', $cantidad * $valorUnitario);
-                                         $set('importe_total', $cantidad * $valorUnitario);
                                     }),
                                 Forms\Components\TextInput::make('descripcion')
                                     ->label('Descripción')
@@ -214,15 +214,31 @@ class CfdiResource extends Resource
                                         'EXENTO' => 'EXENTO',
                                     ])
                                     ->required(),
-                                Forms\Components\TextInput::make('importe')->hidden(),
-                                Forms\Components\TextInput::make('importe_total')
+                                Forms\Components\TextInput::make('importe')
                                     ->label('Importe')
                                     ->numeric()
                                     ->required()
                                     ->disabled(),
                             ])
                             ->columns(3)
-                            ->createItemButtonLabel('Agregar Concepto'),
+                            ->createItemButtonLabel('Agregar Concepto')
+                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
+                                $cantidad = isset($data['cantidad']) ? (float) $data['cantidad'] : 0;
+                                $valorUnitario = isset($data['valor_unitario']) ? (float) $data['valor_unitario'] : 0;
+                                $data['importe'] = $cantidad * $valorUnitario;
+                                return $data;
+                            })
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $total = 0;
+                                if (is_array($state)) {
+                                    foreach ($state as $concepto) {
+                                        $importe = isset($concepto['importe']) ? (float) $concepto['importe'] : 0;
+                                        $total += $importe;
+                                    }
+                                }
+                                $set('../total', $total);
+                                $set('../subtotal', $total);
+                            }),
                     ]),
             ]);
     }
