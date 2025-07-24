@@ -66,9 +66,9 @@ class CfdiContinue extends Page
 
     public function mount($id)
     {
-          if (Auth::user() && Auth::user()->hasRole('Customer')) {
+          if (!Auth::user() && Auth::user()->hasRole('Admin')) {
             abort(403, 'No tienes permiso para acceder a esta página.');
-          }
+        }
 
         $this->cfdiArchivo = CfdiArchivo::find($id);
         if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_SUBIDO){

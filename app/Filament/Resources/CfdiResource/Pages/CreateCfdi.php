@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CfdiResource\Pages;
 
 use Filament\Actions;
 use App\Models\Models\CfdiEmisor;
+use App\Models\Models\CfdiConcepto;
 use App\Models\Models\CfdiReceptor;
 use App\Services\ComplementoXmlService;
 use Illuminate\Support\Facades\Storage;
@@ -41,9 +42,11 @@ class CreateCfdi extends CreateRecord
         ];
 
         $total = 0;
+        $contador = 1;
+
         if (isset($data['conceptos']) && is_array($data['conceptos'])) {
             foreach ($data['conceptos'] as $i => $concepto) {
-                $data['conceptos'][$i]['no_identificacion'] = $i + 1;
+                $concepto['no_identificacion'] = $contador++;
                 $cantidad = isset($concepto['cantidad']) ? (float) $concepto['cantidad'] : 0;
                 $valorUnitario = isset($concepto['valor_unitario']) ? (float) $concepto['valor_unitario'] : 0;
                 $importe = $cantidad * $valorUnitario;
@@ -51,6 +54,7 @@ class CreateCfdi extends CreateRecord
                 $total += $importe;
             }
         }
+
 
         $data['subtotal'] = $total; // Asigna el subtotal
         $data['total'] = $total;
@@ -78,8 +82,24 @@ class CreateCfdi extends CreateRecord
     {
         $cfdi = $this->record; // Modelo Cfdi recién creado
 
-        // Obtén los conceptos relacionados (ajusta el nombre de la relación si es diferente)
-        $conceptos = $cfdi->conceptos;
+        // Obtener los conceptos del formulario
+        $conceptos = $this->data['conceptos'] ?? [];
+
+        // Registrar los conceptos en la base de datos
+        foreach ($conceptos as $concepto) {
+            CfdiConcepto::create([
+                'cfdi_id' => $cfdi->id,
+                'no_identificacion' => $concepto['no_identificacion'] ?? null,
+                'clave_prod_serv' => $concepto['clave_prod_serv'] ?? null,
+                'cantidad' => $concepto['cantidad'] ?? null,
+                'clave_unidad' => $concepto['clave_unidad'] ?? null,
+                'unidad' => $concepto['unidad'] ?? null,
+                'valor_unitario' => $concepto['valor_unitario'] ?? null,
+                'descripcion' => $concepto['descripcion'] ?? null,
+                'tipo_impuesto' => $concepto['tipo_impuesto'] ?? null,
+                'importe' => $concepto['importe'] ?? null,
+            ]);
+        }
 
         // Prepara los datos para el servicio
         $data = [
