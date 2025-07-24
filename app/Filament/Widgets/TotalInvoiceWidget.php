@@ -13,7 +13,7 @@ class TotalInvoiceWidget extends BaseWidget
         $totalFacturado = Cfdi::where('user_id', auth()->id())->sum('total');
         $totalFacturado = number_format($totalFacturado, 2, '.', ',');
 
-        return [
+        $stats = [
             Stat::make('Total Facturado', $totalFacturado)
                 ->description('Total Facturado')
                 ->icon('heroicon-o-currency-dollar')
@@ -23,15 +23,22 @@ class TotalInvoiceWidget extends BaseWidget
                 ->description('Total de Facturas emitidas')
                 ->icon('heroicon-o-document-text')
                 ->color('primary'),
+        ];
 
-            Stat::make('Total Usuarios', \App\Models\User::count())
+        if (
+            auth()->user()->hasRole('Admin')
+        ) {
+            $stats[] = Stat::make('Total Usuarios', \App\Models\User::count())
                 ->description('Total de Usuarios registrados')
                 ->icon('heroicon-o-users')
-                ->color('warning'),
+                ->color('warning');
+        }
 
-            Stat::make('Certificados Vencidos', 0)->description('Certificados que han vencido')
-                ->icon('heroicon-o-exclamation-triangle')
-                ->color('danger'),
-        ];
+        $stats[] = Stat::make('Certificados Vencidos', 0)
+            ->description('Certificados que han vencido')
+            ->icon('heroicon-o-exclamation-triangle')
+            ->color('danger');
+
+        return $stats;
     }
 }
