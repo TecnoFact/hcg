@@ -81,9 +81,7 @@ class CfdiResource extends Resource
                                 'T' => 'T - Traslado',
                             ])
                             ->default('I'),
-                        Forms\Components\TextInput::make('lugar_expedicion')
-                            ->label('Código Postal')
-                            ->maxLength(5),
+
                         Forms\Components\Select::make('moneda')
                             ->label('Moneda')
                             ->options([
@@ -132,6 +130,9 @@ class CfdiResource extends Resource
                             ->searchable()
                             ->preload()
                             ->reactive(),
+                        Forms\Components\TextInput::make('lugar_expedicion')
+                            ->label('Código Postal')
+                            ->maxLength(5),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Datos del Receptor')
