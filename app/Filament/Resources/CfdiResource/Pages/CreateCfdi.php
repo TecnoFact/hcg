@@ -44,7 +44,11 @@ class CreateCfdi extends CreateRecord
         if (isset($data['conceptos']) && is_array($data['conceptos'])) {
             foreach ($data['conceptos'] as $i => $concepto) {
                 $data['conceptos'][$i]['no_identificacion'] = $i + 1;
-                $total += $concepto['importe'] ?? 0;
+                $cantidad = isset($concepto['cantidad']) ? (float) $concepto['cantidad'] : 0;
+                $valorUnitario = isset($concepto['valor_unitario']) ? (float) $concepto['valor_unitario'] : 0;
+                $importe = $cantidad * $valorUnitario;
+                $data['conceptos'][$i]['importe'] = $importe;
+                $total += $importe;
             }
         }
 
@@ -62,7 +66,9 @@ class CreateCfdi extends CreateRecord
             'uso_cfdi' => $data['receptor_uso_cfdi']
         ];
 
-        CfdiReceptor::create($data['receptor']);
+        $receptorCreate = CfdiReceptor::create($data['receptor']);
+
+        $data['receptor_id'] = $receptorCreate->id;
 
         return $data;
     }
