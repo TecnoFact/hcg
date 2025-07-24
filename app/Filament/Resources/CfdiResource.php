@@ -189,7 +189,13 @@ class CfdiResource extends Resource
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                     ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $valorUnitario = (float) $get('valor_unitario');
+                                        $cantidad = (float) $state;
+                                        $set('importe', $cantidad * $valorUnitario);
+                                    }),
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
                                     ->searchable()
@@ -200,7 +206,13 @@ class CfdiResource extends Resource
                                 Forms\Components\TextInput::make('valor_unitario')
                                     ->label('Valor Unitario')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $cantidad = (float) $get('cantidad');
+                                        $valorUnitario = (float) $state;
+                                        $set('importe', $cantidad * $valorUnitario);
+                                    }),
                                 Forms\Components\TextInput::make('descripcion')
                                     ->label('Descripción')
                                     ->required()
@@ -217,7 +229,8 @@ class CfdiResource extends Resource
                                 Forms\Components\TextInput::make('importe')
                                     ->label('Importe')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->disabled(),
                             ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto'),
