@@ -50,7 +50,8 @@ class UserResource extends Resource
                             ->minLength(8)
                             ->maxLength(255)
                             ->label('Contraseña')
-                            ->dehydrateStateUsing(fn ($state) => bcrypt($state))
+                            ->dehydrateStateUsing(fn ($state) => $state ? bcrypt($state) : null)
+                            ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (Page $livewire) => ($livewire instanceof  CreateUser)),
                         Select::make('roles')
                             ->label('Roles')
