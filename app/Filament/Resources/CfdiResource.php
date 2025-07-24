@@ -64,22 +64,22 @@ class CfdiResource extends Resource
                         Forms\Components\Select::make('forma_pago')
                             ->label('Forma de Pago')
                             ->options([
-                                    '01' => '01 - Efectivo',
-                                    '02' => '02 - Cheque nominativo',
-                                    '03' => '03 - Transferencia electrónica',
-                                    '04' => '04 - Tarjeta de crédito',
-                                    '99' => '99 - Por definir',
-                                ])
+                                '01' => '01 - Efectivo',
+                                '02' => '02 - Cheque nominativo',
+                                '03' => '03 - Transferencia electrónica',
+                                '04' => '04 - Tarjeta de crédito',
+                                '99' => '99 - Por definir',
+                            ])
                             ->disabled(fn($get) => $get('metodo_pago') === 'PPD')
                             ->default('03'),
 
                         Forms\Components\Select::make('tipo_de_comprobante')
                             ->label('Tipo de Comprobante')
                             ->options([
-                                    'I' => 'I - Ingreso',
-                                    'E' => 'E - Egreso',
-                                    'T' => 'T - Traslado',
-                                ])
+                                'I' => 'I - Ingreso',
+                                'E' => 'E - Egreso',
+                                'T' => 'T - Traslado',
+                            ])
                             ->default('I'),
                         Forms\Components\TextInput::make('lugar_expedicion')
                             ->label('Código Postal')
@@ -87,86 +87,93 @@ class CfdiResource extends Resource
                         Forms\Components\Select::make('moneda')
                             ->label('Moneda')
                             ->options([
-                                    'MXN' => 'MXN - Peso Mexicano',
-                                    'USD' => 'USD - Dólar Americano',
-                                ])
+                                'MXN' => 'MXN - Peso Mexicano',
+                                'USD' => 'USD - Dólar Americano',
+                            ])
                             ->default('MXN'),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Datos del Emisor')
                     ->schema([
-                            Forms\Components\Select::make('emisor_id')
-                                ->label('Emisor')
-                                ->searchable()
-                                ->reactive()
-                                ->options(DB::table('emisores')->pluck('name', 'id')->toArray())
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    if ($state) {
-                                        $emisor = Emisor::find($state);
-                                        $set('emisor_rfc', $emisor->rfc);
-                                        $set('emisor_nombre', $emisor->name);
-                                        $set('emisor_regimen_fiscal', $emisor->reason_social);
-                                        $set('lugar_expedicion', $emisor->postal_code);
-                                    } else {
-                                        $set('emisor_rfc', null);
-                                        $set('emisor_nombre', null);
-                                        $set('emisor_regimen_fiscal', null);
-                                    }
-                                }),
-                            Forms\Components\TextInput::make('emisor_rfc')
-                                ->label('RFC')
-                                ->maxLength(13),
-                            Forms\Components\TextInput::make('emisor_nombre')
-                                ->label('Nombre o Razón Social'),
-                            Forms\Components\Select::make('emisor_regimen_fiscal')
-                                ->label('Régimen Fiscal')
-                                ->options([
-                                        '601' => '601 - General de Ley Personas Morales',
-                                        '612' => '612 - Personas Físicas con Actividades Empresariales',
-                                    ])
-                                ->default('601'),
-                        ])->columns(3),
+                        Forms\Components\Select::make('emisor_id')
+                            ->label('Emisor')
+                            ->searchable()
+                            ->reactive()
+                            ->options(DB::table('emisores')->pluck('name', 'id')->toArray())
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state) {
+                                    $emisor = Emisor::find($state);
+                                    $set('emisor_rfc', $emisor->rfc);
+                                    $set('emisor_nombre', $emisor->name);
+                                    $set('emisor_regimen_fiscal', $emisor->tax_regimen_id);
+                                    $set('lugar_expedicion', $emisor->postal_code);
+                                } else {
+                                    $set('emisor_rfc', null);
+                                    $set('emisor_nombre', null);
+                                    $set('emisor_regimen_fiscal', null);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('emisor_rfc')
+                            ->label('RFC')
+                            ->maxLength(13),
+                        Forms\Components\TextInput::make('emisor_nombre')
+                            ->label('Nombre o Razón Social'),
+                        Forms\Components\Select::make('emisor_regimen_fiscal')
+                            ->label('Régimen Fiscal')
+                            ->getSearchResultsUsing(
+                                fn(string $search) =>
+                                \App\Models\RegimeFiscal::where('descripcion', 'like', "%{$search}%")
+                                    ->limit(20)
+                                    ->pluck('descripcion', 'clave')
+                            )
+                            ->options(
+                                fn() => \App\Models\RegimeFiscal::pluck('descripcion', 'clave')->toArray()
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->reactive(),
+                    ])->columns(3),
 
                 Forms\Components\Section::make('Datos del Receptor')
                     ->schema([
                         Forms\Components\Select::make('receptor_id')
-                                ->label('Receptor')
-                                ->searchable()
-                                ->reactive()
-                                ->options(DB::table('cfdi_receptores')->pluck('nombre', 'id')->toArray())
-                                 ->afterStateUpdated(function ($state, callable $set) {
-                                    if ($state) {
-                                        $emisor = CfdiReceptor::find($state);
-                                        $set('receptor_rfc', $emisor->rfc);
-                                        $set('receptor_nombre', $emisor->nombre);
-                                        $set('receptor_domicilio', $emisor->domicilio_fiscal);
-                                        $set('receptor_regimen_fiscal', $emisor->regimen_fiscal);
-                                        $set('receptor_uso_cfdi', $emisor->uso_cfdi);
-                                    }
-                                }),
-                            Forms\Components\TextInput::make('receptor_rfc')
-                                ->label('RFC')
-                                ->maxLength(13),
-                            Forms\Components\TextInput::make('receptor_nombre')
-                                ->label('Nombre o Razón Social'),
-                            Forms\Components\TextInput::make('receptor_domicilio')
-                                ->label('Código Postal')
-                                ->maxLength(5),
-                            Forms\Components\Select::make('receptor_regimen_fiscal')
-                                ->label('Régimen Fiscal')
-                                ->options([
-                                        '601' => '601 - General de Ley Personas Morales',
-                                        '612' => '612 - Personas Físicas con Actividades Empresariales',
-                                    ])
-                                ->default('601'),
-                            Forms\Components\Select::make('receptor_uso_cfdi')
-                                ->label('Uso del CFDI')
-                                ->options([
-                                        'G01' => 'G01 - Adquisición de mercancías',
-                                        'G03' => 'G03 - Gastos en general',
-                                    ])
-                                ->default('G03'),
-                        ])->columns(3),
+                            ->label('Receptor')
+                            ->searchable()
+                            ->reactive()
+                            ->options(DB::table('cfdi_receptores')->pluck('nombre', 'id')->toArray())
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state) {
+                                    $emisor = CfdiReceptor::find($state);
+                                    $set('receptor_rfc', $emisor->rfc);
+                                    $set('receptor_nombre', $emisor->nombre);
+                                    $set('receptor_domicilio', $emisor->domicilio_fiscal);
+                                    $set('receptor_regimen_fiscal', $emisor->regimen_fiscal);
+                                    $set('receptor_uso_cfdi', $emisor->uso_cfdi);
+                                }
+                            }),
+                        Forms\Components\TextInput::make('receptor_rfc')
+                            ->label('RFC')
+                            ->maxLength(13),
+                        Forms\Components\TextInput::make('receptor_nombre')
+                            ->label('Nombre o Razón Social'),
+                        Forms\Components\TextInput::make('receptor_domicilio')
+                            ->label('Código Postal')
+                            ->maxLength(5),
+                        Forms\Components\Select::make('receptor_regimen_fiscal')
+                            ->label('Régimen Fiscal')
+                            ->options([
+                                '601' => '601 - General de Ley Personas Morales',
+                                '612' => '612 - Personas Físicas con Actividades Empresariales',
+                            ])
+                            ->default('601'),
+                        Forms\Components\Select::make('receptor_uso_cfdi')
+                            ->label('Uso del CFDI')
+                            ->options([
+                                'G01' => 'G01 - Adquisición de mercancías',
+                                'G03' => 'G03 - Gastos en general',
+                            ])
+                            ->default('G03'),
+                    ])->columns(3),
 
                 Forms\Components\Section::make('Conceptos')
                     ->schema([
@@ -215,7 +222,7 @@ class CfdiResource extends Resource
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto'),
                     ]),
-                ]);
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -239,21 +246,21 @@ class CfdiResource extends Resource
             ->actions([
                 //Tables\Actions\EditAction::make(),
                 Action::make('descargar_xml')
-                ->label('Descargar XML')
-                ->icon('heroicon-o-arrow-down-tray')
-                ->url(fn($record) => route('cfdis.descargar-xml', $record))
-                ->color('success')
-                ->openUrlInNewTab(false)
-                 ->visible(fn($record) => $record->path_xml !== null),
+                    ->label('Descargar XML')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn($record) => route('cfdis.descargar-xml', $record))
+                    ->color('success')
+                    ->openUrlInNewTab(false)
+                    ->visible(fn($record) => $record->path_xml !== null),
 
                 Tables\Actions\EditAction::make(),
             ])
             ->headerActions([
-            Action::make('ir_a_web')
-                ->label('Importar XML')
-                ->icon('heroicon-o-link')
-                ->url(route('filament.admin.pages.cfdi')),
-        ])
+                Action::make('ir_a_web')
+                    ->label('Importar XML')
+                    ->icon('heroicon-o-link')
+                    ->url(route('filament.admin.pages.cfdi')),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
