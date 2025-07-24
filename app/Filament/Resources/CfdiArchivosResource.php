@@ -102,6 +102,11 @@ class CfdiArchivosResource extends Resource
 
 
             ])
+            ->modifyQueryUsing(function (Builder $query) {
+                if (auth()->user()->hasRole('User')) {
+                    $query->where('user_id', auth()->id());
+                }
+            })
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

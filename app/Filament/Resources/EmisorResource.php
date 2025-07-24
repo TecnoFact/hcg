@@ -191,7 +191,11 @@ class EmisorResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ]) ->modifyQueryUsing(function (Builder $query) {
+                if (auth()->user()->hasRole('User')) {
+                    $query->where('user_id', auth()->id());
+                }
+            });
     }
 
     public static function getRelations(): array

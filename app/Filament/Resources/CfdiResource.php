@@ -81,9 +81,7 @@ class CfdiResource extends Resource
                                 'T' => 'T - Traslado',
                             ])
                             ->default('I'),
-                        Forms\Components\TextInput::make('lugar_expedicion')
-                            ->label('Código Postal')
-                            ->maxLength(5),
+
                         Forms\Components\Select::make('moneda')
                             ->label('Moneda')
                             ->options([
@@ -132,25 +130,13 @@ class CfdiResource extends Resource
                             ->searchable()
                             ->preload()
                             ->reactive(),
+                        Forms\Components\TextInput::make('lugar_expedicion')
+                            ->label('Código Postal')
+                            ->maxLength(5),
                     ])->columns(3),
 
                 Forms\Components\Section::make('Datos del Receptor')
                     ->schema([
-                        Forms\Components\Select::make('receptor_id')
-                            ->label('Receptor')
-                            ->searchable()
-                            ->reactive()
-                            ->options(DB::table('cfdi_receptores')->pluck('nombre', 'id')->toArray())
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                if ($state) {
-                                    $emisor = CfdiReceptor::find($state);
-                                    $set('receptor_rfc', $emisor->rfc);
-                                    $set('receptor_nombre', $emisor->nombre);
-                                    $set('receptor_domicilio', $emisor->domicilio_fiscal);
-                                    $set('receptor_regimen_fiscal', $emisor->regimen_fiscal);
-                                    $set('receptor_uso_cfdi', $emisor->uso_cfdi);
-                                }
-                            }),
                         Forms\Components\TextInput::make('receptor_rfc')
                             ->label('RFC')
                             ->maxLength(13),
@@ -189,7 +175,14 @@ class CfdiResource extends Resource
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                     ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $valorUnitario = (float) $get('valor_unitario');
+                                        $cantidad = (float) $state;
+                                        $set('importe', $cantidad * $valorUnitario);
+                                         $set('importe_total', $cantidad * $valorUnitario);
+                                    }),
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
                                     ->searchable()
@@ -200,7 +193,14 @@ class CfdiResource extends Resource
                                 Forms\Components\TextInput::make('valor_unitario')
                                     ->label('Valor Unitario')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $cantidad = (float) $get('cantidad');
+                                        $valorUnitario = (float) $state;
+                                        $set('importe', $cantidad * $valorUnitario);
+                                         $set('importe_total', $cantidad * $valorUnitario);
+                                    }),
                                 Forms\Components\TextInput::make('descripcion')
                                     ->label('Descripción')
                                     ->required()
@@ -214,10 +214,12 @@ class CfdiResource extends Resource
                                         'EXENTO' => 'EXENTO',
                                     ])
                                     ->required(),
-                                Forms\Components\TextInput::make('importe')
+                                Forms\Components\TextInput::make('importe')->hidden(),
+                                Forms\Components\TextInput::make('importe_total')
                                     ->label('Importe')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->disabled(),
                             ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto'),
@@ -261,6 +263,11 @@ class CfdiResource extends Resource
                     ->icon('heroicon-o-link')
                     ->url(route('filament.admin.pages.cfdi')),
             ])
+            ->modifyQueryUsing(function (Builder $query) {
+                if (auth()->user()->hasRole('User')) {
+                    $query->where('user_id', auth()->id());
+                }
+            })
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
