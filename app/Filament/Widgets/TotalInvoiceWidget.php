@@ -24,7 +24,7 @@ class TotalInvoiceWidget extends BaseWidget
                 ->icon('heroicon-o-document-text')
                 ->color('primary'),
 
-            Stat::make('Total Usuarios', \App\Models\User::where('user_id', auth()->id())->count())
+            Stat::make('Total Usuarios', \App\Models\User::count())
                 ->description('Total de Usuarios registrados')
                 ->icon('heroicon-o-users')
                 ->color('warning'),
