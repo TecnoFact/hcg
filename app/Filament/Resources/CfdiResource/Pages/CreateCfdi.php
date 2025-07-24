@@ -86,10 +86,12 @@ class CreateCfdi extends CreateRecord
         $conceptos = $this->data['conceptos'] ?? [];
 
         // Registrar los conceptos en la base de datos
+        $contador = 1;
         foreach ($conceptos as $concepto) {
+
             CfdiConcepto::create([
                 'cfdi_id' => $cfdi->id,
-                'no_identificacion' => $concepto['no_identificacion'] ?? null,
+                'no_identificacion' => $contador ?? null,
                 'clave_prod_serv' => $concepto['clave_prod_serv'] ?? null,
                 'cantidad' => $concepto['cantidad'] ?? null,
                 'clave_unidad' => $concepto['clave_unidad'] ?? null,
@@ -99,6 +101,8 @@ class CreateCfdi extends CreateRecord
                 'tipo_impuesto' => $concepto['tipo_impuesto'] ?? null,
                 'importe' => $concepto['importe'] ?? null,
             ]);
+
+            $contador++;
         }
 
         // Prepara los datos para el servicio
