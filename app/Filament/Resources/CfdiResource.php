@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Models\Emisor;
+use App\Models\ObjImp;
+use App\Models\Tax;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables;
@@ -174,6 +176,12 @@ class CfdiResource extends Resource
                                     ->label('Clave Prod/Serv')
                                     ->required()
                                     ->maxLength(20),
+                                Forms\Components\Select::make('tipo_impuesto')
+                                    ->label('Tipo de Impuesto')
+                                    ->options(Tax::pluck('name', 'id')),
+                                Select::make('obj_imp_id')
+                                    ->label('Objeto del Impuesto')
+                                    ->options(ObjImp::pluck('descripcion', 'clave')),
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
@@ -182,7 +190,17 @@ class CfdiResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $valorUnitario = (float) $get('valor_unitario');
                                         $cantidad = (float) $state;
-                                        $set('importe', $cantidad * $valorUnitario);
+                                        $impuesto = (integer) $get('tipo_impuesto');
+
+                                        $calculado = $cantidad * $valorUnitario;
+
+                                        if ($impuesto) {
+                                            $tax = Tax::find($impuesto);
+                                            if ($tax) {
+                                                $calculado += ($calculado * $tax->rate / 100);
+                                            }
+                                        }
+                                        $set('importe', $calculado);
                                     }),
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
@@ -199,21 +217,24 @@ class CfdiResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $cantidad = (float) $get('cantidad');
                                         $valorUnitario = (float) $state;
-                                        $set('importe', $cantidad * $valorUnitario);
+                                        $impuesto = (integer) $get('tipo_impuesto');
+
+                                        $calculado = $cantidad * $valorUnitario;
+
+                                        if ($impuesto) {
+                                            $tax = Tax::find($impuesto);
+                                            if ($tax) {
+                                                $calculado += ($calculado * $tax->rate / 100);
+                                            }
+                                        }
+
+                                        $set('importe', $calculado);
                                     }),
                                 Forms\Components\TextInput::make('descripcion')
                                     ->label('Descripción')
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\Select::make('tipo_impuesto')
-                                    ->label('Tipo de Impuesto')
-                                    ->options([
-                                        'IVA' => 'IVA',
-                                        'IEPS' => 'IEPS',
-                                        'ISR' => 'ISR',
-                                        'EXENTO' => 'EXENTO',
-                                    ])
-                                    ->required(),
+
                                 Forms\Components\TextInput::make('importe')
                                     ->label('Importe')
                                     ->numeric()

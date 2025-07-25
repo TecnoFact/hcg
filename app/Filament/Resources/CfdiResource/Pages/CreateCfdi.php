@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\CfdiResource\Pages;
 
-use Filament\Actions;
+use Filament\Actions\Action;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiConcepto;
 use App\Models\Models\CfdiReceptor;
@@ -122,4 +122,21 @@ class CreateCfdi extends CreateRecord
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $path_xml]);
     }
+
+     protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+        ];
+    }
+
+     protected function getCreateFormAction(): Action
+    {
+        return Action::make('create')
+            ->label('Prefactura')
+            ->submit('create')
+            ->keyBindings(['mod+s']);
+    }
+
+
 }
