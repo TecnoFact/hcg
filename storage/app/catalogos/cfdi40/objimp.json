@@ -1,0 +1,32 @@
+[
+  {
+    "c_ObjetoImp": "01",
+    "Descripción": "No objeto de impuesto.",
+    "Fecha inicio de vigencia": "2022-01-01",
+    "Fecha fin de vigencia": ""
+  },
+  {
+    "c_ObjetoImp": "02",
+    "Descripción": "Sí objeto de impuesto.",
+    "Fecha inicio de vigencia": "2022-01-01",
+    "Fecha fin de vigencia": ""
+  },
+  {
+    "c_ObjetoImp": "03",
+    "Descripción": "Sí objeto del impuesto y no obligado al desglose.",
+    "Fecha inicio de vigencia": "2022-01-01",
+    "Fecha fin de vigencia": ""
+  },
+  {
+    "c_ObjetoImp": "04",
+    "Descripción": "Sí objeto del impuesto y no causa impuesto.",
+    "Fecha inicio de vigencia": "2022-10-07",
+    "Fecha fin de vigencia": ""
+  },
+  {
+    "c_ObjetoImp": "05",
+    "Descripción": "Sí objeto del impuesto, IVA crédito PODEBI.",
+    "Fecha inicio de vigencia": "2023-12-06",
+    "Fecha fin de vigencia": ""
+  }
+]

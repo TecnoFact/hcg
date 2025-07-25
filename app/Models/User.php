@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Log;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -30,4 +31,16 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function getFilamentAvatarUrl(): ?string
+{
+    // O cualquier lógica que tengas para la URL
+    if ($this->profile_picture) {
+        Log::info('User profile picture URL: ' . Storage::disk('public')->exists($this->profile_picture));
+    }
+
+    return $this->profile_picture
+        ? Storage::disk('public')->url($this->profile_picture)
+        : null; // o un avatar por defecto
+}
 }

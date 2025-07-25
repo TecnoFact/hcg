@@ -38,22 +38,6 @@ class EmisorResource extends Resource
             ->schema([
                 Fieldset::make('Datos del emisor')
                 ->schema([
-
-                        TextInput::make('name')
-                            ->label('Nombre')
-                            ->maxLength(255)
-                            ->hidden(),
-                        TextInput::make('email')
-                            ->email()
-                            ->label('Correo electronico')
-                            ->required()
-                            ->maxLength(255),
-                        TextInput::make('rfc')
-                            ->label('RFC')
-                            ->unique(table: Emisor::class, column: 'rfc', ignorable: fn ($livewire) => !($livewire instanceof \App\Filament\Resources\EmisorResource\Pages\CreateEmisor) ? $livewire->record : null)
-                            ->maxLength(13)
-                            ->required(),
-
                         TextInput::make('reason_social')
                             ->label('Razon social')
                             ->required()
@@ -62,6 +46,22 @@ class EmisorResource extends Resource
                                 $set('name', $state);
                             })
                             ->maxLength(255),
+                        TextInput::make('name')
+                            ->label('Nombre')
+                            ->maxLength(255)
+                            ->hidden(),
+
+                        TextInput::make('rfc')
+                            ->label('RFC')
+                            ->unique(table: Emisor::class, column: 'rfc', ignorable: fn ($livewire) => !($livewire instanceof \App\Filament\Resources\EmisorResource\Pages\CreateEmisor) ? $livewire->record : null)
+                            ->maxLength(13)
+                            ->required(),
+                        TextInput::make('email')
+                            ->email()
+                            ->label('Correo electronico')
+                            ->required()
+                            ->maxLength(255),
+
                         TextInput::make('website')
                             ->label('Sitio web')
                             ->url()

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cfdi_conceptos', function (Blueprint $table) {
-             $table->string('tipo_impuesto')->nullable();
+            $table->integer('tax_id')->nullable()->after('tipo_impuesto');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('cfdi_conceptos', function (Blueprint $table) {
-            $table->dropColumn('tipo_impuesto');
+            $table->dropColumn('tax_id');
         });
     }
 };

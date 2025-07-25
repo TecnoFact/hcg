@@ -21,6 +21,8 @@ class CfdiConcepto extends Model
         'tipo_impuesto',
         'importe',
         'descuento',
+        'tax_id',
+        'obj_imp_id'
     ];
 
     public function cfdi()
