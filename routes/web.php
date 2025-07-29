@@ -20,7 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/cfdi-continue/{id}', \App\Filament\Pages\CfdiContinue::class)->name('filament.admin.pages.cfdi-continues');
-
+    Route::get('/cfdi-cancel/{id}', [CfdiController::class, 'cancelCfdi'])->name('filament.admin.pages.cfdi-cancel');
     Route::get('/descargar-xml/{factura}', [CfdiController::class, 'descargarXml'])->name('facturas.descargar-xml');
     Route::get('/descargar-pdf/{factura}', [CfdiController::class, 'descargarPdf'])->name('facturas.descargar-pdf');
 

@@ -100,6 +100,17 @@ class CfdiArchivosResource extends Resource
                 ->openUrlInNewTab(false)
                 ->visible(fn($record) => $record->status_upload !== 'depositado'),
 
+                Action::make('cancelar')
+                ->label('Cancelar')
+                ->icon('heroicon-o-x-mark')
+                ->url(fn($record) => route('filament.admin.pages.cfdi-cancel', $record))
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('¿Estás seguro?')
+                ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?')
+                ->openUrlInNewTab(false)
+                ->visible(fn($record) => ($record->status_upload !== 'depositado') && ($record->status_upload !== 'subido')),
+
 
             ])
             ->modifyQueryUsing(function (Builder $query) {
