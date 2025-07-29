@@ -126,7 +126,8 @@ class CreateCfdi extends CreateRecord
      protected function getFormActions(): array
     {
         return [
-            $this->getCreateFormAction()
+            $this->getCreateFormAction(),
+            $this->getCancelFormAction()
         ];
     }
 
@@ -138,5 +139,18 @@ class CreateCfdi extends CreateRecord
             ->keyBindings(['mod+s']);
     }
 
+
+    protected function getCancelFormAction(): Action
+    {
+        return Action::make('cancel')
+            ->label('Cancelar')
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->url($this->getRedirectUrl())
+            ->requiresConfirmation()
+            ->modalHeading('¿Estás seguro?')
+            ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?');
+
+    }
 
 }

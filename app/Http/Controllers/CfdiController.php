@@ -447,5 +447,61 @@ class CfdiController extends Controller
             'Content-Type' => 'application/pdf',
         ]);
     }
+
+    public function cancelCfdi($factura)
+    {
+        $cfdi = CfdiArchivo::find($factura);
+
+        if (!$cfdi) {
+            Notification::make()
+                ->title('Error al cancelar CFDI')
+                ->danger()
+                ->body('No se encontró el CFDI con el ID proporcionado.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        $fileXml = Storage::disk('public')->path($cfdi->ruta);
+
+        if (!file_exists($fileXml)) {
+            Notification::make()
+                ->title('Error al cancelar CFDI')
+                ->danger()
+                ->body('El archivo XML del CFDI no se encuentra en el servidor.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+
+        $xmlContent = file_get_contents($fileXml);
+        $xml = new \SimpleXMLElement($xmlContent);
+
+        // Eliminar nodo TimbreFiscalDigital dentro de Complemento
+        if (isset($xml->Complemento->TimbreFiscalDigital)) {
+            unset($xml->Complemento->TimbreFiscalDigital);
+        }
+
+        // Eliminar atributos del nodo Comprobante
+        unset($xml['NoCertificado']);
+        unset($xml['Certificado']);
+        unset($xml['Sello']);
+
+        $xml->asXML($fileXml);
+
+        $cfdi->sello = '';
+        $cfdi->uuid = '';
+        $cfdi->status_upload = CfdiArchivo::ESTATUS_SUBIDO;
+        $cfdi->save();
+
+        Notification::make()
+            ->title('CFDI cancelado')
+            ->success()
+            ->body('El CFDI ha sido cancelado correctamente.')
+            ->send();
+
+        return redirect()->route('filament.admin.pages.cfdi-continues', $cfdi);
+    }
 }
 
