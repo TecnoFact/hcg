@@ -29,7 +29,8 @@ class Cfdi extends Model
 
         'path_xml',
         'user_id',
-        'cfdi_archivos_id'
+        'cfdi_archivos_id',
+        'impuesto'
     ];
 
     public function emisor()
