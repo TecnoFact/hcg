@@ -299,6 +299,7 @@ class CfdiResource extends Resource
                     ->label('Importar XML')
                     ->icon('heroicon-o-link')
                     ->url(route('filament.admin.pages.cfdi')),
+
             ])
             ->modifyQueryUsing(function (Builder $query) {
                 if (auth()->user()->hasRole('User')) {
