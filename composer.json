@@ -9,6 +9,7 @@
         "php": "^8.2",
         "ext-openssl": "*",
         "akaunting/laravel-money": "^6.0",
+        "ariaieboy/filament-currency": "^1.13",
         "azure-oss/storage-blob-flysystem": "^1.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "eclipxe/cfdiutils": "^2.2.9",
@@ -21,13 +22,15 @@
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.23",
         "league/flysystem-azure-blob-storage": "^3.28",
+        "pelmered/filament-money-field": "^1.5",
         "phpcfdi/cfditopdf": "^0.4.2",
         "phpcfdi/credentials": "^1.3",
         "phpcfdi/sat-ws-descarga-masiva": "^1.0",
         "robrichards/wse-php": "^2.0",
         "robrichards/xmlseclibs": "^3.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^6.20"
+        "spatie/laravel-permission": "^6.20",
+        "tuxones/filament-js-money-field": "^0.1.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
