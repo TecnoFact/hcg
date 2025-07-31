@@ -17,7 +17,7 @@ class ListCfdis extends ListRecords
     {
         return [
              \EightyNine\ExcelImport\ExcelImportAction::make()
-                ->label('Importar CFDI')
+                ->label('Importar Excel')
                 ->color("primary")
                 ->use(CfdiImport::class)
                 ->sampleFileExcel(

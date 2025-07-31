@@ -338,7 +338,7 @@ class TimbradoService
      * @param CfdiArchivo $id Objeto CfdiArchivo con los datos del CFDI.
      * @return \Illuminate\Http\JsonResponse
      */
-    static function timbraXML($xml, Emisor $emisor, $sello, CfdiArchivo $id)
+    static function timbraXML($xml, Emisor $emisor, $sello, \App\Models\Models\Cfdi $id)
     {
          $xmlFirmado = Storage::disk('public')->path($xml);
          $registro = null;
@@ -392,7 +392,7 @@ class TimbradoService
            $id->uuid = $timbreData['uuid'] ?? '';
            $id->sello = $sello;
            $id->ruta = $ruta;
-           $id->status_upload = CfdiArchivo::ESTATUS_TIMBRADO;
+           $id->status_upload = \App\Models\Models\Cfdi::ESTATUS_TIMBRADO;
            $id->estatus = 'timbrado';
            $id->save();
 
@@ -439,18 +439,18 @@ class TimbradoService
                 $data['message'] = 'CFDI depositado al SAT correctamente';
                 $data['status'] = 'success';
 
-                $registro = CfdiArchivo::find($registro->id);
+                $registro = \App\Models\Models\Cfdi::find($registro->id);
 
                 $registro->update([
                     'respuesta_sat' => $envioService['xml'],
                     'intento_envio_sat' => $registro->intento_envio_sat + 1,
-                    'status_upload' => CfdiArchivo::ESTATUS_DEPOSITADO
+                    'status_upload' => \App\Models\Models\Cfdi::ESTATUS_DEPOSITADO
                 ]);
 
                 return $data;
 
             } catch (\Exception $e) {
-                $registro = CfdiArchivo::find($registro->id);
+                $registro = \App\Models\Models\Cfdi::find($registro->id);
                 $registro->update([
                     'respuesta_sat' => 'Error: ' . $e->getMessage(),
                     'intento_envio_sat' => $registro->intento_envio_sat + 1
@@ -565,7 +565,7 @@ class TimbradoService
 
 
 
-    static function createCfdiToPDF(CfdiArchivo $cfdiArchivo)
+    static function createCfdiToPDF(\App\Models\Models\Cfdi $cfdiArchivo)
     {
         try {
             // Read the XML file content
@@ -689,7 +689,7 @@ class TimbradoService
             $image = QrCode::format('png')->size(150)->margin(0)->generate($dataCadena['qr_cadena']);
             $qr = 'data:image/png;base64,' . base64_encode($image);
 
-            $customer_invoice = CfdiArchivo::where('id', $cfdiArchivo->id)->first();
+            $customer_invoice = \App\Models\Models\Cfdi::where('id', $cfdiArchivo->id)->first();
 
             $logo = null;
             if ($emisor->logo) {
