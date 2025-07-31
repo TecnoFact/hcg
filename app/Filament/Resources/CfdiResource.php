@@ -201,7 +201,7 @@ class CfdiResource extends Resource
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
                                     ->searchable()
-                                    ->options(options: DB::table('catalogo_clave_unidad')->pluck('nombre', 'clave')),
+                                    ->options(options: DB::table('unit_measures')->pluck('name', 'code')),
                                 Forms\Components\TextInput::make('unidad')
                                     ->label('Unidad')
                                     ->maxLength(20),

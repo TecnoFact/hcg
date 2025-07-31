@@ -13,43 +13,25 @@ class CatalogoClaveUnidadSeed extends Seeder
      */
     public function run(): void
     {
-        $db = \DB::table('catalogo_clave_unidad');
+        $db = \DB::table('unit_measures');
 
         // Verificar si la tabla existe
         if (!$db->exists()) {
             $db->truncate(); // Limpiar la tabla si no existe
         }
 
-        $path = storage_path('app/catalogos/cfdi40/c_ClaveUnidad.csv');
+        $path = storage_path('app/catalogos/cfdi40/unit_measure.sql');
 
         if (!file_exists($path)) {
             $this->command->error("Archivo no encontrado: $path");
             return;
         }
 
-          // Cargar el archivo saltando las 3 primeras líneas
-        $csv = Reader::createFromPath($path, 'r');
-        $csv->setHeaderOffset(3); // encabezado real en la línea 4
+            $sql = file_get_contents($path);
+            \DB::unprepared($sql);
 
-        foreach ($csv->getRecords() as $record) {
-            // Validar que sea un valor de clave válida (ej: "01", "03", etc.)
-            if (!isset($record['c_ClaveUnidad']) || !is_numeric($record['c_ClaveUnidad'])) {
-                continue; // saltar registros inválidos
-            }
+            $this->command->info('Archivo SQL importado correctamente.');
 
-            $db->updateOrInsert([
-                'clave' => $record['c_ClaveUnidad'],
-            ], [
-                'nombre' => $record['Nombre'],
-                'descripcion' => $record['Descripción'],
-                'nota' => $record['Nota'] ?? null,
-                'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
-                'vigencia_hasta' => $record['Fecha de fin de vigencia'] ?: null,
-                'simbolo' => $record['Símbolo'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
 
 
         $this->command->info('Catalogo Clave Unidad seeded successfully.');
