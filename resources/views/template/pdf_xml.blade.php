@@ -66,23 +66,19 @@
                 @endif
             </td>
             <td width="25%" style="vertical-align: top; text-transform: uppercase;">
-                <strong>{{ mb_strtoupper($customer_invoice->user->name) }}</strong>
                 <br/>
-                <span style="text-transform: lowercase;">{{ $customer_invoice->user->email ?? ' ' }}</span>
             </td>
 
             <td width="22%" style="vertical-align: top; text-transform: uppercase;">
-                <strong>Fecha</strong>
                 <br/>
             </td>
 
             <td width="28%" class="text-right" style="vertical-align: top;">
                 <div>
                 <table cellpadding="0" cellspacing="1" class="" width="100%">
-
                     <tr>
-                        <td class="cell-primary-border-line text-center" style="">{!! str_replace(' ','<br>',$fecha) !!}</td>
-                        <td class="cell-primary-border-line text-center" style="">{{ $customer_invoice->name }}</td>
+                        <td class="cell-primary-border-line text-center" style=""> <strong>Fecha: </strong>{!! str_replace(' ','<br>',$fecha) !!}</td>
+                        <td class="cell-primary-border-line text-center" style="">{{ $customer_invoice->id }}</td>
                     </tr>
                     <tr>
                         <td width="" class="" colspan="2" style="">&nbsp;</td>
@@ -117,6 +113,9 @@
                     {{ mb_strtoupper($receptorRfc) }}
                 </td>
 
+                <td class="cell-primary-border-line text-left" style="vertical-align: top; height: 50px; padding: 5px;">
+                    <br>
+                </td>
             </tr>
         </table>
     </div>
