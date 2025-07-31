@@ -139,7 +139,7 @@ class ComplementoXmlService
      * @param string $xml Ruta al archivo XML.
      * @return void
      */
-    public static function insertXmlToDB(string $xml, CfdiArchivo $cfdiArchivo): void
+    public static function insertXmlToDB(string $xml, Cfdi $cfdiArchivo): void
     {
         // Aquí va la lógica para insertar el XML en la base de datos
         $comprobante = \CfdiUtils\Cfdi::newFromString(file_get_contents($xml))
@@ -181,7 +181,7 @@ class ComplementoXmlService
             ]
         );
 
-             $cfdi = Cfdi::create([
+             $cfdi = $cfdiArchivo->update([
                 'emisor_id' => $emisorData->id,
                 'receptor_id' => $receptorData->id,
                 'uuid' => $comprobante['UUID'],
@@ -197,20 +197,16 @@ class ComplementoXmlService
                 'metodo_pago' => $comprobante['MetodoPago'],
                 'lugar_expedicion' => $comprobante['LugarExpedicion'],
                 'user_id' => auth()->id(),
-                'cfdi_archivos_id' => $cfdiArchivo->id
+                'cfdi_archivos_id' => null
             ]);
 
-            $cfdiArchivo->rfc_receptor = $receptor['Rfc'];
-            $cfdiArchivo->total = number_format($comprobante['Total'], 2, '.', '');
-            $cfdiArchivo->fecha = $comprobante['Fecha'];
-            $cfdiArchivo->tipo_comprobante = $comprobante['TipoDeComprobante'];
-            $cfdiArchivo->save();
+
 
          // insertar si hay conceptos en la bsee de datos
          foreach($conceptos() as $concepto)
          {
             $cfdiConcepto = new \App\Models\Models\CfdiConcepto();
-            $cfdiConcepto->cfdi_id = $cfdi->id;
+            $cfdiConcepto->cfdi_id = $cfdiArchivo->id;
             $cfdiConcepto->clave_prod_serv = $concepto['ClaveProdServ'];
             $cfdiConcepto->no_identificacion = $concepto['NoIdentificacion'];
             $cfdiConcepto->cantidad = $concepto['Cantidad'];

@@ -8,12 +8,8 @@ use App\Models\Tax;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables;
-
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\CfdiArchivo;
-
-
 use App\Models\Models\Cfdi;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\DB;

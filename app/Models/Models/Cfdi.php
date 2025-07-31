@@ -5,10 +5,18 @@ namespace App\Models\Models;
 use App\Models\User;
 use App\Models\CfdiArchivo;
 use App\Models\Models\CfdiConcepto;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Cfdi extends Model
 {
+    use HasFactory;
+
+    const ESTATUS_SUBIDO = 'subido';
+    const ESTATUS_SELLADO = 'sellado';
+    const ESTATUS_TIMBRADO = 'timbrado';
+    const ESTATUS_DEPOSITADO = 'depositado';
+
     protected $table = 'cfdis';
 
     protected $fillable = [
@@ -30,7 +38,20 @@ class Cfdi extends Model
         'path_xml',
         'user_id',
         'cfdi_archivos_id',
-        'impuesto'
+        'impuesto',
+
+        // nuevos campos
+        'nombre_archivo',
+        'ruta',
+        'uuid',
+        'sello',
+        'estatus',
+        'fecha_envio_sat',
+        'respuesta_sat',
+        'token_sat',
+        'intento_envio_sat',
+        'status_upload',
+        'pdf_path',
     ];
 
     public function emisor()

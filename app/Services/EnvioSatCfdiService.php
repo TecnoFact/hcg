@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Emisor;
+use App\Models\Models\Cfdi;
 use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ use Str;
 
 class EnvioSatCfdiService
 {
-    public function enviar(CfdiArchivo $cfdi): void
+    public function enviar(Cfdi $cfdi): void
     {
         $xml = Storage::disk('local')->get($cfdi->ruta);
         $nameXml = $cfdi->uuid . '.xml';
@@ -222,12 +223,12 @@ class EnvioSatCfdiService
      * Enviar el CFDI al SAT al metodo de recepcion de documentos.
      *
      * @param string $token obtenido del login al sat
-     * @param CfdiArchivo $cfdi
+     * @param Cfdi $cfdi
      * @param string $nameXml nombre del archivo XML
      * @return void
      * @throws Exception
      */
-    private function enviarSoapSat(string $token, CfdiArchivo $cfdi, string $nameXml): array
+    private function enviarSoapSat(string $token, Cfdi $cfdi, string $nameXml): array
     {
 
         if(!$token) {
@@ -407,7 +408,7 @@ class EnvioSatCfdiService
         return ['xml' => $xmlResponse->asXML()];
     }
 
-     private function enviarSoapSatFromXml(string $token, CfdiArchivo $cfdi, string $nameXml): void
+     private function enviarSoapSatFromXml(string $token, Cfdi $cfdi, string $nameXml): void
     {
 
         if(!$token) {
@@ -734,7 +735,7 @@ class EnvioSatCfdiService
         Log::debug('Token recibido del SAT', ['token' => $token]);
 
         $nameXml = $uuid . '.xml';
-        $cfdi = CfdiArchivo::where('uuid', $uuid)->first();
+        $cfdi = Cfdi::where('uuid', $uuid)->first();
 
         if (!$cfdi) {
             Log::error('CFDI no encontrado', ['uuid' => $uuid]);
@@ -748,7 +749,7 @@ class EnvioSatCfdiService
 
 
 
-     public function enviarXml(CfdiArchivo $cfdi): array
+     public function enviarXml(Cfdi $cfdi): array
     {
         $response = ['xml' => ''];
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Models\Cfdi;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 use App\Models\CfdiArchivo;
@@ -70,8 +71,8 @@ class CfdiContinue extends Page
             abort(403, 'No tienes permiso para acceder a esta página.');
         }
 
-        $this->cfdiArchivo = CfdiArchivo::find($id);
-        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_SUBIDO){
+        $this->cfdiArchivo = Cfdi::find($id);
+        if($this->cfdiArchivo->status_upload == Cfdi::ESTATUS_SUBIDO){
             $this->subido = true;
             $this->estado = '
             <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
@@ -82,7 +83,7 @@ class CfdiContinue extends Page
             </span>
             ';
         }
-        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_SELLADO){
+        if($this->cfdiArchivo->status_upload == Cfdi::ESTATUS_SELLADO){
             $this->sellado = true;
             $this->estado = '
             <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
@@ -93,7 +94,7 @@ class CfdiContinue extends Page
             </span>
             ';
         }
-        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_TIMBRADO){
+        if($this->cfdiArchivo->status_upload == Cfdi::ESTATUS_TIMBRADO){
             $this->timbrado = true;
             $this->estado = '
             <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
@@ -104,7 +105,7 @@ class CfdiContinue extends Page
             </span>
             ';
         }
-        if($this->cfdiArchivo->status_upload == CfdiArchivo::ESTATUS_DEPOSITADO){
+        if($this->cfdiArchivo->status_upload == Cfdi::ESTATUS_DEPOSITADO){
             $this->depositado = true;
             $this->estado = '
             <span style="background-color: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; padding: 0.25rem 0.5rem; display: inline-flex; align-items: center;">
@@ -171,7 +172,7 @@ class CfdiContinue extends Page
         ';
 
         // guardar el registro de subir xml a cfdiArchivo
-        $registro = CfdiArchivo::create([
+        $registro = Cfdi::create([
             'user_id' => Auth::id(),
             'nombre_archivo' => "",
             'ruta' => $this->pathXml,
@@ -182,7 +183,7 @@ class CfdiContinue extends Page
             'total' => "",
             'fecha' => "",
             'tipo_comprobante' => "",
-            'status_upload' => CfdiArchivo::ESTATUS_SUBIDO
+            'status_upload' => Cfdi::ESTATUS_SUBIDO
         ]);
 
         $this->cfdiArchivo = $registro;
@@ -198,11 +199,11 @@ class CfdiContinue extends Page
     {
 
         try {
-            $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+            $cfdiArchivo = Cfdi::find($this->cfdiArchivo->id);
 
               $xmlPath = $cfdiArchivo->ruta;
 
-            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
+            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->emisor->rfc)->first();
 
             if(file_exists(Storage::disk('local')->path($xmlPath)) === false) {
                 Notification::make()
@@ -256,8 +257,7 @@ class CfdiContinue extends Page
             $this->xmlPath = $processXml['ruta'];
 
             $cfdiArchivo->sello = $processXml['sello'];
-            $cfdiArchivo->rfc_receptor = $processXml['rfc_receptor'] ?? '';
-            $cfdiArchivo->status_upload = CfdiArchivo::ESTATUS_SELLADO;
+            $cfdiArchivo->status_upload = Cfdi::ESTATUS_SELLADO;
             $cfdiArchivo->ruta = $processXml['ruta'];
             $cfdiArchivo->total = $processXml['total'];
             $cfdiArchivo->fecha = $processXml['fecha'];
@@ -288,12 +288,12 @@ class CfdiContinue extends Page
 
     public function timbrarXml()
     {
-        $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+        $cfdiArchivo = Cfdi::find($this->cfdiArchivo->id);
 
         $sello = $cfdiArchivo->sello;
         $xmlPath = $cfdiArchivo->ruta;
 
-        $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
+        $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->emisor->rfc)->first();
 
         if (!$emisor) {
             Notification::make()
@@ -402,7 +402,7 @@ class CfdiContinue extends Page
     public function publicacion()
     {
 
-        $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+        $cfdiArchivo = Cfdi::find($this->cfdiArchivo->id);
 
         if( !$cfdiArchivo) {
             Notification::make()
@@ -465,7 +465,7 @@ class CfdiContinue extends Page
     {
         $ID = 62; // Cambia esto al ID del registro que deseas convertir a PDF
 
-        $registro = CfdiArchivo::find($ID);
+        $registro = Cfdi::find($ID);
 
         $pdf = TimbradoService::generatePdfFromXml($registro->respuesta_sat);
 
