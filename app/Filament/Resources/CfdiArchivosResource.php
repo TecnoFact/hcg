@@ -3,12 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CfdiArchivosResource\Pages;
-
-use App\Models\CfdiArchivo;
 use App\Models\Models\Cfdi;
 use Filament\Tables\Actions\Action;
-
-
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
@@ -21,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CfdiArchivosResource extends Resource
 {
-    protected static ?string $model = CfdiArchivo::class;
+    protected static ?string $model = Cfdi::class;
 
     protected static ?string $label = 'CFDI Archivos';
 
@@ -44,10 +40,10 @@ class CfdiArchivosResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('rfc_emisor')
-                    ->label('RFC Emisor'),
-                Tables\Columns\TextColumn::make('rfc_receptor')
-                    ->label('RFC Receptor'),
+               Tables\Columns\TextColumn::make('emisor.rfc')
+                    ->label('RFC Emisor')->searchable(),
+                Tables\Columns\TextColumn::make('receptor.rfc')
+                    ->label('RFC Receptor')->searchable(),
                 Tables\Columns\TextColumn::make('uuid')
                     ->label('UUID')->searchable(),
                 Tables\Columns\TextColumn::make('fecha')

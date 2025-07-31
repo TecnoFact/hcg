@@ -209,7 +209,7 @@ class Cfdi extends Page
         ';
 
         // guardar el registro de subir xml a cfdiArchivo
-        $registro = CfdiArchivo::create([
+        $registro = \App\Models\Models\Cfdi::create([
             'user_id' => Auth::id(),
             'nombre_archivo' => $nameFile,
             'ruta' => 'cfdi/' . $pathXml,
@@ -217,10 +217,16 @@ class Cfdi extends Page
             'sello' => "",
             'rfc_emisor' => $emisor->rfc,
             'rfc_receptor' => "",
-            'total' => "",
             'fecha' => "",
-            'tipo_comprobante' => "",
-            'status_upload' => CfdiArchivo::ESTATUS_SUBIDO
+            'tipo_de_comprobante' => "",
+            'lugar_expedicion' => "",
+            'emisor_id' => 1,
+            'subtotal' => "0",
+            'total' => "0",
+            'receptor_id' => 1,
+            'path_xml' => 'cfdi/' . $pathXml,
+            'estatus' => 'validado',
+            'status_upload' => \App\Models\Models\Cfdi::ESTATUS_SUBIDO
         ]);
 
         $this->cfdiArchivo = $registro;
@@ -229,7 +235,7 @@ class Cfdi extends Page
         try {
             ComplementoXmlService::insertXmlToDB($this->pathXml, $registro);
         } catch (\Exception $e) {
-            Log::error('Error al insertar datos del XML: ' . $e->getMessage());
+            Log::error('Error al insertar datos del XML: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
             Notification::make()
                 ->title('Error al insertar datos del XML')
                 ->danger()
@@ -249,11 +255,11 @@ class Cfdi extends Page
     {
 
         try {
-            $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+            $cfdiArchivo = \App\Models\Models\Cfdi::find($this->cfdiArchivo->id);
 
             $xmlPath = $cfdiArchivo->ruta;
 
-            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->rfc_emisor)->first();
+            $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->emisor->rfc)->first();
 
              $contentXml = Storage::disk('local')->path($xmlPath);
 
@@ -299,8 +305,7 @@ class Cfdi extends Page
             $this->xmlPath = $processXml['ruta'];
 
             $cfdiArchivo->sello = $processXml['sello'];
-            $cfdiArchivo->rfc_receptor = $processXml['rfcReceptor'] ?? '';
-            $cfdiArchivo->status_upload = CfdiArchivo::ESTATUS_SELLADO;
+            $cfdiArchivo->status_upload = \App\Models\Models\Cfdi::ESTATUS_SELLADO;
             $cfdiArchivo->ruta = $processXml['ruta'];
             $cfdiArchivo->total = $processXml['total'];
             $cfdiArchivo->fecha = $processXml['fecha'];
@@ -333,7 +338,7 @@ class Cfdi extends Page
 
     public function timbrarXml()
     {
-        $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+        $cfdiArchivo = \App\Models\Models\Cfdi::find($this->cfdiArchivo->id);
 
         $sello = $cfdiArchivo->sello;
         $xmlPath = $cfdiArchivo->ruta;
@@ -354,32 +359,6 @@ class Cfdi extends Page
 
 
         $comprobante = \CfdiUtils\Cfdi::newFromString($xmlPath)->getQuickReader();
-
-        //dd($comprobante);
-
-        // vaalidr si la fecha del $comprobante es un dia lunes, de ser asi devuelve un notification de error
-       /*
-        $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('l');
-        if ($fechaEmision !== 'Tuesday') {
-            Notification::make()
-                ->title('Error al timbrar el XML')
-                ->danger()
-                ->body('La fecha de emisión debe ser un martes.')
-                ->send();
-            return;
-        }
-
-        // valida que la fecha del comprobante no sea segundo :00 si es asi devuelve un notification de error
-        $fechaEmision = Carbon::parse($comprobante['Fecha'])->format('s');
-        if ($fechaEmision === '00') {
-            Notification::make()
-                ->title('Error al timbrar el XML')
-                ->danger()
-                ->body('La fecha de emisión no puede tener segundos en 00.')
-                ->send();
-            return;
-        }
-            */
 
         $fechaCfdi = Carbon::parse($comprobante['Fecha'])->utc();
 
@@ -448,7 +427,7 @@ class Cfdi extends Page
     public function publicacion()
     {
 
-        $cfdiArchivo = CfdiArchivo::find($this->cfdiArchivo->id);
+        $cfdiArchivo = \App\Models\Models\Cfdi::find($this->cfdiArchivo->id);
 
         if( !$cfdiArchivo) {
             Notification::make()
@@ -510,7 +489,7 @@ class Cfdi extends Page
     {
         $ID = 62; // Cambia esto al ID del registro que deseas convertir a PDF
 
-        $registro = CfdiArchivo::find($ID);
+        $registro = \App\Models\Models\Cfdi::find($ID);
 
         $pdf = TimbradoService::generatePdfFromXml($registro->respuesta_sat);
 

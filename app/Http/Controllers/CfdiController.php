@@ -6,9 +6,7 @@ use App\Models\Models\Cfdi;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Models\CfdiArchivo;
 use Illuminate\Support\Facades\Auth;
-
 use App\Services\CfdiValidatorService;
 use App\Services\CfdiComplementValidatorService;
 use App\Services\CfdiCadenaOriginalService;
@@ -143,7 +141,7 @@ class CfdiController extends Controller
             $acuse = $acuseService->generarDesdeXml($xmlFirmado);
 
             // 10. Guardar en base de datos
-            $registro = CfdiArchivo::create([
+            $registro = Cfdi::create([
                 'user_id' => Auth::id(),
                 'nombre_archivo' => $file->getClientOriginalName(),
                 'ruta' => $nombre,
@@ -245,7 +243,7 @@ class CfdiController extends Controller
             Storage::disk('local')->put($nombre, $xmlContent);
 
             // 10. Guardar en base de datos
-            $registro = CfdiArchivo::create([
+            $registro = Cfdi::create([
                 'user_id' => Auth::id(),
                 'nombre_archivo' => $file->getClientOriginalName(),
                 'ruta' => $nombre,
@@ -354,7 +352,7 @@ class CfdiController extends Controller
 
     public function descargarXml($factura)
     {
-        $cfdi = CfdiArchivo::find($factura);
+        $cfdi = Cfdi::find($factura);
         $ruta = $cfdi->ruta;
 
         if (empty($ruta)) {
@@ -394,13 +392,13 @@ class CfdiController extends Controller
 
     public function descargarPdf($factura)
     {
-        $cfdi = CfdiArchivo::find($factura);
+        $cfdi = Cfdi::find($factura);
         $cfdi->pdf_path = null;
         $cfdi->save();
 
         TimbradoService::createCfdiToPDF($cfdi);
 
-        $cfdiPathPdf = CfdiArchivo::find($factura);
+        $cfdiPathPdf = Cfdi::find($factura);
         if (!$cfdiPathPdf) {
             Notification::make()
                 ->title('Error al descargar PDF')
@@ -450,7 +448,7 @@ class CfdiController extends Controller
 
     public function cancelCfdi($factura)
     {
-        $cfdi = CfdiArchivo::find($factura);
+        $cfdi = Cfdi::find($factura);
 
         if (!$cfdi) {
             Notification::make()
@@ -492,7 +490,7 @@ class CfdiController extends Controller
 
         $cfdi->sello = '';
         $cfdi->uuid = '';
-        $cfdi->status_upload = CfdiArchivo::ESTATUS_SUBIDO;
+        $cfdi->status_upload = Cfdi::ESTATUS_SUBIDO;
         $cfdi->save();
 
         Notification::make()
