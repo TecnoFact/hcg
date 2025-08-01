@@ -16,6 +16,8 @@ class RegimenFiscalSeed extends Seeder
     {
         $path = storage_path('app/catalogos/cfdi40/c_RegimenFiscal.csv');
 
+        DB::table('catalogo_regimen_fiscal')->truncate(); // Limpiar la tabla antes de insertar nuevos datos
+
         if (!file_exists($path)) {
             $this->command->error("Archivo no encontrado: $path");
             return;
@@ -23,7 +25,7 @@ class RegimenFiscalSeed extends Seeder
 
         // Cargar el archivo saltando las 3 primeras líneas
         $csv = Reader::createFromPath($path, 'r');
-        $csv->setHeaderOffset(3); // encabezado real en la línea 4
+        $csv->setHeaderOffset(2); // encabezado real en la línea 4
 
         foreach ($csv->getRecords() as $record) {
             // Validar que sea un valor de clave válida (ej: "01", "03", etc.)

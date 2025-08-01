@@ -15,6 +15,7 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\Models\Cfdi;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -198,7 +199,7 @@ class CfdiResource extends Resource
                                     ->label('Descripción')
                                     ->required()
                                     ->maxLength(255),
-                                JSMoneyInput::make('valor_unitario')
+                                TextInput::make('valor_unitario')
                                     ->required()
                                     ->inputMode('decimal')
                                     ->prefix('$')
@@ -231,9 +232,8 @@ class CfdiResource extends Resource
                                             ->label('Importe')
                                             ->numeric()
                                             ->required()
-                                            ->disabled()
-                                             ->prefix('$')
-                                                ->suffixAction(
+                                            ->prefix('$')
+                                            ->suffixAction(
                                                     \Filament\Forms\Components\Actions\Action::make('copyCostToPrice')
                                                         ->icon('heroicon-m-squares-plus')
                                                         ->action(function (Set $set, $state, callable $get) {
@@ -252,8 +252,7 @@ class CfdiResource extends Resource
 
                                                                 $set('importe', $importe);
                                                         })
-                                                )
-                                            ->formatStateUsing(fn ($state) => number_format((float) $state, 2, '.', ',')),
+                                                ),
                                ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto')
