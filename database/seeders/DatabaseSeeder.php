@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             CountrySeed::class,
             RegimenFiscalSeed::class,
             StateSeed::class,
+            ImpuestoSeed::class,
+            ObjImpSeed::class,
             PermissionSeed::class,
             RoleSeed::class,
             AdminUserSeeder::class,
