@@ -33,14 +33,14 @@ class User extends Authenticatable
     ];
 
     public function getFilamentAvatarUrl(): ?string
-{
-    // O cualquier lógica que tengas para la URL
-    if ($this->profile_picture) {
-        Log::info('User profile picture URL: ' . Storage::disk('public')->exists($this->profile_picture));
-    }
+    {
+        // O cualquier lógica que tengas para la URL
+        if ($this->profile_picture) {
+            Log::info('User profile picture URL: ' . Storage::disk('public')->exists($this->profile_picture));
+        }
 
-    return $this->profile_picture
-        ? Storage::disk('public')->url($this->profile_picture)
-        : null; // o un avatar por defecto
-}
+        return $this->profile_picture
+            ? Storage::disk('public')->url($this->profile_picture)
+            : null; // o un avatar por defecto
+    }
 }

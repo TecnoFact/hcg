@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Cfdi;
+use App\Filament\Widgets\CfdiChart;
 use App\Filament\Widgets\TotalInvoiceWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -47,6 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 TotalInvoiceWidget::class,
+                CfdiChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
