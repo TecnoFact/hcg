@@ -80,8 +80,7 @@ class EmisorResource extends Resource
                                     ->limit(20)
                                     ->pluck('descripcion', 'clave')
                             )
-                            ->reactive()
-                            ->default(2),
+                            ->reactive(),
                         ColorPicker::make('color')
                             ->label('Color PDF')
                             ->default('#000000'),
