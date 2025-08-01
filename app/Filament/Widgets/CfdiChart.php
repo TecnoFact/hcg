@@ -12,6 +12,11 @@ class CfdiChart extends ChartWidget
     protected static ? string $heading = 'Grafica Emisión de CFDI';
     protected static bool $hasForm = true;
 
+        protected static ?int $sort = 100;
+
+
+    protected int|string|array $columnSpan = 'full';
+
     public ?string $filter = 'today';
     public ?string $fecha_inicio = null;
     public ?string $fecha_fin = null;
