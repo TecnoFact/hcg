@@ -12,6 +12,11 @@ class CfdiChart extends ChartWidget
     protected static ? string $heading = 'Grafica Emisión de CFDI';
     protected static bool $hasForm = true;
 
+        protected static ?int $sort = 100;
+
+
+    protected int|string|array $columnSpan = 'full';
+
     public ?string $filter = 'today';
     public ?string $fecha_inicio = null;
     public ?string $fecha_fin = null;
@@ -62,7 +67,7 @@ protected function getData(): array
         $resultados = Cfdi::query()
             ->selectRaw('DAY(created_at) as dia, COUNT(*) as total')
             ->whereBetween('created_at', [$inicioMes, $finMes])
-            ->when($estado, fn($q) => $q->where('estatus_upload', $estado))
+            ->when($estado, fn($q) => $q->where('status_upload', $estado))
             ->groupBy('dia')
             ->get()
             ->mapWithKeys(function($item) {

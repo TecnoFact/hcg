@@ -23,6 +23,8 @@ class Cfdi extends Page
 
     protected static ?string $title =  'Subir CFDI';
 
+      protected static ?int $navigationSort = 2;
+
     public $rfc;
     public $xml_file;
 

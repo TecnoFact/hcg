@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cfdis', function (Blueprint $table) {
-            $table->unsignedBigInteger('cfdi_archivos_id')->nullable()->after('uuid');
+            $table->unsignedBigInteger('cfdi_archivos_id')->nullable();
         });
     }
 

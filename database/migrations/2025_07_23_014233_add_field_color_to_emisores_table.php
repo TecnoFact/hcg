@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('emisores', function (Blueprint $table) {
-            $table->string('color')->nullable()->after('regimen_fiscal_id');
+            $table->string('color')->nullable();
         });
     }
 
