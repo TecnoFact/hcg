@@ -33,7 +33,7 @@ class EditEmisor extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $data['user_id'] = auth()->id();
-
+        $data['name'] = $data['reason_social'];
         // subir el archivo cer y key al Storage disk local dentro de la carpeta certificates y con el nombre del rfc y que el nombre del archivo sea el rfc con su extension
 
 
