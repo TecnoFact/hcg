@@ -16,6 +16,7 @@
         "eightynine/filament-excel-import": "^3.1",
         "filament/filament": "^3.3",
         "guzzlehttp/guzzle": "^7.9",
+        "hydrat/filament-table-layout-toggle": "^2.1",
         "kwn/number-to-words": "^2.12",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",

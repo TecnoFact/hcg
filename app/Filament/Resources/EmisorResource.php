@@ -3,9 +3,12 @@
 namespace App\Filament\Resources;
 
 use Filament\Forms;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use App\Models\Emisor;
 use Filament\Forms\Form;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
@@ -167,7 +170,26 @@ class EmisorResource extends Resource
 
     public static function table(Table $table): Table
     {
+
         return $table
+            ->columns([
+                Stack::make([
+                    Tables\Columns\ImageColumn::make('logo')
+                        ->label('Logo')
+                        ->disk('local')
+                        ->visibility('private')
+                        ->circular(),
+
+                    Tables\Columns\TextColumn::make('rfc')->searchable(),
+                    Tables\Columns\TextColumn::make('reason_social')->size(TextColumnSize::Large)->searchable(),
+                    Tables\Columns\TextColumn::make('email')->icon('heroicon-o-envelope')->searchable(),
+                ]),
+            ])
+        ->contentGrid([
+            'md' => 2,
+            'xl' => 3,
+        ])
+        /*
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable()->label('Nombre'),
@@ -186,6 +208,7 @@ class EmisorResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
+                */
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
