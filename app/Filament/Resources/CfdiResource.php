@@ -8,10 +8,13 @@ use App\Models\Tax;
 use Filament\Forms;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TextInput\Mask;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Set;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Forms\Form;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Models\Cfdi;
 use Filament\Resources\Resource;
@@ -25,7 +28,9 @@ use App\Filament\Resources\CfdiResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\CfdiResource\RelationManagers;
 use Pelmered\FilamentMoneyField\Forms\Components\MoneyInput;
+use Pelmered\FilamentMoneyField\Infolists\Components\MoneyEntry;
 use Tuxones\JsMoneyField\Forms\Components\JSMoneyInput;
+use Tuxones\JsMoneyField\Tables\Columns\JSMoneyColumn;
 use function Filament\Support\format_money;
 use function Filament\Support\format_number;
 
@@ -199,35 +204,16 @@ class CfdiResource extends Resource
                                     ->label('Descripción')
                                     ->required()
                                     ->maxLength(255),
-                                TextInput::make('valor_unitario')
-                                    ->required()
-                                    ->inputMode('decimal')
-                                    ->prefix('$')
-                                    ->label('Valor Unitario'),
+                               TextInput::make('valor_unitario')
+                                    ->label('Valor Unitario')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->numeric()
+                                    ->required(),
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
-                                    ->required()
-
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get){
-                                        $cantidad = (float) $state;
-                                        $valorUnitario = (float) $get('valor_unitario');
-                                        $tipoImpuesto = $get('tipo_impuesto');
-                                        $importe = $cantidad * $valorUnitario;
-
-                                        if ($tipoImpuesto) {
-                                            $tax = \App\Models\Tax::find($tipoImpuesto);
-                                            if ($tax) {
-                                                $importe += $importe * ($tax->rate / 100);
-                                            }
-                                        }
-
-                                        $importe = number_format($importe, 2, '.', ',');
-
-                                        $set('importe', $importe);
-                                    }),
-
-
+                                    ->required(),
                                          Forms\Components\TextInput::make('importe')
                                             ->label('Importe')
                                             ->numeric()
@@ -256,12 +242,7 @@ class CfdiResource extends Resource
                                ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto')
-                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
-                                $cantidad = isset($data['cantidad']) ? (float) $data['cantidad'] : 0;
-                                $valorUnitario = isset($data['valor_unitario']) ? (float) $data['valor_unitario'] : 0;
-                                $data['importe'] = $cantidad * $valorUnitario;
-                                return $data;
-                            })
+
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $total = 0;
                                 if (is_array($state)) {
@@ -277,24 +258,6 @@ class CfdiResource extends Resource
             ]);
     }
 
-    private function calcularImporte(callable $get, callable $set): void
-    {
-        $cantidad = (float) $get('cantidad');
-        $valorUnitario = (float) $get('valor_unitario');
-        $tipoImpuesto = $get('tipo_impuesto');
-
-        $importe = $cantidad * $valorUnitario;
-
-        if ($tipoImpuesto) {
-            $tax = \App\Models\Tax::find($tipoImpuesto);
-            if ($tax) {
-                $importe += $importe * ($tax->rate / 100);
-            }
-        }
-
-        $set('importe', $importe);
-    }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -306,6 +269,12 @@ class CfdiResource extends Resource
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
+                    TextColumn::make('subtotal')
+                    ->numeric()
+                    ->label('SubTotal'),
+                    TextColumn::make('impuesto')
+                    ->numeric()
+                    ->label('Impuesto'),
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
                     ->label('Total'),
@@ -322,6 +291,14 @@ class CfdiResource extends Resource
                     ->color('success')
                     ->openUrlInNewTab(false)
                     ->visible(fn($record) => $record->path_xml !== null),
+
+                Action::make('descargar_pdf')
+                    ->label('Descargar PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn($record) => route('cfdis.descargar-pdf', $record))
+                    ->color('success')
+                    ->openUrlInNewTab(false)
+                    ->visible(fn($record) => $record->path_pdf !== null),
 
                 Tables\Actions\EditAction::make(),
             ])

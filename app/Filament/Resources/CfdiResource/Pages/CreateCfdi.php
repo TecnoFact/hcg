@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CfdiResource\Pages;
 
+use App\Models\Models\Cfdi;
 use Filament\Actions\Action;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiConcepto;
@@ -42,20 +43,6 @@ class CreateCfdi extends CreateRecord
         ];
 
         $total = 0;
-        $contador = 1;
-
-        if (isset($data['conceptos']) && is_array($data['conceptos'])) {
-            foreach ($data['conceptos'] as $i => $concepto) {
-                $concepto['no_identificacion'] = $contador++;
-                $cantidad = isset($concepto['cantidad']) ? (float) $concepto['cantidad'] : 0;
-                $valorUnitario = isset($concepto['valor_unitario']) ? (float) $concepto['valor_unitario'] : 0;
-                $importe = $cantidad * $valorUnitario;
-                $data['conceptos'][$i]['importe'] = $importe;
-                $total += $importe;
-            }
-        }
-
-
         $data['subtotal'] = $total; // Asigna el subtotal
         $data['total'] = $total;
 
@@ -87,23 +74,47 @@ class CreateCfdi extends CreateRecord
 
         // Registrar los conceptos en la base de datos
         $contador = 1;
+        $subtotal = 0;
+        $total = 0;
+        $iva = 0;
         foreach ($conceptos as $concepto) {
+            // Convert formatted string to float (e.g. '200,000.00' => 200000.00)
+            $valor_unitario = isset($concepto['valor_unitario'])
+                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                : 0;
 
-            CfdiConcepto::create([
+            $cfdiContepto = CfdiConcepto::create([
                 'cfdi_id' => $cfdi->id,
                 'no_identificacion' => $contador ?? null,
                 'clave_prod_serv' => $concepto['clave_prod_serv'] ?? null,
                 'cantidad' => $concepto['cantidad'] ?? null,
                 'clave_unidad' => $concepto['clave_unidad'] ?? null,
                 'unidad' => $concepto['unidad'] ?? null,
-                'valor_unitario' => $concepto['valor_unitario'] ?? null,
+                'valor_unitario' => $valor_unitario,
                 'descripcion' => $concepto['descripcion'] ?? null,
                 'tipo_impuesto' => $concepto['tipo_impuesto'] ?? null,
                 'importe' => $concepto['importe'] ?? null,
             ]);
 
+            $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
+            $calculoImporte = 0;
+            if ($tax) {
+                $calculoImporte += ($concepto['cantidad'] * $valor_unitario) * ($tax->rate / 100);
+            }
+
+            // find cfdi from update total, subtotal, iva
+            $subtotal += $concepto['cantidad'] * $valor_unitario ?? 0;
+            $iva += $calculoImporte ?? 0;
+            $total += $subtotal + $iva;
+
             $contador++;
         }
+
+        $cfdiUpdate = Cfdi::find($cfdi->id);
+        $cfdiUpdate->subtotal = $subtotal;
+        $cfdiUpdate->impuesto = $iva;
+        $cfdiUpdate->total = $total;
+        $cfdiUpdate->save();
 
         // Prepara los datos para el servicio
         $data = [

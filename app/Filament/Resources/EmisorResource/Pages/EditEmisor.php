@@ -4,6 +4,7 @@ namespace App\Filament\Resources\EmisorResource\Pages;
 
 use App\Filament\Resources\EmisorResource;
 use App\Models\Emisor;
+use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\OpenSSL\OpenSSL;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -53,6 +54,18 @@ class EditEmisor extends EditRecord
             $pemCertificate = $openssl->derCerConvertPhp($cerContents);
 
             Storage::disk('local')->put('certificates/' . $nameCerPem, $pemCertificate);
+
+             $fileCertificatePath = Storage::disk('local')->path($data['file_certificate']);
+
+            // obtener la fecha de vencimiento del certificado
+            $certificado = new Certificado($fileCertificatePath);
+
+            $fecha = date('Y-m-d H:i:s', $certificado->getValidTo());
+            $fechaDesde = date('Y-m-d H:i:s', $certificado->getValidFrom());
+
+            $data['date_from'] = $fechaDesde;
+
+            $data['due_date'] = $fecha;
         }
 
 

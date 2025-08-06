@@ -219,7 +219,7 @@ class Cfdi extends Page
             'sello' => "",
             'rfc_emisor' => $emisor->rfc,
             'rfc_receptor' => "",
-            'fecha' => "",
+            'fecha' => now(),
             'tipo_de_comprobante' => "",
             'lugar_expedicion' => "",
             'emisor_id' => 1,

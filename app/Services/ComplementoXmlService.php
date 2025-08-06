@@ -115,12 +115,12 @@ class ComplementoXmlService
         foreach ($datos['conceptos'] as $c) {
             $concepto = $doc->createElement('cfdi:Concepto');
             $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
-            $concepto->setAttribute('Cantidad', number_format($c['cantidad'], 6, '.', ''));
+            $concepto->setAttribute('Cantidad', number_format((float) str_replace([',', ' '], '', $c['cantidad']), 6, '.', ''));
             $concepto->setAttribute('ClaveUnidad', $c['clave_unidad']);
             $concepto->setAttribute('Unidad', $c['unidad']);
             $concepto->setAttribute('Descripcion', $c['descripcion']);
-            $concepto->setAttribute('ValorUnitario', number_format($c['valor_unitario'], 2, '.', ''));
-            $concepto->setAttribute('Importe', number_format($c['importe'], 2, '.', ''));
+            $concepto->setAttribute('ValorUnitario', number_format((float) str_replace([',', ' '], '', $c['valor_unitario']), 2, '.', ''));
+            $concepto->setAttribute('Importe', number_format((float) str_replace([',', ' '], '', $c['importe']), 2, '.', ''));
             //$concepto->setAttribute('ObjetoImp', '01'); // No objeto de impuesto
             $conceptos->appendChild($concepto);
         }
