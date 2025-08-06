@@ -30,7 +30,9 @@ class Emisor extends Model
         'password_key',
         'user_id',
         'logo',
-        'color'
+        'color',
+        'due_date',
+        'date_from'
     ];
 
     public function user()

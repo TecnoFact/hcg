@@ -180,9 +180,24 @@ class EmisorResource extends Resource
                         ->visibility('private')
                         ->circular(),
 
-                    Tables\Columns\TextColumn::make('rfc')->searchable(),
-                    Tables\Columns\TextColumn::make('reason_social')->size(TextColumnSize::Large)->searchable(),
-                    Tables\Columns\TextColumn::make('email')->icon('heroicon-o-envelope')->searchable(),
+                    Tables\Columns\TextColumn::make('rfc')
+                        ->formatStateUsing(fn($state) => 'RFC: ' . $state)
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('reason_social')
+                        ->formatStateUsing(fn($state) => 'Razón Social: ' . $state)
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('email')
+                        ->formatStateUsing(fn($state) => 'Correo electrónico: ' . $state)
+                        ->icon('heroicon-o-envelope')
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('date_from')
+                        ->formatStateUsing(fn($state) => 'Fecha de inicio: ' . $state)
+                        ->icon('heroicon-o-calendar')
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('due_date')
+                        ->formatStateUsing(fn($state) => 'Fecha de vencimiento: ' . $state)
+                        ->icon('heroicon-o-calendar')
+                        ->searchable(),
                 ]),
             ])
         ->contentGrid([
