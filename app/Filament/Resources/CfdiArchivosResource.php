@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CfdiArchivosResource\Pages;
+use App\Filament\Resources\CfdiResource\Pages\EditCfdi;
 use App\Models\Models\Cfdi;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
@@ -11,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -71,44 +73,47 @@ class CfdiArchivosResource extends Resource
                 //
             ])
             ->actions([
-                //Tables\Actions\EditAction::make(),
-                Action::make('descargar_xml')
-                ->label('Descargar XML')
-                ->icon('heroicon-o-arrow-down-tray')
-                ->url(fn($record) => route('facturas.descargar-xml', $record))
-                ->color('success')
-                ->openUrlInNewTab(false)
-                 ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
+                ActionGroup::make([
+
+                    Tables\Actions\EditAction::make(),
+
+                        Action::make('descargar_xml')
+                        ->label('Descargar XML')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn($record) => route('facturas.descargar-xml', $record))
+                        ->color('success')
+                        ->openUrlInNewTab(false)
+                        ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
 
 
-                Action::make('descargar_pdf')
-                ->label('Descargar PDF')
-                ->icon('heroicon-o-arrow-down-tray')
-                ->url(fn($record) => route('facturas.descargar-pdf', $record))
-                ->color('success')
-                ->openUrlInNewTab(false)
-                ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
+                        Action::make('descargar_pdf')
+                        ->label('Descargar PDF')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn($record) => route('facturas.descargar-pdf', $record))
+                        ->color('success')
+                        ->openUrlInNewTab(false)
+                        ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
 
 
-                Action::make('continuar')
-                ->label('Continuar')
-                ->icon('heroicon-o-arrow-right')
-                ->url(fn($record) => route('filament.admin.pages.cfdi-continues', $record))
-                ->color('success')
-                ->openUrlInNewTab(false)
-                ->visible(fn($record) => $record->status_upload !== 'depositado'),
+                        Action::make('continuar')
+                        ->label('Continuar')
+                        ->icon('heroicon-o-arrow-right')
+                        ->url(fn($record) => route('filament.admin.pages.cfdi-continues', $record))
+                        ->color('success')
+                        ->openUrlInNewTab(false)
+                        ->visible(fn($record) => $record->status_upload !== 'depositado'),
 
-                Action::make('cancelar')
-                ->label('Cancelar')
-                ->icon('heroicon-o-x-mark')
-                ->url(fn($record) => route('filament.admin.pages.cfdi-cancel', $record))
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('¿Estás seguro?')
-                ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?')
-                ->openUrlInNewTab(false)
-                ->visible(fn($record) => ($record->status_upload !== 'depositado') && ($record->status_upload !== 'subido')),
-
+                        Action::make('cancelar')
+                        ->label('Cancelar')
+                        ->icon('heroicon-o-x-mark')
+                        ->url(fn($record) => route('filament.admin.pages.cfdi-cancel', $record))
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('¿Estás seguro?')
+                        ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?')
+                        ->openUrlInNewTab(false)
+                        ->visible(fn($record) => ($record->status_upload !== 'depositado') && ($record->status_upload !== 'subido')),
+            ]),
 
             ])
             ->modifyQueryUsing(function (Builder $query) {
@@ -134,6 +139,7 @@ class CfdiArchivosResource extends Resource
     {
         return [
             'index' => Pages\ListCfdiArchivos::route('/'),
+            'edit' => EditCfdi::route('/{record}/edit'),
             //'create' => Pages\CreateCfdi::route('/create'),
             //'create' => \App\Filament\Pages\Cfdi::class,
            // 'edit' => Pages\EditCfdi::route('/{record}/edit'),

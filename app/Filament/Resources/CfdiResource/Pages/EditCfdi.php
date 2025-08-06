@@ -8,8 +8,10 @@ use App\Models\Models\Cfdi;
 use App\Models\Models\CfdiConcepto;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiReceptor;
+use App\Services\ComplementoXmlService;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Storage;
 
 class EditCfdi extends EditRecord
 {
@@ -67,6 +69,7 @@ class EditCfdi extends EditRecord
                 $importe = $cantidad * $valorUnitario;
 
                 $concepto['importe'] = $importe;
+                $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
                 $total += $importe;
             }
 
@@ -151,24 +154,70 @@ class EditCfdi extends EditRecord
         // Obtener los conceptos del formulario
         $conceptos = $data['conceptos'] ?? [];
 
-        // Registrar los conceptos en la base de datos
+        $conceptos = array_map(function ($concepto) {
+            // Convert formatted string to float (e.g. '200,000.00' => 200000.00)
+            $concepto['valor_unitario'] = isset($concepto['valor_unitario'])
+                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                : 0;
 
+            return $concepto;
+        }, $conceptos);
+
+
+
+        // Registrar los conceptos en la base de datos
+         $subtotal = 0;
+        $total = 0;
+        $iva = 0;
         foreach ($conceptos as $concepto) {
+            $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
             CfdiConcepto::updateOrCreate(
                 ['cfdi_id' => $cfdi->id, 'no_identificacion' => $concepto['no_identificacion']],
                 array_merge($concepto, ['cfdi_id' => $cfdi->id])
             );
+
+            $valor_unitario = isset($concepto['valor_unitario'])
+                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                : 0;
+
+            $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
+            $calculoImporte = 0;
+            if ($tax) {
+                $calculoImporte += ($concepto['cantidad'] * $valor_unitario) * ($tax->rate / 100);
+            }
+
+            // find cfdi from update total, subtotal, iva
+            $subtotal += $concepto['cantidad'] * $valor_unitario ?? 0;
+            $iva += $calculoImporte ?? 0;
+            $total += $subtotal + $iva;
         }
 
         // Actualizar el subtotal y total del Cfdi
         $total = array_sum(array_column($conceptos, 'importe'));
-        $cfdi->update(['subtotal' => $total, 'total' => $total]);
-
-
+        $cfdi->update(['subtotal' => $total, 'total' => $total, 'impuesto' => $iva]);
 
         // Retornar los datos actualizados
         $data['subtotal'] = $total;
         $data['total'] = $total;
+
+
+ // Prepara los datos para el servicio
+        $data = [
+            'cfdi' => $cfdi,
+            'conceptos' => $conceptos
+        ];
+
+        // Genera el XML
+        $xml = ComplementoXmlService::buildXmlCfdi($data);
+
+        // Guarda el XML
+        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+        $path_xml = 'emisiones/' . $name_xml_path;
+        Storage::disk('local')->put($path_xml, $xml);
+
+        // Actualiza el registro con la ruta del XML
+        $cfdi->update(['path_xml' => $path_xml]);
+
 
         return $data;
     }

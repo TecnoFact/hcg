@@ -83,7 +83,7 @@ class CreateCfdi extends CreateRecord
                 ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
                 : 0;
 
-            $cfdiContepto = CfdiConcepto::create([
+            CfdiConcepto::create([
                 'cfdi_id' => $cfdi->id,
                 'no_identificacion' => $contador ?? null,
                 'clave_prod_serv' => $concepto['clave_prod_serv'] ?? null,
@@ -94,6 +94,7 @@ class CreateCfdi extends CreateRecord
                 'descripcion' => $concepto['descripcion'] ?? null,
                 'tipo_impuesto' => $concepto['tipo_impuesto'] ?? null,
                 'importe' => $concepto['importe'] ?? null,
+                'obj_imp_id' => $concepto['obj_imp_id'] ?? null
             ]);
 
             $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
