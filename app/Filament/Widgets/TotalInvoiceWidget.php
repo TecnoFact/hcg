@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Emisor;
 use App\Models\Models\Cfdi;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -12,6 +13,11 @@ class TotalInvoiceWidget extends BaseWidget
     {
         $totalFacturado = Cfdi::where('user_id', auth()->id())->sum('total');
         $totalFacturado = number_format($totalFacturado, 2, '.', ',');
+
+
+        $certificadosVencidos = Emisor::where('user_id', auth()->id())
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->count();
 
         $stats = [
             Stat::make('Total Facturado', $totalFacturado)
@@ -34,7 +40,7 @@ class TotalInvoiceWidget extends BaseWidget
                 ->color('warning');
         }
 
-        $stats[] = Stat::make('Certificados Vencidos', 0)
+        $stats[] = Stat::make('Certificados Vencidos', $certificadosVencidos)
             ->description('Certificados que han vencido')
             ->icon('heroicon-o-exclamation-triangle')
             ->color('danger');

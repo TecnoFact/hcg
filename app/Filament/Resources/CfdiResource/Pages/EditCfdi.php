@@ -166,7 +166,7 @@ class EditCfdi extends EditRecord
 
 
         // Registrar los conceptos en la base de datos
-         $subtotal = 0;
+        $subtotal = 0;
         $total = 0;
         $iva = 0;
         foreach ($conceptos as $concepto) {

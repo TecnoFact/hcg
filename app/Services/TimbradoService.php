@@ -564,7 +564,12 @@ class TimbradoService
     }
 
 
-
+    /**
+     * Método para crear un PDF a partir de un CFDI.
+     *
+     * @param \App\Models\Models\Cfdi $cfdiArchivo
+     * @return string Ruta del PDF generado
+     */
     static function createCfdiToPDF(\App\Models\Models\Cfdi $cfdiArchivo)
     {
         try {

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CfdiResource\Pages;
 
 use App\Models\Models\Cfdi;
+use App\Services\TimbradoService;
 use Filament\Actions\Action;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiConcepto;
@@ -83,6 +84,19 @@ class CreateCfdi extends CreateRecord
                 ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
                 : 0;
 
+            $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
+
+            $calculoImporte = 0;
+
+            if ($tax) {
+                $calculoImporte += ($concepto['cantidad'] * $valor_unitario) * ($tax->rate / 100);
+            }
+
+            // find cfdi from update total, subtotal, iva
+            $subtotal += $concepto['cantidad'] * $valor_unitario ?? 0;
+            $iva += $calculoImporte ?? 0;
+            $total += $subtotal + $iva;
+
             CfdiConcepto::create([
                 'cfdi_id' => $cfdi->id,
                 'no_identificacion' => $contador ?? null,
@@ -93,20 +107,11 @@ class CreateCfdi extends CreateRecord
                 'valor_unitario' => $valor_unitario,
                 'descripcion' => $concepto['descripcion'] ?? null,
                 'tipo_impuesto' => $concepto['tipo_impuesto'] ?? null,
-                'importe' => $concepto['importe'] ?? null,
+                'importe' => $subtotal + $iva ?? 0,
                 'obj_imp_id' => $concepto['obj_imp_id'] ?? null
             ]);
 
-            $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
-            $calculoImporte = 0;
-            if ($tax) {
-                $calculoImporte += ($concepto['cantidad'] * $valor_unitario) * ($tax->rate / 100);
-            }
 
-            // find cfdi from update total, subtotal, iva
-            $subtotal += $concepto['cantidad'] * $valor_unitario ?? 0;
-            $iva += $calculoImporte ?? 0;
-            $total += $subtotal + $iva;
 
             $contador++;
         }
@@ -125,6 +130,7 @@ class CreateCfdi extends CreateRecord
 
         // Genera el XML
         $xml = ComplementoXmlService::buildXmlCfdi($data);
+        $pdf = TimbradoService::createCfdiToPDF($cfdiUpdate);
 
         // Guarda el XML
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
@@ -133,6 +139,7 @@ class CreateCfdi extends CreateRecord
 
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $path_xml]);
+        $cfdi->update(['path_pdf' => $pdf]);
     }
 
      protected function getFormActions(): array

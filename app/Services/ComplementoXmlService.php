@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ObjImp;
 use DOMXPath;
 use Exception;
 use DOMDocument;
@@ -113,6 +114,8 @@ class ComplementoXmlService
         $conceptos = $doc->createElement('cfdi:Conceptos');
 
         foreach ($datos['conceptos'] as $c) {
+            $objeImp = ObjImp::find($c['obj_imp_id']);
+
             $concepto = $doc->createElement('cfdi:Concepto');
             $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
             $concepto->setAttribute('Cantidad', number_format((float) str_replace([',', ' '], '', $c['cantidad']), 6, '.', ''));
@@ -121,7 +124,7 @@ class ComplementoXmlService
             $concepto->setAttribute('Descripcion', $c['descripcion']);
             $concepto->setAttribute('ValorUnitario', number_format((float) str_replace([',', ' '], '', $c['valor_unitario']), 2, '.', ''));
             $concepto->setAttribute('Importe', number_format((float) str_replace([',', ' '], '', $c['importe']), 2, '.', ''));
-            //$concepto->setAttribute('ObjetoImp', '01'); // No objeto de impuesto
+            $concepto->setAttribute('ObjetoImp', $objeImp ? $objeImp->clave : '01');
             $conceptos->appendChild($concepto);
         }
 

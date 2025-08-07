@@ -10,6 +10,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TextInput\Mask;
 use Filament\Forms\Components\ViewField;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Support\RawJs;
 use Filament\Tables;
@@ -48,6 +49,32 @@ class CfdiResource extends Resource
 
     public static function form(Form $form): Form
     {
+          $calcularImporte = function (callable $set, callable $get) {
+                $cantidad = $get('cantidad');
+                $valorUnitarioRaw = $get('valor_unitario');
+
+                // Si falta alguno, no hacemos nada
+                if ($cantidad === null || $valorUnitarioRaw === null || $valorUnitarioRaw === '') {
+                    return;
+                }
+
+                $cantidad = (float) $cantidad;
+                $valorUnitario = (float) str_replace([',', '$', ' '], '', $valorUnitarioRaw);
+
+                $tipoImpuesto = $get('tipo_impuesto');
+
+                $importe = $cantidad * $valorUnitario;
+
+                if ($tipoImpuesto) {
+                    $tax = \App\Models\Tax::find($tipoImpuesto);
+                    if ($tax) {
+                        $importe += $importe * ($tax->rate / 100);
+                    }
+                }
+
+                $set('importe', number_format($importe, 2, '.', ','));
+            };
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Datos Generales del Comprobante')
@@ -178,6 +205,7 @@ class CfdiResource extends Resource
 
                 Forms\Components\Section::make('Conceptos')
                     ->schema([
+
                         Forms\Components\Repeater::make('conceptos')
                             ->schema([
                                 Forms\Components\TextInput::make('no_identificacion')
@@ -188,6 +216,8 @@ class CfdiResource extends Resource
                                     ->maxLength(20),
                                 Forms\Components\Select::make('tipo_impuesto')
                                     ->label('Tipo de Impuesto')
+                                    ->live(debounce: 500)
+                                    ->afterStateUpdated($calcularImporte)
                                     ->options(Tax::pluck('name', 'id')),
                                 Select::make('obj_imp_id')
                                     ->label('Objeto del Impuesto')
@@ -209,36 +239,19 @@ class CfdiResource extends Resource
                                     ->mask(RawJs::make('$money($input)'))
                                     ->stripCharacters(',')
                                     ->numeric()
-                                    ->required(),
+                                   ->live(debounce: 800)
+                                    ->required()->afterStateUpdated($calcularImporte),
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
-                                    ->required(),
-                                         Forms\Components\TextInput::make('importe')
+                                   ->live(debounce: 800)
+                                    ->required()->afterStateUpdated($calcularImporte),
+                                Forms\Components\TextInput::make('importe')
                                             ->label('Importe')
-                                            ->numeric()
                                             ->required()
                                             ->prefix('$')
-                                            ->suffixAction(
-                                                    \Filament\Forms\Components\Actions\Action::make('copyCostToPrice')
-                                                        ->icon('heroicon-m-squares-plus')
-                                                        ->action(function (Set $set, $state, callable $get) {
-                                                            //$set('price', $state);
-                                                                $cantidad = (integer)$get('cantidad');
-                                                                $valorUnitario = floatval(str_replace([',', '$'], '', $get('valor_unitario')));
-                                                                $tipoImpuesto = $get('tipo_impuesto');
-                                                                $importe = $cantidad * $valorUnitario;
+                                            ->dehydrated(true)
 
-                                                                if ($tipoImpuesto) {
-                                                                    $tax = \App\Models\Tax::find($tipoImpuesto);
-                                                                    if ($tax) {
-                                                                        $importe += $importe * ($tax->rate / 100);
-                                                                    }
-                                                                }
-
-                                                                $set('importe', $importe);
-                                                        })
-                                                ),
                                ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto')
