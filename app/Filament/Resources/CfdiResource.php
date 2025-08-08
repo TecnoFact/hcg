@@ -89,6 +89,7 @@ class CfdiResource extends Resource
                             ->label('Folio')
                             ->maxLength(255),
                         Forms\Components\DateTimePicker::make('fecha')
+                            ->required()
                             ->label('Fecha y Hora'),
                         Forms\Components\Select::make('metodo_pago')
                             ->label('Método de Pago')
@@ -139,6 +140,7 @@ class CfdiResource extends Resource
                         Forms\Components\Select::make('emisor_id')
                             ->label('Emisor')
                             ->searchable()
+                            ->required()
                             ->reactive()
                             ->options(DB::table('emisores')->pluck('name', 'id')->toArray())
                             ->afterStateUpdated(function ($state, callable $set) {
@@ -156,9 +158,11 @@ class CfdiResource extends Resource
                             }),
                         Forms\Components\TextInput::make('emisor_rfc')
                             ->label('RFC')
+                            ->required()
                             ->maxLength(13),
                         Forms\Components\TextInput::make('emisor_nombre')
-                            ->label('Nombre o Razón Social'),
+                            ->label('Nombre o Razón Social')
+                            ->required(),
                         Forms\Components\Select::make('emisor_regimen_fiscal')
                             ->label('Régimen Fiscal')
                             ->getSearchResultsUsing(
@@ -170,11 +174,13 @@ class CfdiResource extends Resource
                             ->options(
                                 fn() => \App\Models\RegimeFiscal::pluck('descripcion', 'clave')->toArray()
                             )
+                            ->required()
                             ->searchable()
                             ->preload()
                             ->reactive(),
                         Forms\Components\TextInput::make('lugar_expedicion')
                             ->label('Código Postal')
+                            ->required()
                             ->maxLength(5),
                     ])->columns(3),
 
@@ -182,14 +188,18 @@ class CfdiResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('receptor_rfc')
                             ->label('RFC')
+                            ->required()
                             ->maxLength(13),
                         Forms\Components\TextInput::make('receptor_nombre')
-                            ->label('Nombre o Razón Social'),
+                            ->label('Nombre o Razón Social')
+                            ->required(),
                         Forms\Components\TextInput::make('receptor_domicilio')
                             ->label('Código Postal')
+                            ->required()
                             ->maxLength(5),
                         Forms\Components\Select::make('receptor_regimen_fiscal')
                             ->label('Régimen Fiscal')
+                            ->required()
                             ->options([
                                 '601' => '601 - General de Ley Personas Morales',
                                 '612' => '612 - Personas Físicas con Actividades Empresariales',
@@ -197,6 +207,7 @@ class CfdiResource extends Resource
                             ->default('601'),
                         Forms\Components\Select::make('receptor_uso_cfdi')
                             ->label('Uso del CFDI')
+                            ->required()
                             ->options([
                                 'G01' => 'G01 - Adquisición de mercancías',
                                 'G03' => 'G03 - Gastos en general',
@@ -227,6 +238,8 @@ class CfdiResource extends Resource
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
                                     ->searchable()
+                                    ->preload()
+                                    ->reactive()
                                     ->options(options: DB::table('unit_measures')->pluck('name', 'code')),
                                 Forms\Components\TextInput::make('unidad')
                                     ->label('Unidad')
