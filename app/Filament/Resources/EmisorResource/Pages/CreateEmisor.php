@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\EmisorResource\Pages;
 
 use App\Filament\Resources\EmisorResource;
+use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\OpenSSL\OpenSSL;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
@@ -25,6 +26,7 @@ class CreateEmisor extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = auth()->id();
+        $data['name'] = $data['reason_social'];
 
         // subir el archivo cer y key al Storage disk local dentro de la carpeta certificates y con el nombre del rfc y que el nombre del archivo sea el rfc con su extension
         if (isset($data['file_certificate'])) {
@@ -43,6 +45,21 @@ class CreateEmisor extends CreateRecord
             $pemCertificate = $openssl->derCerConvertPhp($cerContents);
 
             Storage::disk('local')->put('certificates/' . $nameCerPem, $pemCertificate);
+
+            $fileCertificatePath = Storage::disk('local')->path($data['file_certificate']);
+
+            // obtener la fecha de vencimiento del certificado
+            $certificado = new Certificado($fileCertificatePath);
+
+            $fecha = date('Y-m-d H:i:s', $certificado->getValidTo());
+            $fechaDesde = date('Y-m-d H:i:s', $certificado->getValidFrom());
+
+            $data['date_from'] = $fechaDesde;
+
+            $data['due_date'] = $fecha;
+
+
+
         }
 
         if (isset($data['file_key'])) {

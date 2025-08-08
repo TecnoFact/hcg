@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('emisores', function (Blueprint $table) {
-            $table->string('color')->nullable();
+            $table->date('due_date')->nullable()->after('color')->comment('Fecha de vencimiento del emisor');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('emisores', function (Blueprint $table) {
-            $table->dropColumn('color');
+            $table->dropColumn('due_date');
         });
     }
 };

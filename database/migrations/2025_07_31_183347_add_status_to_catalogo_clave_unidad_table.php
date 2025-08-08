@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('emisores', function (Blueprint $table) {
-            $table->string('color')->nullable();
+        Schema::table('catalogo_clave_unidad', function (Blueprint $table) {
+            $table->boolean('status')->default(true);
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('emisores', function (Blueprint $table) {
-            $table->dropColumn('color');
+        Schema::table('catalogo_clave_unidad', function (Blueprint $table) {
+            $table->dropColumn('status');
         });
     }
 };

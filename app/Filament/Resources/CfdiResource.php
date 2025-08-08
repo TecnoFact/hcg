@@ -6,12 +6,21 @@ use App\Models\Emisor;
 use App\Models\ObjImp;
 use App\Models\Tax;
 use Filament\Forms;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TextInput\Mask;
+use Filament\Forms\Components\ViewField;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Forms\Form;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Models\Cfdi;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -20,6 +29,12 @@ use Filament\Infolists\Components\Section;
 use App\Filament\Resources\CfdiResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\CfdiResource\RelationManagers;
+use Pelmered\FilamentMoneyField\Forms\Components\MoneyInput;
+use Pelmered\FilamentMoneyField\Infolists\Components\MoneyEntry;
+use Tuxones\JsMoneyField\Forms\Components\JSMoneyInput;
+use Tuxones\JsMoneyField\Tables\Columns\JSMoneyColumn;
+use function Filament\Support\format_money;
+use function Filament\Support\format_number;
 
 class CfdiResource extends Resource
 {
@@ -31,9 +46,36 @@ class CfdiResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
+          $calcularImporte = function (callable $set, callable $get) {
+                $cantidad = $get('cantidad');
+                $valorUnitarioRaw = $get('valor_unitario');
+
+                // Si falta alguno, no hacemos nada
+                if ($cantidad === null || $valorUnitarioRaw === null || $valorUnitarioRaw === '') {
+                    return;
+                }
+
+                $cantidad = (float) $cantidad;
+                $valorUnitario = (float) str_replace([',', '$', ' '], '', $valorUnitarioRaw);
+
+                $tipoImpuesto = $get('tipo_impuesto');
+
+                $importe = $cantidad * $valorUnitario;
+
+                if ($tipoImpuesto) {
+                    $tax = \App\Models\Tax::find($tipoImpuesto);
+                    if ($tax) {
+                        $importe += $importe * ($tax->rate / 100);
+                    }
+                }
+
+                $set('importe', number_format($importe, 2, '.', ','));
+            };
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Datos Generales del Comprobante')
@@ -175,6 +217,7 @@ class CfdiResource extends Resource
 
                 Forms\Components\Section::make('Conceptos')
                     ->schema([
+
                         Forms\Components\Repeater::make('conceptos')
                             ->schema([
                                 Forms\Components\TextInput::make('no_identificacion')
@@ -185,78 +228,47 @@ class CfdiResource extends Resource
                                     ->maxLength(20),
                                 Forms\Components\Select::make('tipo_impuesto')
                                     ->label('Tipo de Impuesto')
+                                    ->live(debounce: 500)
+                                    ->afterStateUpdated($calcularImporte)
                                     ->options(Tax::pluck('name', 'id')),
                                 Select::make('obj_imp_id')
                                     ->label('Objeto del Impuesto')
                                     ->options(ObjImp::pluck('descripcion', 'clave')),
-                                Forms\Components\TextInput::make('cantidad')
-                                    ->label('Cantidad')
-                                    ->numeric()
-                                    ->required()
-                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $valorUnitario = (float) $get('valor_unitario');
-                                        $cantidad = (float) $state;
-                                        $impuesto = (integer) $get('tipo_impuesto');
 
-                                        $calculado = $cantidad * $valorUnitario;
-
-                                        if ($impuesto) {
-                                            $tax = Tax::find($impuesto);
-                                            if ($tax) {
-                                                $calculado += ($calculado * $tax->rate / 100);
-                                            }
-                                        }
-                                        $set('importe', $calculado);
-                                    }),
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
                                     ->searchable()
                                     ->required()
-                                    ->options(options: DB::table('catalogo_clave_unidad')->pluck('nombre', 'clave')),
+                                    ->options(options: DB::table('unit_measures')->pluck('name', 'code')),
                                 Forms\Components\TextInput::make('unidad')
                                     ->label('Unidad')
                                     ->maxLength(20),
-                                Forms\Components\TextInput::make('valor_unitario')
-                                    ->label('Valor Unitario')
-                                    ->numeric()
-                                    ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $cantidad = (float) $get('cantidad');
-                                        $valorUnitario = (float) $state;
-                                        $impuesto = (integer) $get('tipo_impuesto');
-
-                                        $calculado = $cantidad * $valorUnitario;
-
-                                        if ($impuesto) {
-                                            $tax = Tax::find($impuesto);
-                                            if ($tax) {
-                                                $calculado += ($calculado * $tax->rate / 100);
-                                            }
-                                        }
-
-                                        $set('importe', $calculado);
-                                    }),
                                 Forms\Components\TextInput::make('descripcion')
                                     ->label('Descripción')
                                     ->required()
                                     ->maxLength(255),
-
-                                Forms\Components\TextInput::make('importe')
-                                    ->label('Importe')
+                               TextInput::make('valor_unitario')
+                                    ->label('Valor Unitario')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
-                                    ->required()
-                                    ->disabled(),
-                            ])
+                                   ->live(debounce: 800)
+                                    ->required()->afterStateUpdated($calcularImporte),
+                                Forms\Components\TextInput::make('cantidad')
+                                    ->label('Cantidad')
+                                    ->numeric()
+                                   ->live(debounce: 800)
+                                    ->required()->afterStateUpdated($calcularImporte),
+                                Forms\Components\TextInput::make('importe')
+                                            ->label('Importe')
+                                            ->required()
+                                            ->prefix('$')
+                                            ->dehydrated(true)
+
+                               ])
                             ->columns(3)
                             ->createItemButtonLabel('Agregar Concepto')
-                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
-                                $cantidad = isset($data['cantidad']) ? (float) $data['cantidad'] : 0;
-                                $valorUnitario = isset($data['valor_unitario']) ? (float) $data['valor_unitario'] : 0;
-                                $data['importe'] = $cantidad * $valorUnitario;
-                                return $data;
-                            })
+
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $total = 0;
                                 if (is_array($state)) {
@@ -283,14 +295,24 @@ class CfdiResource extends Resource
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
+                    TextColumn::make('subtotal')
+                    ->numeric()
+
+                    ->label('SubTotal'),
+                    TextColumn::make('impuesto')
+                    ->numeric()
+
+                    ->label('Impuesto'),
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
+
                     ->label('Total'),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                  ActionGroup::make([
                 //Tables\Actions\EditAction::make(),
                 Action::make('descargar_xml')
                     ->label('Descargar XML')
@@ -300,7 +322,16 @@ class CfdiResource extends Resource
                     ->openUrlInNewTab(false)
                     ->visible(fn($record) => $record->path_xml !== null),
 
+                Action::make('descargar_pdf')
+                    ->label('Descargar PDF')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn($record) => route('cfdis.descargar-pdf', $record))
+                    ->color('success')
+                    ->openUrlInNewTab(false)
+                    ->visible(fn($record) => $record->pdf_path !== null),
+
                 Tables\Actions\EditAction::make(),
+                  ])
             ])
             ->headerActions([
                 Action::make('ir_a_web')

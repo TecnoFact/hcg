@@ -10,7 +10,7 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-       User::truncate();
+       //User::truncate();
 
        $user = User::create([
             'email' => 'admin@cfdi.test',

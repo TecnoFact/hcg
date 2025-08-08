@@ -564,7 +564,12 @@ class TimbradoService
     }
 
 
-
+    /**
+     * Método para crear un PDF a partir de un CFDI TIMBRADO.
+     *
+     * @param \App\Models\Models\Cfdi $cfdiArchivo
+     * @return string Ruta del PDF generado
+     */
     static function createCfdiToPDF(\App\Models\Models\Cfdi $cfdiArchivo)
     {
         try {
@@ -757,6 +762,200 @@ class TimbradoService
             ]);
 
             return "";
+        }
+
+    }
+
+    /**
+     * Método para crear un PDF a partir de un CFDI SIMPLE.
+     *
+     * @param \App\Models\Models\Cfdi $cfdiArchivo
+     * @return string Ruta del PDF generado
+     */
+    static function createCfdiSimpleToPDF(\App\Models\Models\Cfdi $cfdiArchivo)
+    {
+        try {
+            // Read the XML file content
+            $xmlPath = Storage::disk('public')->path($cfdiArchivo->ruta);
+
+            if (!file_exists($xmlPath)) {
+                throw new \Exception("El archivo XML no existe: $xmlPath");
+            }
+
+             $xmlContent = file_get_contents($xmlPath);
+
+            if ($xmlContent === false) {
+                throw new \Exception("No se pudo leer el archivo XML");
+            }
+
+            // Crear el objeto CFDI
+            $cfdi = Cfdi::newFromString($xmlContent);
+            $comprobante = $cfdi->getNode();
+
+            // Obtener datos principales
+            $version = $comprobante['Version'];
+            $fecha = $comprobante['Fecha'];
+            $sello = $comprobante['Sello'];
+            $total = $comprobante['Total'];
+            $subTotal = $comprobante['SubTotal'];
+            $moneda = $comprobante['Moneda'];
+            $formaPago = $comprobante['FormaPago'];
+            $metodoPago = $comprobante['MetodoPago'];
+            $tipoDeComprobante = $comprobante['TipoDeComprobante'];
+            $lugarExpedicion = $comprobante['LugarExpedicion'];
+            $noCertificado = $comprobante['NoCertificado'];
+
+
+            // Obtener TimbreFiscalDigital
+            $timbreFiscal = null;
+            $uuid = date('YmdHis') . '-' . Str::random(8); // Generar UUID temporal
+            $fechaTimbrado = null;
+            $selloSAT = null;
+            $selloCFD = null;
+
+            // Crear objeto data para la vista
+            $data = [
+                'Version' => $version,
+                'TipoDeComprobante' => $tipoDeComprobante,
+                'FormaPago' => $formaPago,
+                'MetodoPago' => $metodoPago,
+                'LugarExpedicion' => $lugarExpedicion,
+                'NoCertificado' => $noCertificado,
+                'complemento' => [
+                    'timbreFiscalDigital' => [
+                        'NoCertificadoSAT' => null
+                    ]
+                ]
+            ];
+
+            $emisorNode = $comprobante->searchNode('cfdi:Emisor');
+            $emisorRfc = $emisorNode['Rfc'];
+            $emisorNombre = $emisorNode['Nombre'];
+            $emisorRegimenFiscal = $emisorNode['RegimenFiscal'];
+
+            $emisor = Emisor::where('rfc', $emisorRfc)->first();
+
+            if($emisor === null) {
+                throw new \Exception("Emisor no encontrado para el RFC: " . $emisorRfc);
+            }
+
+            // Obtener datos del emisor
+
+
+            // Obtener datos del receptor
+            $receptorNode = $comprobante->searchNode('cfdi:Receptor');
+            $receptorRfc = $receptorNode['Rfc'];
+            $receptorNombre = $receptorNode['Nombre'];
+            $receptorUsoCfdi = $receptorNode['UsoCFDI'];
+
+            // Obtener conceptos
+            $conceptos = [];
+            $conceptosNode = $comprobante->searchNode('cfdi:Conceptos');
+            foreach ($conceptosNode->searchNodes('cfdi:Concepto') as $concepto) {
+                // Obtener el nodo ComplementoConcepto si existe
+                $complementoConcepto = $concepto->searchNode('cfdi:ComplementoConcepto');
+                $complementoConceptoArr = [];
+                if ($complementoConcepto) {
+                    $complementoConceptoArr = $complementoConcepto->attributes()->values();
+                }
+                $conceptos[] = [
+                    'clave' => $concepto['ClaveProdServ'],
+                    'cantidad' => $concepto['Cantidad'],
+                    'descripcion' => $concepto['Descripcion'],
+                    'valorUnitario' => $concepto['ValorUnitario'],
+                    'importe' => $concepto['Importe'],
+                    'ObjetoImp' => $concepto['ObjetoImp'] ?? null,
+                    'claveUnidad' => $concepto['ClaveUnidad'],
+                    'unidad' => $concepto['Unidad'] ?? null,
+                    'descuento' => $concepto['Descuento'] ?? null,
+                    'impuestos' => [
+                        'traslados' => [],
+                        'retenciones' => []
+                    ],
+                    'complemento_concepto' => $complementoConceptoArr,
+                ];
+            }
+
+
+
+            $dataCadena = array(
+                'qr_cadena' => null,
+                // other keys and values
+            );
+
+            $cadenaOrigen = null;
+
+            // Generar QR
+            $image = null;
+            $qr = null;
+            $customer_invoice = \App\Models\Models\Cfdi::where('id', $cfdiArchivo->id)->first();
+
+            $logo = null;
+            if ($emisor->logo) {
+                $logoPath = Storage::disk('local')->path($emisor->logo);
+                Log::debug('RUTA LOGO: ' . $logoPath);
+                if (file_exists($logoPath)) {
+                    $logo = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+                } else {
+                    Log::warning('Logo del emisor no encontrado', [
+                        'emisor_rfc' => $emisorRfc,
+                        'logo_path' => $logoPath
+                    ]);
+                }
+            }
+
+            // Cargar vista y generar PDF
+            $viewTemplate = 'template.pdf_xml';
+
+            $pdf = \PDF::loadView($viewTemplate, compact(
+                'emisor',
+                'emisorRfc',
+                'emisorNombre',
+                'emisorRegimenFiscal',
+                'receptorRfc',
+                'receptorNombre',
+                'receptorUsoCfdi',
+                'fecha',
+                'total',
+                'subTotal',
+                'moneda',
+                'conceptos',
+                'uuid',
+                'fechaTimbrado',
+                'selloSAT',
+                'selloCFD',
+                'cadenaOrigen',
+                'qr',
+                'data',
+                'timbreFiscal',
+                'customer_invoice',
+                'logo',
+                'noCertificado'
+            ));
+
+            // Guardar PDF
+            $pdf_path = 'pdf/' . $uuid . '.pdf';
+            \Storage::disk('public')->put($pdf_path, $pdf->output());
+
+            $customer_invoice->update([
+                'pdf_path' => $pdf_path
+            ]);
+
+            $pathPdf = \Storage::disk('public')->path($pdf_path);
+            Log::info('PDF generado correctamente', [
+                'user_id' => auth()->id(),
+                'pdf_path' => $pdf_path
+            ]);
+
+            return $pdf->output();
+
+        } catch (\Exception $e) {
+            Log::error('Error in generatePdfFromXml: ' . $e->getMessage() . '-' . $e->getFile() . ':' . $e->getLine(), [
+                'exception' => $e,
+                'user_id' => auth()->id()
+            ]);
+
+            throw new \Exception("Error en la generación del PDF");
         }
 
     }

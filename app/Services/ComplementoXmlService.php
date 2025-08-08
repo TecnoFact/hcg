@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ObjImp;
 use DOMXPath;
 use Exception;
 use DOMDocument;
@@ -113,6 +114,74 @@ class ComplementoXmlService
         $conceptos = $doc->createElement('cfdi:Conceptos');
 
         foreach ($datos['conceptos'] as $c) {
+            $objeImp = ObjImp::find($c['obj_imp_id']);
+
+            $concepto = $doc->createElement('cfdi:Concepto');
+            $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
+            $concepto->setAttribute('Cantidad', number_format((float) str_replace([',', ' '], '', $c['cantidad']), 6, '.', ''));
+            $concepto->setAttribute('ClaveUnidad', $c['clave_unidad']);
+            $concepto->setAttribute('Unidad', $c['unidad']);
+            $concepto->setAttribute('Descripcion', $c['descripcion']);
+            $concepto->setAttribute('ValorUnitario', number_format((float) str_replace([',', ' '], '', $c['valor_unitario']), 2, '.', ''));
+            $concepto->setAttribute('Importe', number_format((float) str_replace([',', ' '], '', $c['importe']), 2, '.', ''));
+            $concepto->setAttribute('ObjetoImp', $objeImp ? $objeImp->clave : '01');
+            $conceptos->appendChild($concepto);
+        }
+
+        $cfdi->appendChild($conceptos);
+
+        $doc->appendChild($cfdi);
+
+        return $doc->saveXML();
+
+    }
+
+    public static function buildXmlCfdiFromDatabase(Cfdi $datos)
+    {
+        $doc = new DOMDocument('1.0', 'UTF-8');
+        $doc->formatOutput = true;
+
+        $cfdi = $doc->createElementNS('http://www.sat.gob.mx/cfd/4', 'cfdi:Comprobante');
+        $cfdi->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $cfdi->setAttribute('xsi:schemaLocation', 'http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd');
+
+        $cfdi->setAttribute('Version', '4.0');
+        $cfdi->setAttribute('Serie', $datos->serie);
+        $cfdi->setAttribute('Folio', $datos->folio);
+        $cfdi->setAttribute('Fecha', $datos->fecha);
+        $cfdi->setAttribute('FormaPago', $datos->forma_pago);
+        $cfdi->setAttribute('NoCertificado', "");
+        $cfdi->setAttribute('SubTotal', number_format($datos->sub_total, 2, '.', ''));
+        $cfdi->setAttribute('Moneda', $datos->moneda);
+        $cfdi->setAttribute('Total', number_format($datos->total, 2, '.', ''));
+        $cfdi->setAttribute('TipoDeComprobante', $datos->tipo_de_comprobante);
+        $cfdi->setAttribute('MetodoPago', $datos->metodo_pago);
+        $cfdi->setAttribute('LugarExpedicion', $datos->lugar_expedicion);
+        //$cfdi->setAttribute('Exportacion', '01');
+
+        // Emisor
+
+        $emisorFind = CfdiEmisor::find( $datos->emisor_id);
+        $emisor = $doc->createElement('cfdi:Emisor');
+        $emisor->setAttribute('Rfc', $emisorFind->rfc);
+        $emisor->setAttribute('Nombre', $emisorFind->nombre);
+        $emisor->setAttribute('RegimenFiscal', $emisorFind->regimen_fiscal);
+        $cfdi->appendChild($emisor);
+
+        // Receptor
+        $receptorFind = CfdiReceptor::find($datos->receptor_id);
+        $receptor = $doc->createElement('cfdi:Receptor');
+        $receptor->setAttribute('Rfc', $receptorFind->rfc);
+        $receptor->setAttribute('Nombre', $receptorFind->nombre);
+        $receptor->setAttribute('DomicilioFiscalReceptor', $receptorFind->domicilio_fiscal);
+        $receptor->setAttribute('RegimenFiscalReceptor', $receptorFind->regimen_fiscal);
+        $receptor->setAttribute('UsoCFDI', $receptorFind->uso_cfdi);
+        $cfdi->appendChild($receptor);
+
+        // Conceptos
+        $conceptos = $doc->createElement('cfdi:Conceptos');
+
+        foreach ($datos->conceptos as $c) {
             $concepto = $doc->createElement('cfdi:Concepto');
             $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
             $concepto->setAttribute('Cantidad', number_format($c['cantidad'], 6, '.', ''));
@@ -130,7 +199,6 @@ class ComplementoXmlService
         $doc->appendChild($cfdi);
 
         return $doc->saveXML();
-
     }
 
     /**

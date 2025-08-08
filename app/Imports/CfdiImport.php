@@ -5,9 +5,11 @@ namespace App\Imports;
 use App\Models\Models\Cfdi;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Tax;
+use App\Services\ComplementoXmlService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\Models\CfdiReceptor;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
 class CfdiImport implements ToCollection
@@ -19,13 +21,11 @@ class CfdiImport implements ToCollection
     {
          $cfdi = null;
 
-        foreach($collection as $row) {
+        $cfdiAnterior = null;
+
+        foreach($collection as $key => $row) {
             if ($row->isEmpty()) {
                 continue; // Skip empty rows
-            }
-
-            if (count($row) < 16) {
-                continue; // Skip rows with insufficient data
             }
 
 
@@ -35,6 +35,19 @@ class CfdiImport implements ToCollection
             $subtotal = 0;
 
             if ($tipo === 'CFDI') {
+
+                if ($cfdiAnterior) {
+                   $xml = ComplementoXmlService::buildXmlCfdiFromDatabase($cfdiAnterior);
+
+                   // actualizar Cfdi con path
+                    // Guarda el XML
+                    $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+                    $path_xml = 'emisiones/' . $name_xml_path;
+                    Storage::disk('local')->put($path_xml, $xml);
+
+                    // Actualiza el registro con la ruta del XML
+                    $cfdi->update(['path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
+                }
 
                 $emisorFind = CfdiEmisor::where('rfc', $row[1])->first();
 
@@ -78,7 +91,7 @@ class CfdiImport implements ToCollection
                     $fechaFormateada = $fecha->format('Y-m-d H:i:s');
                 }
 
-                //dd($row[11]);
+
                 $conceptosQty = 0;
 
                 $cfdi = Cfdi::create([
@@ -97,8 +110,9 @@ class CfdiImport implements ToCollection
                     'exportacion' => '01',
                     'user_id' => auth()->id(),
                     'lugar_expedicion' => $row[8],
-                    // ...
                 ]);
+
+
             } elseif ($tipo === 'CONCEPTO' && $cfdi) {
 
                 if (count($row) < 16) {
@@ -108,7 +122,7 @@ class CfdiImport implements ToCollection
                 $conceptosQty++;
 
                 $tax = Tax::where('code', $row[23])->first();
-                $subtotal = $row[18] * $row[22]; // Assuming row[17] is quantity and row[21] is unit price
+                $subtotal = $row[18] * $row[22]; // Assuming row[18] is quantity and row[22] is unit price
                 $totalTax = $row[18] * $row[22] * ($tax ? $tax->rate : 0);
 
                 $total = $subtotal + $totalTax; // Add tax to total
@@ -126,12 +140,24 @@ class CfdiImport implements ToCollection
                     'tipo_impuesto' => $row[23],
                     'importe' => $total,
                     'descuento' => 0,
-                    'tax_id' => $tax ? $tax->id : null,
+                    'tax_id' => $tax?->id,
                     'obj_imp_id' => null
                 ]);
+
+                $cfdiAnterior = $cfdi;
             }
 
 
+        }
+
+        if ($cfdiAnterior) {
+            $xml = ComplementoXmlService::buildXmlCfdiFromDatabase($cfdiAnterior);
+
+            $name_xml_path = 'CFDI-' . $cfdiAnterior->id . '.xml';
+            $path_xml = 'emisiones/' . $name_xml_path;
+            Storage::disk('local')->put($path_xml, $xml);
+
+            $cfdiAnterior->update(['path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
         }
     }
 }

@@ -23,6 +23,8 @@ class Cfdi extends Page
 
     protected static ?string $title =  'Subir CFDI';
 
+      protected static ?int $navigationSort = 2;
+
     public $rfc;
     public $xml_file;
 
@@ -217,7 +219,7 @@ class Cfdi extends Page
             'sello' => "",
             'rfc_emisor' => $emisor->rfc,
             'rfc_receptor' => "",
-            'fecha' => "",
+            'fecha' => now(),
             'tipo_de_comprobante' => "",
             'lugar_expedicion' => "",
             'emisor_id' => 1,

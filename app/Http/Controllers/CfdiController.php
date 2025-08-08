@@ -350,6 +350,38 @@ class CfdiController extends Controller
         ]);
     }
 
+    public function descargarCfdiPdf($factura)
+    {
+        $factura = Cfdi::find($factura);
+
+        if (!$factura) {
+            Notification::make()
+                ->title('Error al descargar PDF')
+                ->danger()
+                ->body('No se encontró el CFDI con el ID proporcionado.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+        if ($factura->pdf_path === null) {
+            Notification::make()
+                ->title('error al generar PDF')
+                ->danger()
+                 ->body('El archivo PDF no existe.')
+                 ->send();
+
+        }
+
+
+        if(Storage::disk('public')->exists($factura->pdf_path)) {
+
+            return response()->download(Storage::disk('public')->path($factura->pdf_path));
+        }
+
+
+    }
+
     public function descargarXml($factura)
     {
         $cfdi = Cfdi::find($factura);
