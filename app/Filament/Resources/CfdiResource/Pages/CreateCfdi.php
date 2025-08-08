@@ -135,7 +135,7 @@ class CreateCfdi extends CreateRecord
 
         // Genera el XML
         $xml = ComplementoXmlService::buildXmlCfdi($data);
-        $pdf = TimbradoService::createCfdiToPDF($cfdiUpdate);
+        TimbradoService::createCfdiToPDF($cfdiUpdate);
 
         // Guarda el XML
         Storage::disk('local')->put($path_xml, $xml);
@@ -144,7 +144,6 @@ class CreateCfdi extends CreateRecord
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $path_xml]);
         $cfdi->update(['ruta' => $ruta]);
-        $cfdi->update(['pdf_path' => $pdf]);
     }
 
      protected function getFormActions(): array

@@ -9,6 +9,7 @@ use App\Models\Models\CfdiConcepto;
 use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiReceptor;
 use App\Services\ComplementoXmlService;
+use App\Services\TimbradoService;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
@@ -200,8 +201,11 @@ class EditCfdi extends EditRecord
         $data['subtotal'] = $total;
         $data['total'] = $total;
 
+        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+        $path_xml = 'emisiones/' . $name_xml_path;
+        $ruta = 'cfdi/' . $path_xml;
 
- // Prepara los datos para el servicio
+        // Prepara los datos para el servicio
         $data = [
             'cfdi' => $cfdi,
             'conceptos' => $conceptos
@@ -209,6 +213,13 @@ class EditCfdi extends EditRecord
 
         // Genera el XML
         $xml = ComplementoXmlService::buildXmlCfdi($data);
+        TimbradoService::createCfdiToPDF($cfdi);
+
+        // Guarda el XML
+        Storage::disk('local')->put($path_xml, $xml);
+        Storage::disk('public')->put($ruta, $xml);
+
+
 
         // Guarda el XML
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
@@ -217,6 +228,7 @@ class EditCfdi extends EditRecord
 
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $path_xml]);
+        $cfdi->update(['ruta' => $ruta]);
 
 
         return $data;

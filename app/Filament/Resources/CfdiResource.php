@@ -15,6 +15,7 @@ use Filament\Forms\Set;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Forms\Form;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Models\Cfdi;
@@ -284,18 +285,22 @@ class CfdiResource extends Resource
                     ->label('Fecha'),
                     TextColumn::make('subtotal')
                     ->numeric()
+
                     ->label('SubTotal'),
                     TextColumn::make('impuesto')
                     ->numeric()
+
                     ->label('Impuesto'),
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
+
                     ->label('Total'),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                  ActionGroup::make([
                 //Tables\Actions\EditAction::make(),
                 Action::make('descargar_xml')
                     ->label('Descargar XML')
@@ -314,6 +319,7 @@ class CfdiResource extends Resource
                     ->visible(fn($record) => $record->path_pdf !== null),
 
                 Tables\Actions\EditAction::make(),
+                  ])
             ])
             ->headerActions([
                 Action::make('ir_a_web')
