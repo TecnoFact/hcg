@@ -26,7 +26,9 @@
                         class="transition-all duration-300 w-full"
                         x-bind:class="subido ? 'opacity-75' : ''"
                     >
-                        <span class="flex items-center" wire:loading.remove>
+                        <div
+                            class="flex items-center w-full flex-col justify-center"
+                            wire:loading.remove>
                             <template x-if="!subido">
                                 <svg class="w-5 h-5 mr-2 -ml-1" fill="none"
                                      stroke="currentColor" stroke-width="2"
@@ -47,7 +49,7 @@
                             </template>
                             <span x-text="subido ? 'Subido ✓' : 'Subir'"
                                   class="ml-1"></span>
-                        </span>
+                        </div>
                         <span wire:loading wire:target="subirXml"
                               class="flex items-center">
                             <svg
@@ -78,7 +80,9 @@
                         class="transition-all duration-300 w-full"
                         x-bind:class="!subido ? 'opacity-50 cursor-not-allowed' : (sellado ? 'opacity-75' : '')"
                     >
-                            <span class="flex items-center" wire:loading.remove>
+                        <div
+                            class="flex items-center w-full flex-col justify-center"
+                            wire:loading.remove>
                                 <template x-if="!sellado">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none"
                                          stroke="currentColor" stroke-width="2"
@@ -99,7 +103,7 @@
                                 </template>
                                 <span x-text="sellado ? 'Sellado ✓' : 'Sellar'"
                                       class="ml-1"></span>
-                            </span>
+                        </div>
                         <span wire:loading wire:target="sellarXml"
                               class="flex items-center">
                                 <svg
@@ -130,7 +134,9 @@
                         class="transition-all duration-300 w-full"
                         x-bind:class="!sellado ? 'opacity-50 cursor-not-allowed' : (timbrado ? 'opacity-75' : '')"
                     >
-                            <span class="flex items-center" wire:loading.remove>
+                        <div
+                            class="flex items-center w-full flex-col justify-center"
+                            wire:loading.remove>
                                 <template x-if="!timbrado">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none"
                                          stroke="currentColor" stroke-width="2"
@@ -152,7 +158,7 @@
                                 <span
                                     x-text="timbrado ? 'Timbrado ✓' : 'Timbrar'"
                                     class="ml-1"></span>
-                            </span>
+                        </div>
                         <span wire:loading wire:target="timbrarXml"
                               class="flex items-center">
                                 <svg
@@ -183,7 +189,9 @@
                         class="transition-all duration-300 w-full"
                         x-bind:class="!timbrado ? 'opacity-50 cursor-not-allowed' : (depositado ? 'opacity-75' : '')"
                     >
-                            <span class="flex items-center" wire:loading.remove>
+                        <div
+                            class="flex items-center w-full flex-col justify-center"
+                            wire:loading.remove>
                                 <template x-if="!depositado">
                                     <svg class="w-5 h-5 mr-2 -ml-1" fill="none"
                                          stroke="currentColor" stroke-width="2"
@@ -208,7 +216,7 @@
                                 <span
                                     x-text="depositado ? 'Depositado ✓' : 'Depositar'"
                                     class="ml-1"></span>
-                            </span>
+                        </div>
                         <span wire:loading wire:target="publicacion"
                               class="flex items-center">
                                 <svg
