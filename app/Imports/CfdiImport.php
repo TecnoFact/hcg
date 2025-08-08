@@ -55,8 +55,8 @@ class CfdiImport implements ToCollection
 
                     $emisor = [
                         'rfc' => $row[1],
-                        'nombre' => $row[2],
-                        'regimen_fiscal' => $row[3],
+                        'name' => $row[2],
+                        'tax_regimen_id' => $row[3],
                     ];
 
                     $emisorFind = Emisor::firstOrCreate($emisor);
