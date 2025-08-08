@@ -42,7 +42,7 @@ class Emisor extends Model
 
        // Si no hay logo, retorna el avatar por defecto
        if (!$value) {
-           return asset('image/avaatar.png');
+           return public_path('image/avaatar.png');
        }
        // Si hay logo, verifica si el archivo existe
        $logoPath = Storage::disk('local')->path($value);
@@ -51,7 +51,7 @@ class Emisor extends Model
            return $value;
        }
        // Si el archivo no existe, retorna el avatar por defecto
-       return asset('image/avaatar.png');
+       return public_path('image/avaatar.png');
    }
 
     public function user()
