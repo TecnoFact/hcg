@@ -116,10 +116,15 @@ class CreateCfdi extends CreateRecord
             $contador++;
         }
 
+         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+        $path_xml = 'emisiones/' . $name_xml_path;
+        $ruta = 'cfdi/' . $path_xml;
+
         $cfdiUpdate = Cfdi::find($cfdi->id);
         $cfdiUpdate->subtotal = $subtotal;
         $cfdiUpdate->impuesto = $iva;
         $cfdiUpdate->total = $total;
+        $cfdiUpdate->ruta = $ruta;
         $cfdiUpdate->save();
 
         // Prepara los datos para el servicio
@@ -133,13 +138,13 @@ class CreateCfdi extends CreateRecord
         $pdf = TimbradoService::createCfdiToPDF($cfdiUpdate);
 
         // Guarda el XML
-        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = 'emisiones/' . $name_xml_path;
         Storage::disk('local')->put($path_xml, $xml);
+        Storage::disk('public')->put($ruta, $xml);
 
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $path_xml]);
-        $cfdi->update(['path_pdf' => $pdf]);
+        $cfdi->update(['ruta' => $ruta]);
+        $cfdi->update(['pdf_path' => $pdf]);
     }
 
      protected function getFormActions(): array
