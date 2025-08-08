@@ -141,6 +141,11 @@ class EditCfdi extends EditRecord
 
         $data['receptor_id'] = $receptorFind->id;
 
+        if($data['status_upload'] === null || empty($data['status_upload'])) {
+            $data['status_upload'] = Cfdi::ESTATUS_SUBIDO;
+            $data['estatus'] = 'validado';
+        }
+
         return $data;
     }
 
@@ -202,7 +207,7 @@ class EditCfdi extends EditRecord
         $data['total'] = $total;
 
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = 'emisiones/' . $name_xml_path;
+        $path_xml = $cfdi->emisor->rfc .'/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
         // Prepara los datos para el servicio
@@ -222,14 +227,16 @@ class EditCfdi extends EditRecord
 
 
         // Guarda el XML
-        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = 'emisiones/' . $name_xml_path;
-        Storage::disk('local')->put($path_xml, $xml);
+         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+        $path_xml =  $cfdi->emisor->rfc .'/' . $name_xml_path;
+        $ruta = 'cfdi/' . $path_xml;
+
+        Storage::disk('local')->put($ruta, $xml);
 
         // Actualiza el registro con la ruta del XML
-        $cfdi->update(['path_xml' => $path_xml]);
+          $cfdi->update(['path_xml' => $ruta]);
+        $cfdi->update(['nombre_archivo' => $name_xml_path]);
         $cfdi->update(['ruta' => $ruta]);
-
 
         return $data;
     }

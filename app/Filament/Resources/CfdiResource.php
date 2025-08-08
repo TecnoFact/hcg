@@ -82,6 +82,8 @@ class CfdiResource extends Resource
                     ->schema([
                         TextInput::make('total')->hidden(),
                         TextInput::make('subtotal')->hidden(),
+                        TextInput::make('status')->hidden(),
+                        TextInput::make('status_upload')->hidden(),
                         Forms\Components\TextInput::make('serie')
                             ->label('Serie')
                             ->maxLength(255),

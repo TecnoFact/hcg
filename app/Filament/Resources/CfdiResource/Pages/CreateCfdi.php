@@ -32,9 +32,9 @@ class CreateCfdi extends CreateRecord
         $data['user_id'] = auth()->id();
         //$data['nombre_archivo'] = 'CFDI-' . ($data['user_id'] + 1) . '.xml'; // Genera un nombre único basado en el ID del usuario
         $data['subtotal'] = 0;
+        $data['total'] = 0;
         //$data['ruta'] = 'emisiones/' . $data['nombre_archivo'];
         $data['iva'] = 0;
-        $data['total'] = 0;
 
         // guardar el emisor
         $data['emisor'] = [
@@ -44,9 +44,7 @@ class CreateCfdi extends CreateRecord
             'postal_code' => $data['lugar_expedicion'],
         ];
 
-        $total = 0;
-        $data['subtotal'] = $total; // Asigna el subtotal
-        $data['total'] = $total;
+      //  $data['subtotal'] = $data['total'];
 
         $emisor = Emisor::updateOrCreate(
             ['rfc' => $data['emisor']['rfc']],
@@ -69,6 +67,9 @@ class CreateCfdi extends CreateRecord
         );
 
         $data['receptor_id'] = $receptorCreate->id;
+
+        $data['status_upload'] = Cfdi::ESTATUS_SUBIDO;
+        $data['estatus'] = 'validado';
 
         return $data;
     }
@@ -125,7 +126,7 @@ class CreateCfdi extends CreateRecord
         }
 
          $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = 'emisiones/' . $name_xml_path;
+        $path_xml =  $cfdi->emisor->rfc .'/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
         $cfdiUpdate = Cfdi::find($cfdi->id);
@@ -137,7 +138,7 @@ class CreateCfdi extends CreateRecord
 
         // Prepara los datos para el servicio
         $data = [
-            'cfdi' => $cfdi,
+            'cfdi' => $cfdiUpdate,
             'conceptos' => $conceptos
         ];
 
@@ -145,11 +146,11 @@ class CreateCfdi extends CreateRecord
         $xml = ComplementoXmlService::buildXmlCfdi($data);
 
         // Guarda el XML
-        Storage::disk('local')->put($path_xml, $xml);
-        Storage::disk('public')->put($ruta, $xml);
+        Storage::disk('local')->put($ruta, $xml);
 
         // Actualiza el registro con la ruta del XML
-        $cfdi->update(['path_xml' => $path_xml]);
+        $cfdi->update(['path_xml' => $ruta]);
+        $cfdi->update(['nombre_archivo' => $name_xml_path]);
         $cfdi->update(['ruta' => $ruta]);
 
         TimbradoService::createCfdiSimpleToPDF($cfdiUpdate);

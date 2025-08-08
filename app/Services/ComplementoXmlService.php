@@ -82,7 +82,7 @@ class ComplementoXmlService
         $cfdi->setAttribute('Fecha', $datos['cfdi']['fecha']);
         $cfdi->setAttribute('FormaPago', $datos['cfdi']['forma_pago']);
         $cfdi->setAttribute('NoCertificado', "");
-        $cfdi->setAttribute('SubTotal', number_format($datos['cfdi']['sub_total'], 2, '.', ''));
+        $cfdi->setAttribute('SubTotal', number_format($datos['cfdi']['subtotal'], 2, '.', ''));
         $cfdi->setAttribute('Moneda', $datos['cfdi']['moneda']);
         $cfdi->setAttribute('Total', number_format($datos['cfdi']['total'], 2, '.', ''));
         $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_de_comprobante']);

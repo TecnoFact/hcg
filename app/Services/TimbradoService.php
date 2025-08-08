@@ -574,7 +574,7 @@ class TimbradoService
     {
         try {
             // Read the XML file content
-            $xmlPath = Storage::disk('public')->path($cfdiArchivo->ruta);
+            $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
 
             if (!file_exists($xmlPath)) {
                 throw new \Exception("El archivo XML no existe: $xmlPath");
@@ -776,7 +776,7 @@ class TimbradoService
     {
         try {
             // Read the XML file content
-            $xmlPath = Storage::disk('public')->path($cfdiArchivo->ruta);
+            $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
 
             if (!file_exists($xmlPath)) {
                 throw new \Exception("El archivo XML no existe: $xmlPath");
