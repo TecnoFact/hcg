@@ -241,7 +241,7 @@
         </div>
     @endif
 
-
+    @if(!empty($cadenaOrigen))
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 5px; table-layout: fixed;">
             <tr>
@@ -254,6 +254,9 @@
             </tr>
         </table>
     </div>
+    @endif
+
+    @if(!empty($selloCFD))
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 5px; table-layout: fixed;">
             <tr>
@@ -266,6 +269,9 @@
             </tr>
         </table>
     </div>
+    @endif
+
+    @if(!empty($selloSAT))
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 5px; table-layout: fixed;">
             <tr>
@@ -278,6 +284,8 @@
             </tr>
         </table>
     </div>
+    @endif
+
 
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 5px; table-layout: fixed;">
@@ -288,27 +296,25 @@
                 <td width="100%" class="cell-primary-border-line text-left" style="vertical-align: top; padding: 5px;  word-wrap:break-word;">
                     <table cellpadding="0" cellspacing="0" class="" width="100%" style="table-layout: fixed;">
                         <tr>
+                            @if(!empty($qr))
                             <td width="20%" class="text-center" style="vertical-align: top;">
                                 <img src="{{ $qr }}" width="120px" style="margin: 5px 0;"/>
                             </td>
+                            @endif
                             <td width="18%" class="" style="vertical-align: top; padding-top: 12px;">
-                               Tipo:<br>
+                                Tipo:<br>
                                 Fecha de Entrada:<br>
-
-
                                 Fecha de Timbrado:<br>
                                 Certificado:<br>
                                 No. de Certificado SAT:<br>
-
                                 Forma de Pago:<br>
                                 Método de Pago:<br>
                                 Lugar de Expedición:<br>
 
                             </td>
                             <td width="" class="" style="vertical-align: top; padding-top: 12px;">
-                                {{ $customer_invoice->documentType->cfdiType->name_sat ?? '' }}<br>
+                                {{ $customer_invoice->documentType->cfdiType->name_sat ?? '-' }}<br>
                                 {{ $fecha }}<br>
-
                                 {{ str_replace('T',' ',$fechaTimbrado) }}<br>
                                 {{ $noCertificado }}<br>
                                 {{ $data['complemento']['timbreFiscalDigital']['NoCertificadoSAT'] }}<br>
@@ -320,7 +326,6 @@
                             </td>
                             <td width="7%" class="" style="vertical-align: top; padding-top: 12px;">
                                 Moneda:<br>
-                                Tipo de Cambio:<br>
                             </td>
                             <td width="10%" class="text-left" style="vertical-align: top; padding-top: 12px;">
                                 {!! 'MXN'  !!}<br>
