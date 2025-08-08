@@ -213,7 +213,7 @@ class EditCfdi extends EditRecord
 
         // Genera el XML
         $xml = ComplementoXmlService::buildXmlCfdi($data);
-        TimbradoService::createCfdiToPDF($cfdi);
+        TimbradoService::createCfdiSimpleToPDF($cfdi);
 
         // Guarda el XML
         Storage::disk('local')->put($path_xml, $xml);

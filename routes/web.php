@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     // RUTA CFDIS
     Route::get('/descargar-cfdis-xml/{factura}', [CfdiController::class, 'descargarCfdiXml'])->name('cfdis.descargar-xml');
+    Route::get('/descargar-cfdis-pdf/{factura}', [CfdiController::class, 'descargarCfdiPdf'])->name('cfdis.descargar-pdf');
 
     Route::get('emision/descargar-xml/{emision}', [EmisionController::class, 'descargarXmlEmision'])->name('emision.descargar-xml');
 });

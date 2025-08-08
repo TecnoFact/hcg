@@ -316,7 +316,7 @@ class CfdiResource extends Resource
                     ->url(fn($record) => route('cfdis.descargar-pdf', $record))
                     ->color('success')
                     ->openUrlInNewTab(false)
-                    ->visible(fn($record) => $record->path_pdf !== null),
+                    ->visible(fn($record) => $record->pdf_path !== null),
 
                 Tables\Actions\EditAction::make(),
                   ])
