@@ -27,6 +27,11 @@ class ReceptorResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -80,8 +85,8 @@ class ReceptorResource extends Resource
     {
         return [
             'index' => Pages\ListReceptors::route('/'),
-            'create' => Pages\CreateReceptor::route('/create'),
-            'edit' => Pages\EditReceptor::route('/{record}/edit'),
+            //'create' => Pages\CreateReceptor::route('/create'),
+            //'edit' => Pages\EditReceptor::route('/{record}/edit'),
         ];
     }
 }

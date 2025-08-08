@@ -126,7 +126,7 @@ class EditCfdi extends EditRecord
         $data['receptor'] = [
             'rfc' => $data['receptor_rfc'],
             'nombre' => $data['receptor_nombre'],
-            'domicilio_fiscal' => $data['receptor_domicilio'],
+            'domicilio_fiscal' => $data['receptor_domicilio'] ?? '0',
             'regimen_fiscal' => $data['receptor_regimen_fiscal'],
             'uso_cfdi' => $data['receptor_uso_cfdi']
         ];

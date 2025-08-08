@@ -47,18 +47,25 @@ class CreateCfdi extends CreateRecord
         $data['subtotal'] = $total; // Asigna el subtotal
         $data['total'] = $total;
 
-        CfdiEmisor::create($data['emisor']);
+        $emisor = CfdiEmisor::updateOrCreate(
+            ['rfc' => $data['emisor']['rfc']],
+            $data['emisor']
+        );
 
+        $data['emisor_id'] = $emisor->id;
         // guardar el receptor
         $data['receptor'] = [
             'rfc' => $data['receptor_rfc'],
             'nombre' => $data['receptor_nombre'],
-            'domicilio_fiscal' => $data['receptor_domicilio'],
+            'domicilio_fiscal' => $data['receptor_domicilio'] ?? '0',
             'regimen_fiscal' => $data['receptor_regimen_fiscal'],
             'uso_cfdi' => $data['receptor_uso_cfdi']
         ];
 
-        $receptorCreate = CfdiReceptor::create($data['receptor']);
+        $receptorCreate = CfdiReceptor::updateOrCreate(
+            ['rfc' => $data['receptor']['rfc']],
+            $data['receptor']
+        );
 
         $data['receptor_id'] = $receptorCreate->id;
 
