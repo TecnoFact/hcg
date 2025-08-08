@@ -104,7 +104,7 @@
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 10px;">
             <tr>
-                <td width="" class="cell-primary" colspan="2" style="">Cliente</td>
+                <td width="" class="cell-primary" colspan="2" style="">Receptor</td>
             </tr>
             <tr>
                 <td width="50%" class="cell-primary-border-line text-left" style="vertical-align: top; height: 50px; padding: 5px;">
@@ -161,7 +161,6 @@
                     <td class="text-center">{{ $result['cantidad'] }}</td>
                     <td>
                         {!! nl2br($result['descripcion']) !!}
-
                     </td>
                     <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
                     <td class="text-center">
