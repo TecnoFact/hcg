@@ -228,7 +228,7 @@ class EmisorResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]) ->modifyQueryUsing(function (Builder $query) {
-                if (auth()->user()->hasRole('User')) {
+                if (auth()->user()->hasRole('Customer')) {
                     $query->where('user_id', auth()->id());
                 }
             });
