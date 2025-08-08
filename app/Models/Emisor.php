@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\RegimeFiscal;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Emisor extends Model
 {
@@ -34,6 +35,24 @@ class Emisor extends Model
         'due_date',
         'date_from'
     ];
+
+   // get logo attribute and validation if not found
+   public function getLogoAttribute($value)
+   {
+
+       // Si no hay logo, retorna el avatar por defecto
+       if (!$value) {
+           return asset('image/avaatar.png');
+       }
+       // Si hay logo, verifica si el archivo existe
+       $logoPath = Storage::disk('local')->path($value);
+
+       if (file_exists($logoPath)) {
+           return $value;
+       }
+       // Si el archivo no existe, retorna el avatar por defecto
+       return asset('image/avaatar.png');
+   }
 
     public function user()
     {

@@ -186,9 +186,8 @@ class EmisorResource extends Resource
                     Tables\Columns\TextColumn::make('reason_social')
                         ->formatStateUsing(fn($state) => 'Razón Social: ' . $state)
                         ->searchable(),
-                    Tables\Columns\TextColumn::make('email')
-                        ->formatStateUsing(fn($state) => 'Correo electrónico: ' . $state)
-                        ->icon('heroicon-o-envelope')
+                    Tables\Columns\TextColumn::make('regimenFiscal.descripcion')
+                        ->formatStateUsing(fn($state) => 'Régimen Fiscal: ' . $state)
                         ->searchable(),
                     Tables\Columns\TextColumn::make('date_from')
                         ->formatStateUsing(fn($state) => 'Fecha de inicio: ' . $state)
