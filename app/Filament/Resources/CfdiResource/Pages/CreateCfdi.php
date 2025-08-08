@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CfdiResource\Pages;
 
+use App\Models\Emisor;
 use App\Models\Models\Cfdi;
 use App\Services\TimbradoService;
 use Filament\Actions\Action;
@@ -47,7 +48,7 @@ class CreateCfdi extends CreateRecord
         $data['subtotal'] = $total; // Asigna el subtotal
         $data['total'] = $total;
 
-        $emisor = CfdiEmisor::updateOrCreate(
+        $emisor = Emisor::updateOrCreate(
             ['rfc' => $data['emisor']['rfc']],
             $data['emisor']
         );

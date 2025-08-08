@@ -2,6 +2,7 @@
 
 namespace App\Models\Models;
 
+use App\Models\Emisor;
 use App\Models\User;
 use App\Models\CfdiArchivo;
 use App\Models\Models\CfdiConcepto;
@@ -56,7 +57,7 @@ class Cfdi extends Model
 
     public function emisor()
     {
-        return $this->belongsTo(CfdiEmisor::class, 'emisor_id');
+        return $this->belongsTo(Emisor::class, 'emisor_id');
     }
 
     public function receptor()

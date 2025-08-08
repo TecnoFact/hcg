@@ -114,10 +114,10 @@ class EditCfdi extends EditRecord
         $data['subtotal'] = $total; // Asigna el subtotal
         $data['total'] = $total;
 
-        $emisor = CfdiEmisor::where('rfc', $data['emisor_rfc'])->first();
+        $emisor = Emisor::where('rfc', $data['emisor_rfc'])->first();
 
         if (!$emisor) {
-            $emisor = CfdiEmisor::create($data['emisor']);
+            $emisor = Emisor::create($data['emisor']);
         } else {
             $emisor->update($data['emisor']);
         }
