@@ -69,7 +69,7 @@ class ComplementoXmlService
     public static function buildXmlCfdi(array $datos): string
     {
 
-         $doc = new DOMDocument('1.0', 'UTF-8');
+        $doc = new DOMDocument('1.0', 'UTF-8');
         $doc->formatOutput = true;
 
         $cfdi = $doc->createElementNS('http://www.sat.gob.mx/cfd/4', 'cfdi:Comprobante');
@@ -88,11 +88,9 @@ class ComplementoXmlService
         $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_de_comprobante']);
         $cfdi->setAttribute('MetodoPago', $datos['cfdi']['metodo_pago']);
         $cfdi->setAttribute('LugarExpedicion', $datos['cfdi']['lugar_expedicion']);
-        //$cfdi->setAttribute('Exportacion', '01');
 
         // Emisor
-
-        $emisorFind = Emisor::find( $datos['cfdi']['emisor_id']);
+        $emisorFind = Emisor::find($datos['cfdi']['emisor_id']);
         $regimenFiscal = RegimeFiscal::find($emisorFind->tax_regimen_id);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
@@ -125,10 +123,85 @@ class ComplementoXmlService
             $concepto->setAttribute('ValorUnitario', number_format((float) str_replace([',', ' '], '', $c['valor_unitario']), 2, '.', ''));
             $concepto->setAttribute('Importe', number_format((float) str_replace([',', ' '], '', $c['importe']), 2, '.', ''));
             $concepto->setAttribute('ObjetoImp', $objeImp ? $objeImp->clave : '01');
+
+            // Nodo de impuestos por concepto
+            if (!empty($c['traslados']) || !empty($c['retenciones'])) {
+                $impuestosConcepto = $doc->createElement('cfdi:Impuestos');
+
+                // Traslados
+                if (!empty($c['traslados'])) {
+                    $traslados = $doc->createElement('cfdi:Traslados');
+                    foreach ($c['traslados'] as $t) {
+                        $traslado = $doc->createElement('cfdi:Traslado');
+                        $traslado->setAttribute('Base', number_format($t['base'], 2, '.', ''));
+                        $traslado->setAttribute('Impuesto', $t['impuesto']); // Ej: 002 = IVA
+                        $traslado->setAttribute('TipoFactor', $t['tipo_factor']); // Ej: Tasa
+                        $traslado->setAttribute('TasaOCuota', number_format($t['tasa'], 6, '.', ''));
+                        $traslado->setAttribute('Importe', number_format($t['importe'], 2, '.', ''));
+                        $traslados->appendChild($traslado);
+                    }
+                    $impuestosConcepto->appendChild($traslados);
+                }
+
+                // Retenciones
+                if (!empty($c['retenciones'])) {
+                    $retenciones = $doc->createElement('cfdi:Retenciones');
+                    foreach ($c['retenciones'] as $r) {
+                        $retencion = $doc->createElement('cfdi:Retencion');
+                        $retencion->setAttribute('Base', number_format($r['base'], 2, '.', ''));
+                        $retencion->setAttribute('Impuesto', $r['impuesto']);
+                        $retencion->setAttribute('TipoFactor', $r['tipo_factor']);
+                        $retencion->setAttribute('TasaOCuota', number_format($r['tasa'], 6, '.', ''));
+                        $retencion->setAttribute('Importe', number_format($r['importe'], 2, '.', ''));
+                        $retenciones->appendChild($retencion);
+                    }
+                    $impuestosConcepto->appendChild($retenciones);
+                }
+
+                $concepto->appendChild($impuestosConcepto);
+            }
+
             $conceptos->appendChild($concepto);
         }
 
         $cfdi->appendChild($conceptos);
+
+        // Nodo global de impuestos
+        $impuestosGlobal = $doc->createElement('cfdi:Impuestos');
+
+        if (!empty($datos['impuestos']['retenciones'])) {
+            $retencionesGlobal = $doc->createElement('cfdi:Retenciones');
+            foreach ($datos['impuestos']['retenciones'] as $r) {
+                $retencion = $doc->createElement('cfdi:Retencion');
+                $retencion->setAttribute('Impuesto', $r['impuesto']);
+                $retencion->setAttribute('Importe', number_format($r['importe'], 2, '.', ''));
+                $retencionesGlobal->appendChild($retencion);
+            }
+            $impuestosGlobal->appendChild($retencionesGlobal);
+        }
+
+        if (!empty($datos['impuestos']['traslados'])) {
+            $trasladosGlobal = $doc->createElement('cfdi:Traslados');
+            foreach ($datos['impuestos']['traslados'] as $t) {
+                $traslado = $doc->createElement('cfdi:Traslado');
+                $traslado->setAttribute('Base', number_format($t['base'], 2, '.', ''));
+                $traslado->setAttribute('Impuesto', $t['impuesto']);
+                $traslado->setAttribute('TipoFactor', $t['tipo_factor']);
+                $traslado->setAttribute('TasaOCuota', number_format($t['tasa'], 6, '.', ''));
+                $traslado->setAttribute('Importe', number_format($t['importe'], 2, '.', ''));
+                $trasladosGlobal->appendChild($traslado);
+            }
+            $impuestosGlobal->appendChild($trasladosGlobal);
+        }
+
+        if (isset($datos['impuestos']['total_retenciones'])) {
+            $impuestosGlobal->setAttribute('TotalImpuestosRetenidos', number_format($datos['impuestos']['total_retenciones'], 2, '.', ''));
+        }
+        if (isset($datos['impuestos']['total_traslados'])) {
+            $impuestosGlobal->setAttribute('TotalImpuestosTrasladados', number_format($datos['impuestos']['total_traslados'], 2, '.', ''));
+        }
+
+        $cfdi->appendChild($impuestosGlobal);
 
         $doc->appendChild($cfdi);
 
@@ -183,6 +256,7 @@ class ComplementoXmlService
         $conceptos = $doc->createElement('cfdi:Conceptos');
 
         foreach ($datos->conceptos as $c) {
+             $objeImp = ObjImp::find($c['obj_imp_id']);
             $concepto = $doc->createElement('cfdi:Concepto');
             $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
             $concepto->setAttribute('Cantidad', number_format($c['cantidad'], 6, '.', ''));
@@ -191,7 +265,7 @@ class ComplementoXmlService
             $concepto->setAttribute('Descripcion', $c['descripcion']);
             $concepto->setAttribute('ValorUnitario', number_format($c['valor_unitario'], 2, '.', ''));
             $concepto->setAttribute('Importe', number_format($c['importe'], 2, '.', ''));
-            //$concepto->setAttribute('ObjetoImp', '01'); // No objeto de impuesto
+            $concepto->setAttribute('ObjetoImp', $objeImp ? $objeImp->clave : '01'); // No objeto de impuesto
             $conceptos->appendChild($concepto);
         }
 
