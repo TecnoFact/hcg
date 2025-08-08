@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Emisor;
 use App\Models\ObjImp;
+use App\Models\RegimeFiscal;
 use DOMXPath;
 use Exception;
 use DOMDocument;
@@ -92,10 +93,11 @@ class ComplementoXmlService
         // Emisor
 
         $emisorFind = Emisor::find( $datos['cfdi']['emisor_id']);
+        $regimenFiscal = RegimeFiscal::find($emisorFind->tax_regimen_id);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
-        $emisor->setAttribute('Nombre', $emisorFind->nombre);
-        $emisor->setAttribute('RegimenFiscal', $emisorFind->regimen_fiscal);
+        $emisor->setAttribute('Nombre', $emisorFind->name);
+        $emisor->setAttribute('RegimenFiscal', $regimenFiscal ? $regimenFiscal->clave : '01');
         $cfdi->appendChild($emisor);
 
         // Receptor
@@ -160,10 +162,11 @@ class ComplementoXmlService
         // Emisor
 
         $emisorFind = Emisor::find( $datos->emisor_id);
+        $regimenFiscal = RegimeFiscal::find($emisorFind->tax_regimen_id);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
-        $emisor->setAttribute('Nombre', $emisorFind->nombre);
-        $emisor->setAttribute('RegimenFiscal', $emisorFind->regimen_fiscal);
+        $emisor->setAttribute('Nombre', $emisorFind->name);
+        $emisor->setAttribute('RegimenFiscal', $regimenFiscal ? $regimenFiscal->clave : '01');
         $cfdi->appendChild($emisor);
 
         // Receptor
@@ -224,9 +227,9 @@ class ComplementoXmlService
        $emisorData = Emisor::updateOrCreate(
             ['rfc' => $emisor['Rfc']],
             [
-                'nombre' => $emisor['Nombre'],
-                'regimen_fiscal' => $emisor['RegimenFiscal'] ?? null,
-                'domicilio_fiscal' => null,
+                'name' => $emisor['Nombre'],
+                'tax_regimen_id' => $emisor['RegimenFiscal'] ?? null,
+                'postal_code' => null,
             ]
         );
 
