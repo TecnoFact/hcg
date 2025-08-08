@@ -233,7 +233,7 @@ class CfdiResource extends Resource
                                     ->options(Tax::pluck('name', 'id')),
                                 Select::make('obj_imp_id')
                                     ->label('Objeto del Impuesto')
-                                    ->options(ObjImp::pluck('descripcion', 'clave')),
+                                    ->options(ObjImp::pluck('descripcion', 'id')),
 
                                 Forms\Components\Select::make('clave_unidad')
                                     ->label('Clave Unidad')
