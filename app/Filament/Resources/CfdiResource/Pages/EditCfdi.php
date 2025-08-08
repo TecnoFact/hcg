@@ -91,8 +91,9 @@ class EditCfdi extends EditRecord
         // guardar el emisor
         $data['emisor'] = [
             'rfc' => $data['emisor_rfc'],
-            'nombre' => $data['emisor_nombre'],
-            'regimen_fiscal' => $data['emisor_regimen_fiscal'],
+            'name' => $data['emisor_nombre'],
+            'tax_regimen_id' => $data['emisor_regimen_fiscal'],
+            'postal_code' => $data['lugar_expedicion'],
         ];
 
         $total = 0;
