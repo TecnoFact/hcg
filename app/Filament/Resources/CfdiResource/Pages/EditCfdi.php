@@ -6,7 +6,6 @@ use App\Filament\Resources\CfdiResource;
 use App\Models\Emisor;
 use App\Models\Models\Cfdi;
 use App\Models\Models\CfdiConcepto;
-use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiReceptor;
 use App\Services\ComplementoXmlService;
 use App\Services\TimbradoService;

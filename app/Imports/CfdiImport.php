@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
+use App\Models\Emisor;
 use App\Models\Models\Cfdi;
-use App\Models\Models\CfdiEmisor;
 use App\Models\Tax;
 use App\Services\ComplementoXmlService;
 use Illuminate\Support\Collection;
@@ -49,7 +49,7 @@ class CfdiImport implements ToCollection
                     $cfdi->update(['path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
                 }
 
-                $emisorFind = CfdiEmisor::where('rfc', $row[1])->first();
+                $emisorFind = Emisor::where('rfc', $row[1])->first();
 
                 if (!$emisorFind) {
 
@@ -59,7 +59,7 @@ class CfdiImport implements ToCollection
                         'regimen_fiscal' => $row[3],
                     ];
 
-                    $emisorFind = CfdiEmisor::firstOrCreate($emisor);
+                    $emisorFind = Emisor::firstOrCreate($emisor);
                 }
 
                 $receptorFind = CfdiReceptor::where('rfc', $row[4])->first();

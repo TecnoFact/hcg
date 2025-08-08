@@ -2,14 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Emisor;
 use App\Models\ObjImp;
 use DOMXPath;
 use Exception;
 use DOMDocument;
-use App\Models\Emision;
-use App\Models\CfdiArchivo;
 use App\Models\Models\Cfdi;
-use App\Models\Models\CfdiEmisor;
 use App\Models\Models\CfdiReceptor;
 use Illuminate\Support\Facades\Storage;
 
@@ -93,7 +91,7 @@ class ComplementoXmlService
 
         // Emisor
 
-        $emisorFind = CfdiEmisor::find( $datos['cfdi']['emisor_id']);
+        $emisorFind = Emisor::find( $datos['cfdi']['emisor_id']);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
         $emisor->setAttribute('Nombre', $emisorFind->nombre);
@@ -161,7 +159,7 @@ class ComplementoXmlService
 
         // Emisor
 
-        $emisorFind = CfdiEmisor::find( $datos->emisor_id);
+        $emisorFind = Emisor::find( $datos->emisor_id);
         $emisor = $doc->createElement('cfdi:Emisor');
         $emisor->setAttribute('Rfc', $emisorFind->rfc);
         $emisor->setAttribute('Nombre', $emisorFind->nombre);
@@ -223,7 +221,7 @@ class ComplementoXmlService
         }
 
         // Aquí puedes guardar el emisor en la base de datos
-       $emisorData = CfdiEmisor::updateOrCreate(
+       $emisorData = Emisor::updateOrCreate(
             ['rfc' => $emisor['Rfc']],
             [
                 'nombre' => $emisor['Nombre'],
