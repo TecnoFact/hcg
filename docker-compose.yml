@@ -1,6 +1,6 @@
 services:
     # Servicio para la aplicación Laravel
-    web:
+    app:
         build:
             context: .
             dockerfile: ./Dockerfile
@@ -25,13 +25,42 @@ services:
             - "80:80"
             - "443:443"
         volumes:
-            - .:/var/www
-            - ./nginx/conf.d/:/etc/nginx/conf.d/
+            - ./:/var/www
+            - ./docker/nginx:/etc/nginx/conf.d
+            - ./docker/nginx/ssl:/etc/nginx/ssl:ro
         networks:
             - apitimbrado-network
 
+
+    db:
+        image: mysql:8.0
+        container_name: apitimbrado_db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+            MYSQL_CHARACTER_SET_SERVER: utf8mb4
+            MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+        command: --default-authentication-plugin=mysql_native_password
+        volumes:
+            - dbdata:/var/lib/mysql
+            - ./docker/mysql/init:/docker-entrypoint-initdb.d
+        ports:
+            - "${DB_PORT:-3306}:3306"
+        networks:
+            - apitimbrado-network
+        healthcheck:
+            test: [ "CMD", "mysqladmin", "ping", "-p${DB_ROOT_PASSWORD}" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
 # Red para conectar los servicios
 networks:
     apitimbrado-network:
         driver: bridge
+
+volumes:
+    dbdata:
+        driver: local

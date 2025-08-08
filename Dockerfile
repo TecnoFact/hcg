@@ -33,9 +33,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-    install-php-extensions mbstring pdo_pgsql zip exif pcntl gd gmp xsl bcmath soap intl imagick
-
-
+    install-php-extensions mbstring pdo_mysql pdo_pgsql zip exif pcntl gd gmp xsl bcmath soap intl imagick
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
