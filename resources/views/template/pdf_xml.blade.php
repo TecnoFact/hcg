@@ -27,15 +27,15 @@
         }
 
         .text-primary {
-            color: #2299dd!important;
+            color: {{$color}} !important;
         }
 
         .table-items thead th {
-            background-color: #2299dd!important;
+            background-color: {{$color}} !important;
         }
         .cell-primary {
-            border: 1px solid #2299dd!important;
-            background-color: #2299dd!important;
+            border: 1px solid {{$color}} !important;
+            background-color: {{$color}} !important;
             color: #ffffff;
             font-weight: bold;
             padding: 5px 2px;
@@ -45,7 +45,7 @@
             font-size: 8pt;
         }
         .cell-primary-border-line {
-            border: 1px solid #2299dd!important;
+            border: 1px solid {{$color}} !important;
             border-radius: 0 0 3px 3px;
             padding: 5px 1px;
         }
@@ -93,28 +93,28 @@
                 </div>
             </td>
         </tr>
-        <tr>
-            <td colspan="2"></td>
-            <td colspan="2" style="padding-top: 13px;">
-                {{mb_strtoupper("Regimen Fiscal:")}}: {{ $emisorRegimenFiscal }}
-            </td>
-        </tr>
     </table>
     </div>
     <div>
         <table cellpadding="0" cellspacing="0" class="" width="100%" style="margin-top: 10px;">
             <tr>
-                <td width="" class="cell-primary" colspan="2" style="">Receptor</td>
+                <td width="" class="cell-primary" style="">Emisor</td>
+                <td width="" class="cell-primary" style="">Receptor</td>
             </tr>
             <tr>
+                <td class="cell-primary-border-line text-left" style="vertical-align: top; height: 50px; padding: 5px;">
+                    <strong>{{ mb_strtoupper($emisorNombre) }}</strong>
+                    <br>
+                    {{ "RFC: ".mb_strtoupper($emisorRfc) }}
+                    <br>
+                    {{mb_strtoupper("Regimen Fiscal:")}}: {{ $emisorRegimenFiscal }}
+                </td>
                 <td width="50%" class="cell-primary-border-line text-left" style="vertical-align: top; height: 50px; padding: 5px;">
                     <strong>{{ mb_strtoupper($receptorNombre) }}</strong>
                     <br>
-                    {{ mb_strtoupper($receptorRfc) }}
-                </td>
-
-                <td class="cell-primary-border-line text-left" style="vertical-align: top; height: 50px; padding: 5px;">
+                    {{ "RFC: ".mb_strtoupper($receptorRfc) }}
                     <br>
+                    {{mb_strtoupper("Regimen Fiscal:")}}: {{ $receptorRegimenFiscal }}
                 </td>
             </tr>
         </table>

@@ -346,7 +346,10 @@ class CfdiController extends Controller
             ->send();
 
         return response()->download($path, basename($ruta), [
-            'Content-Type' => 'application/xml',
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -373,13 +376,17 @@ class CfdiController extends Controller
 
         }
 
-
         if(Storage::disk('public')->exists($factura->pdf_path)) {
-
-            return response()->download(Storage::disk('public')->path($factura->pdf_path));
+            return response()->download(
+                Storage::disk('public')->path($factura->pdf_path),
+            null,
+            [
+                'Content-Type' => 'application/pdf',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ]);
         }
-
-
     }
 
     public function descargarXml($factura)
@@ -418,7 +425,10 @@ class CfdiController extends Controller
 
 
         return response()->download($path, basename($ruta), [
-            'Content-Type' => 'application/xml',
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 
@@ -453,8 +463,6 @@ class CfdiController extends Controller
             return redirect()->back();
         }
 
-
-
         $path = Storage::disk('public')->path($pdfPath);
 
         if (!file_exists($path)) {
@@ -475,6 +483,9 @@ class CfdiController extends Controller
 
         return response()->download($path, basename($pdfPath), [
             'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 

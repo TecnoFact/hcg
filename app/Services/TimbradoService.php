@@ -602,6 +602,7 @@ class TimbradoService
             $tipoDeComprobante = $comprobante['TipoDeComprobante'];
             $lugarExpedicion = $comprobante['LugarExpedicion'];
             $noCertificado = $comprobante['NoCertificado'];
+            $color = $cfdiArchivo?->emisor?->color ?? "#2299dd";
 
             // validar si existe el nodo Complemento
             if (!$comprobante->searchNode('cfdi:Complemento')) {
@@ -630,6 +631,7 @@ class TimbradoService
                 ]
             ];
 
+            // Obtener datos del emisor
             $emisorNode = $comprobante->searchNode('cfdi:Emisor');
             $emisorRfc = $emisorNode['Rfc'];
             $emisorNombre = $emisorNode['Nombre'];
@@ -641,14 +643,13 @@ class TimbradoService
                 throw new \Exception("Emisor no encontrado para el RFC: " . $emisorRfc);
             }
 
-            // Obtener datos del emisor
-
-
             // Obtener datos del receptor
             $receptorNode = $comprobante->searchNode('cfdi:Receptor');
             $receptorRfc = $receptorNode['Rfc'];
             $receptorNombre = $receptorNode['Nombre'];
             $receptorUsoCfdi = $receptorNode['UsoCFDI'];
+            $receptorRegimenFiscal = $receptorNode['RegimenFiscalReceptor'];
+            $receptorDomicilioFiscal = $receptorNode['DomicilioFiscalReceptor'];
 
             // Obtener conceptos
             $conceptos = [];
@@ -719,6 +720,7 @@ class TimbradoService
                 'emisorNombre',
                 'emisorRegimenFiscal',
                 'receptorRfc',
+                'receptorRegimenFiscal',
                 'receptorNombre',
                 'receptorUsoCfdi',
                 'fecha',
@@ -736,7 +738,8 @@ class TimbradoService
                 'timbreFiscal',
                 'customer_invoice',
                 'logo',
-                'noCertificado'
+                'noCertificado',
+                'color'
             ));
 
             // Guardar PDF
@@ -847,6 +850,8 @@ class TimbradoService
             $receptorRfc = $receptorNode['Rfc'];
             $receptorNombre = $receptorNode['Nombre'];
             $receptorUsoCfdi = $receptorNode['UsoCFDI'];
+            $receptorRegimenFiscal = $receptorNode['RegimenFiscalReceptor'];
+            $receptorDomicilioFiscal = $receptorNode['DomicilioFiscalReceptor'];
 
             // Obtener conceptos
             $conceptos = [];
