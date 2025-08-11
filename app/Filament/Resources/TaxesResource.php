@@ -43,6 +43,14 @@ class TaxesResource extends Resource
                     ->numeric()
                     ->minValue(0)
                     ->maxValue(100),
+                Forms\Components\Select::make('tipo_factor')
+                    ->label('Tipo de factor')
+                    ->options([
+                        'Tasa' => 'Tasa',
+                        'Cuota' => 'Cuota',
+                        'Exento' => 'Exento'
+                    ])
+                    ->required(),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Estado del impuesto')
                     ->default(true),
@@ -59,6 +67,8 @@ class TaxesResource extends Resource
                     ->label('Código del impuesto'),
                 Tables\Columns\TextColumn::make('rate')
                     ->label('Tasa del impuesto'),
+                Tables\Columns\TextColumn::make('tipo_factor')
+                    ->label('Tipo de factor'),
                 Tables\Columns\BooleanColumn::make('is_active')
                     ->label('Estado del impuesto'),
             ])

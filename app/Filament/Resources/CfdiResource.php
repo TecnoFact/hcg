@@ -315,26 +315,35 @@ class CfdiResource extends Resource
                 //
             ])
             ->actions([
-                  ActionGroup::make([
-                //Tables\Actions\EditAction::make(),
-                Action::make('descargar_xml')
-                    ->label('Descargar XML')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn($record) => route('cfdis.descargar-xml', $record))
-                    ->color('success')
-                    ->openUrlInNewTab(false)
-                    ->visible(fn($record) => $record->path_xml !== null),
+                    ActionGroup::make([
+                        Action::make('duplicate')
+                            ->label('Duplicar')
+                            ->icon('heroicon-o-document-duplicate')
+                            ->action(function (Model $record) {
+                                $new = $record->replicate();
+                                $new->created_at = now();
+                                $new->updated_at = now();
+                                $new->save();
+                                return redirect()->route('filament.resources.cfdi-resource.edit', ['record' => $new->id]);
+                            }),
+                        Action::make('descargar_xml')
+                            ->label('Descargar XML')
+                            ->icon('heroicon-o-arrow-down-tray')
+                            ->url(fn($record) => route('cfdis.descargar-xml', $record))
+                            ->color('success')
+                            ->openUrlInNewTab(false)
+                            ->visible(fn($record) => $record->path_xml !== null),
 
-                Action::make('descargar_pdf')
-                    ->label('Descargar PDF')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn($record) => route('cfdis.descargar-pdf', $record))
-                    ->color('success')
-                    ->openUrlInNewTab(false)
-                    ->visible(fn($record) => $record->pdf_path !== null),
+                        Action::make('descargar_pdf')
+                            ->label('Descargar PDF')
+                            ->icon('heroicon-o-arrow-down-tray')
+                            ->url(fn($record) => route('cfdis.descargar-pdf', $record))
+                            ->color('success')
+                            ->openUrlInNewTab(false)
+                            ->visible(fn($record) => $record->pdf_path !== null),
 
-                Tables\Actions\EditAction::make(),
-                  ])
+                        Tables\Actions\EditAction::make(),
+                    ])
             ])
             ->headerActions([
                 Action::make('ir_a_web')

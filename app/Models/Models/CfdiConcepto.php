@@ -3,6 +3,9 @@
 namespace App\Models\Models;
 
 use App\Models\CfdiArchivo;
+use App\Models\RetencionCfdi;
+use App\Models\Tax;
+use App\Models\TrasladoCfdi;
 use Illuminate\Database\Eloquent\Model;
 
 class CfdiConcepto extends Model
@@ -28,5 +31,20 @@ class CfdiConcepto extends Model
     public function cfdi()
     {
         return $this->belongsTo(Cfdi::class, 'cfdi_id', 'id');
+    }
+
+    public function traslados()
+    {
+        return $this->hasMany(TrasladoCfdi::class, 'concepto_id');
+    }
+
+    public function retenciones()
+    {
+        return $this->hasMany(RetencionCfdi::class, 'concepto_id');
+    }
+
+    public function impuestos()
+    {
+        return $this->belongsTo(Tax::class, 'tax_id');
     }
 }

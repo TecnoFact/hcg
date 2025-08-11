@@ -13,6 +13,7 @@ class Tax extends Model
         'code',
         'rate',
         'is_active',
+        'tipo_factor'
     ];
 
     protected $casts = [

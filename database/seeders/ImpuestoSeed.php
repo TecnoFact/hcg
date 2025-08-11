@@ -17,9 +17,18 @@ class ImpuestoSeed extends Seeder
         $data = json_decode($json, true);
 
         foreach ($data as $item) {
+
+            if($item['Descripción'] === 'IVA') {
+                $code = '002';
+            } elseif($item['Descripción'] === 'ISR') {
+                $code = '001';
+            } else {
+                $code = '003';
+            }
+
             \App\Models\Tax::create([
                 'name' => $item['Descripción'],
-                'code' => $item['Descripción'],
+                'code' => $code,
                 'rate' => 0,
                 'is_active' => true,
 

@@ -2,16 +2,20 @@
 
 namespace App\Filament\Resources\CfdiResource\Pages;
 
-use App\Filament\Resources\CfdiResource;
+use App\Models\RetencionCfdi;
+use App\Models\Tax;
+use App\Models\TrasladoCfdi;
+use Filament\Actions;
 use App\Models\Emisor;
+use App\Models\ObjImp;
 use App\Models\Models\Cfdi;
+use App\Services\TimbradoService;
 use App\Models\Models\CfdiConcepto;
 use App\Models\Models\CfdiReceptor;
 use App\Services\ComplementoXmlService;
-use App\Services\TimbradoService;
-use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
+use App\Filament\Resources\CfdiResource;
+use Filament\Resources\Pages\EditRecord;
 
 class EditCfdi extends EditRecord
 {
@@ -175,6 +179,8 @@ class EditCfdi extends EditRecord
         $subtotal = 0;
         $total = 0;
         $iva = 0;
+         $conceptoCfdi = [];
+
         foreach ($conceptos as $concepto) {
             $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
             CfdiConcepto::updateOrCreate(
@@ -196,6 +202,41 @@ class EditCfdi extends EditRecord
             $subtotal += $concepto['cantidad'] * $valor_unitario ?? 0;
             $iva += $calculoImporte ?? 0;
             $total += $subtotal + $iva;
+
+            $objImp = ObjImp::find($concepto['obj_imp_id']);
+            $taxFind = Tax::find($concepto['tipo_impuesto']);
+
+            // si es tipo 003 o 002
+            if ($objImp && ($objImp->clave === '03' || $objImp->clave === '02')) {
+
+                       TrasladoCfdi::updateOrCreate(
+                                        [
+                                            'concepto_id' => $conceptoCfdi->id,
+                                            'impuesto' => $taxFind->code,
+                                        ],
+                                        [
+                                            'base' => $conceptoCfdi->importe,
+                                            'tipo_factor' => $taxFind->tipo_factor,
+                                            'tasa_o_cuota' => $taxFind->rate,
+                                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                                        ]
+                                    );
+            }
+
+            if($objImp && $objImp->clave === '01'){
+                        RetencionCfdi::updateOrCreate(
+                            [
+                                'concepto_id' => $conceptoCfdi->id,
+                                'impuesto' => $taxFind->code, // Ej: 002
+                            ],[
+                             'base' => $conceptoCfdi->importe,
+                            'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
+                            'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
+                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                        ]);
+            }
+
+            $contador++;
         }
 
         // Actualizar el subtotal y total del Cfdi
@@ -210,10 +251,18 @@ class EditCfdi extends EditRecord
         $path_xml = $cfdi->emisor->rfc .'/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
+        $cfdiUpdate = Cfdi::find($cfdi->id);
+        $cfdiUpdate->subtotal = $subtotal;
+        $cfdiUpdate->impuesto = $iva;
+        $cfdiUpdate->total = $total;
+        $cfdiUpdate->ruta = $ruta;
+        $cfdiUpdate->save();
+
+        $cfdiUpdate = Cfdi::with('conceptos')->find($cfdi->id);
+
         // Prepara los datos para el servicio
         $data = [
-            'cfdi' => $cfdi,
-            'conceptos' => $conceptos
+            'cfdi' => $cfdiUpdate,
         ];
 
         // Genera el XML

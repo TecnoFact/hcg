@@ -5,12 +5,17 @@ namespace App\Services;
 use App\Models\Emisor;
 use App\Models\ObjImp;
 use App\Models\RegimeFiscal;
+use App\Models\RetencionCfdi;
+use App\Models\Tax;
+use App\Models\TrasladoCfdi;
 use DOMXPath;
 use Exception;
 use DOMDocument;
 use App\Models\Models\Cfdi;
 use App\Models\Models\CfdiReceptor;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Str;
 
 class ComplementoXmlService
 {
@@ -66,6 +71,7 @@ class ComplementoXmlService
         return $dom->saveXML();
     }
 
+    /*
     public static function buildXmlCfdi(array $datos): string
     {
 
@@ -208,6 +214,7 @@ class ComplementoXmlService
         return $doc->saveXML();
 
     }
+    */
 
     public static function buildXmlCfdiFromDatabase(Cfdi $datos)
     {
@@ -274,6 +281,161 @@ class ComplementoXmlService
         $doc->appendChild($cfdi);
 
         return $doc->saveXML();
+    }
+
+    /**
+     * Genera el XML del CFDI a partir de un array de datos.
+     *
+     * @param array $datos
+     * @return string
+     */
+    public static function buildXmlCfdi(array $datos): string
+    {
+        //dd($datos);
+        if (empty($datos)) {
+            throw new \InvalidArgumentException('Los datos son requeridos para generar el CFDI.');
+        }
+
+        $emisor = Emisor::find($datos['cfdi']->emisor_id);
+
+        if (!$emisor) {
+            throw new \InvalidArgumentException('El emisor no existe.');
+        }
+
+        $certificatePath = Storage::disk('local')->path($emisor->file_certificate);
+        $fileKeyPath = Storage::disk('local')->path($emisor->file_key);
+
+        if (!file_exists($certificatePath)) {
+            throw new \InvalidArgumentException("El certificado del emisor $emisor->rfc no existe.");
+        }
+
+        $certificado = new \CfdiUtils\Certificado\Certificado($certificatePath);
+
+
+        $comprobanteAtributos = [
+            'Serie' => $datos['cfdi']->serie ?? null,
+            'Folio' => $datos['cfdi']->folio ?? null,
+            'Fecha' => str_replace(' ', 'T', $datos['cfdi']->fecha ?? ''),
+            'FormaPago' => $datos['cfdi']->forma_pago ?? null,
+            'MetodoPago' => $datos['cfdi']->metodo_pago ?? null,
+            'TipoDeComprobante' => $datos['cfdi']->tipo_de_comprobante ?? null,
+            'LugarExpedicion' => $datos['cfdi']->lugar_expedicion ?? null,
+            'Moneda' => 'MXN',
+            'TipoCambio' => '1'
+        ];
+        $creator = new \CfdiUtils\CfdiCreator40($comprobanteAtributos, $certificado);
+
+        $comprobante = $creator->comprobante();
+
+        // No agrego (aunque puedo) el Rfc y Nombre porque uso los que están establecidos en el certificado
+        $comprobante->addEmisor([
+            'Rfc' => $emisor->rfc,
+            'Nombre' => Str::upper($emisor->name),
+            'RegimenFiscal' => $emisor->regimenFiscal->clave, // General de Ley Personas Morales
+        ]);
+
+        $receptor = CfdiReceptor::find($datos['cfdi']->receptor_id);
+
+        if (!$receptor) {
+            throw new \InvalidArgumentException('El receptor no existe.');
+        }
+
+        $comprobante->addReceptor([
+            'Rfc' => $receptor->rfc,
+            'Nombre' => Str::upper($receptor->nombre),
+            'DomicilioFiscalReceptor' => $receptor->domicilio_fiscal,
+            'RegimenFiscalReceptor' => $receptor->regimen_fiscal,
+            'UsoCFDI' => $receptor->uso_cfdi,
+        ]);
+
+
+        $conceptos = [];
+
+        foreach($datos['cfdi']->conceptos as $concepto)
+        {
+
+
+           $objeImp = ObjImp::find($concepto->obj_imp_id);
+
+           $conceptos['ClaveProdServ'] = $concepto->clave_prod_serv;
+           $conceptos['Cantidad'] = number_format((float) str_replace([',', ' '], '', $concepto->cantidad), 6, '.', '');
+           $conceptos['ClaveUnidad'] = $concepto->clave_unidad;
+           $conceptos['Unidad'] = $concepto->unidad;
+           $conceptos['Descripcion'] = $concepto->descripcion;
+           $conceptos['ValorUnitario'] = number_format((float) str_replace([',', ' '], '', $concepto->valor_unitario), 2, '.', '');
+           $conceptos['Importe'] = number_format((float) str_replace([',', ' '], '', $concepto->importe), 2, '.', '');
+           $conceptos['ObjetoImp'] = $objeImp ? $objeImp->clave : '01';
+
+           $conceptoCfdi = $comprobante->addConcepto($conceptos);
+
+            // buscar el impuesto
+            $taxs = $concepto->impuestos ?? Tax::find((int)$concepto->tipo_impuesto);
+
+            $attributesTaxes = [];
+            if ($taxs && ($taxs->code === '002' || $taxs->code === '003')) {
+                // TRASLADOS
+                foreach($concepto->traslados as $traslado)
+                {
+                    $attributesTaxes['Importe'] = number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', '');
+                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', '');
+                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', '');
+                    $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
+                    $attributesTaxes['TipoFactor'] = 'tasa';
+                    $conceptoCfdi->addTraslado($attributesTaxes);
+                }
+            }
+
+            if($taxs->code === '001')
+            {
+                // retenciones
+                foreach($concepto->retenciones as $items)
+                {
+                    $attributesTaxes['Importe'] = number_format((float) str_replace([',', ' '], '', $items->importe), 2, '.', '');
+                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', '');
+                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $items->base), 2, '.', '');
+                    $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
+                    $attributesTaxes['TipoFactor'] = 'tasa';
+                    $conceptoCfdi->addRetencion($attributesTaxes);
+                }
+            }
+        }
+
+
+
+        // método de ayuda para establecer las sumas del comprobante e impuestos
+        // con base en la suma de los conceptos y la agrupación de sus impuestos
+        $creator->addSumasConceptos(null, 2);
+
+            $keyDerFile = $fileKeyPath;
+            $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
+            $keyDerPass = $emisor->password_key;
+
+            $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+
+                if( !file_exists($keyPemFileUnprotected)) {
+                    // Convertir clave DER a PEM
+                    $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+                }
+
+        // método de ayuda para generar el sello (obtener la cadena de origen y firmar con la llave privada)
+        $creator->addSello('file://' . $keyPemFileUnprotected, $emisor->password_key);
+
+        // método de ayuda para mover las declaraciones de espacios de nombre al nodo raíz
+        $creator->moveSatDefinitionsToComprobante();
+
+        // método de ayuda para validar usando las validaciones estándar de creación de la librería
+        $asserts = $creator->validate();
+
+        if ($asserts->hasErrors()) { // contiene si hay o no errores
+            Log::debug($asserts->errors());
+            //throw new Exception(implode("\n", $asserts->errors()));
+        }
+
+        // método de ayuda para generar el xml y guardar los contenidos en un archivo
+        //$creator->saveXml(Storage::disk('local')->path('cfdi/'. $emisor->rfc . '/' . $datos['cfdi']['uuid'] . '.xml'));
+
+        // método de ayuda para generar el xml y retornarlo como un string
+        return $creator->asXml();
     }
 
     /**
@@ -348,6 +510,9 @@ class ComplementoXmlService
          // insertar si hay conceptos en la bsee de datos
          foreach($conceptos() as $concepto)
          {
+            $objImp = ObjImp::where('clave', $concepto['ObjetoImp'])->first();
+            $taxs = Tax::where('code', $concepto['Impuesto'])->first();
+
             $cfdiConcepto = new \App\Models\Models\CfdiConcepto();
             $cfdiConcepto->cfdi_id = $cfdiArchivo->id;
             $cfdiConcepto->clave_prod_serv = $concepto['ClaveProdServ'];
@@ -358,7 +523,38 @@ class ComplementoXmlService
             $cfdiConcepto->descripcion = $concepto['Descripcion'];
             $cfdiConcepto->valor_unitario = $concepto['ValorUnitario'];
             $cfdiConcepto->importe = $concepto['Importe'];
+            $cfdiConcepto->obj_imp_id = $objImp ? $objImp->id : null;
+            $cfdiConcepto->tax_id = $taxs ? $taxs->id : null;
+            $cfdiConcepto->tipo_impuesto = $taxs ? $taxs->id : null;
             $cfdiConcepto->save();
+
+
+            if ($taxs && ($taxs->code === '002' || $taxs->code === '003')) {
+                // TRASLADOS
+                foreach($concepto->traslados as $traslado)
+                {
+                    TrasladoCfdi::create([
+                        'concepto_id' => $cfdiConcepto->id,
+                        'importe' => number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', ''),
+                        'tasa' => number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', ''),
+                        'base' => number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', ''),
+                        'impuesto' => $taxs->code, // 002 = IVA, 003 = IEPS
+                    ]);
+
+                }
+            }
+
+            if($taxs->code === '001')
+            {
+                // retenciones
+                    RetencionCfdi::create([
+                        'concepto_id' => $cfdiConcepto->id,
+                        'importe' => number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', ''),
+                        'tasa' => number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', ''),
+                        'base' => number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', ''),
+                        'impuesto' => $taxs->code, // 002 = IVA, 003 = IEPS
+                    ]);
+            }
          }
     }
 
