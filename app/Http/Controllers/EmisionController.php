@@ -30,7 +30,10 @@ class EmisionController extends Controller
         $emisionModel->save();
 
         return response()->download($pathXmlComplete, $name_xml_path, [
-            'Content-Type' => 'application/xml',
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
 
     }

@@ -480,12 +480,17 @@ class Cfdi extends Page
             ->body('El XML ha sido subido correctamente y enviado.')
             ->send();
 
-        return response()->download($pdf, 'cfdi_' . $cfdiArchivo->uuid . '.pdf');
+        return response()->download($pdf, 'cfdi_' . $cfdiArchivo->uuid . '.pdf', [
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     /**
      * function for test generate pdf from xml
-     * @return void
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
     public function convertXmlToPdf()
     {
@@ -503,7 +508,12 @@ class Cfdi extends Page
             ->body('El PDF ha sido generado exitosamente.')
             ->send();
 
-        return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf');
+        return response()->download($pdf, 'cfdi_' . $registro->uuid . '.pdf', [
+            'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
 }
