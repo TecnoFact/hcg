@@ -602,7 +602,7 @@ class TimbradoService
             $tipoDeComprobante = $comprobante['TipoDeComprobante'];
             $lugarExpedicion = $comprobante['LugarExpedicion'];
             $noCertificado = $comprobante['NoCertificado'];
-            $color = $cfdiArchivo->emisor->color;
+            $color = $cfdiArchivo?->emisor?->color ?? "#2299dd";
 
             // validar si existe el nodo Complemento
             if (!$comprobante->searchNode('cfdi:Complemento')) {
