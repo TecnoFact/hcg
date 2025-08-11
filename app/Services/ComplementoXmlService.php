@@ -455,6 +455,7 @@ class ComplementoXmlService
         $conceptos = $comprobante->conceptos;
 
 
+
         if(!$emisor) {
             throw new Exception("No se pudo obtener el emisor del CFDI");
         }
@@ -486,7 +487,7 @@ class ComplementoXmlService
             ]
         );
 
-             $cfdi = $cfdiArchivo->update([
+              $cfdiArchivo->update([
                 'emisor_id' => $emisorData->id,
                 'receptor_id' => $receptorData->id,
                 'uuid' => $comprobante['UUID'],
@@ -504,8 +505,6 @@ class ComplementoXmlService
                 'user_id' => auth()->id(),
                 'cfdi_archivos_id' => null
             ]);
-
-
 
          // insertar si hay conceptos en la bsee de datos
          foreach($conceptos() as $concepto)
@@ -529,32 +528,30 @@ class ComplementoXmlService
             $cfdiConcepto->save();
 
 
-            if ($taxs && ($taxs->code === '002' || $taxs->code === '003')) {
                 // TRASLADOS
-                foreach($concepto->traslados as $traslado)
+                foreach(($concepto->impuestos->traslados)() as $traslado)
                 {
                     TrasladoCfdi::create([
                         'concepto_id' => $cfdiConcepto->id,
-                        'importe' => number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', ''),
-                        'tasa' => number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', ''),
-                        'base' => number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', ''),
-                        'impuesto' => $taxs->code, // 002 = IVA, 003 = IEPS
+                        'importe' => $traslado['importe'],
+                        'tasa' => $traslado['TasaOCuota'],
+                        'base' => $traslado['base'],
+                        'impuesto' => $traslado['Impuesto'], // 002 = IVA, 003 = IEPS
+                        'tipo_factor' => $traslado['TipoFactor'],
                     ]);
-
                 }
-            }
 
-            if($taxs->code === '001')
-            {
-                // retenciones
-                    RetencionCfdi::create([
-                        'concepto_id' => $cfdiConcepto->id,
-                        'importe' => number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', ''),
-                        'tasa' => number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', ''),
-                        'base' => number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', ''),
-                        'impuesto' => $taxs->code, // 002 = IVA, 003 = IEPS
-                    ]);
-            }
+                 foreach(($concepto->impuestos->retenciones)() as $retencion) {
+                          RetencionCfdi::create([
+                                'concepto_id' => $cfdiConcepto->id,
+                                'importe' => $retencion['importe'],
+                                'tasa' => $retencion['TasaOCuota'],
+                                'base' => $retencion['base'],
+                                'impuesto' => $retencion['Impuesto'], // 002 = IVA, 003 = IEPS
+                                'tipo_factor' => $retencion['TipoFactor'],
+                        ]);
+                  }
+
          }
     }
 
