@@ -4,7 +4,10 @@ namespace App\Imports;
 
 use App\Models\Emisor;
 use App\Models\Models\Cfdi;
+use App\Models\ObjImp;
+use App\Models\RetencionCfdi;
 use App\Models\Tax;
+use App\Models\TrasladoCfdi;
 use App\Services\ComplementoXmlService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -129,7 +132,10 @@ class CfdiImport implements ToCollection
 
                 $claveUnidadFind = DB::table('catalogo_clave_unidad')->where('nombre', 'LIKE', "%$row[20]%")->first();
 
-                $cfdi->conceptos()->create([
+                $objImp = ObjImp::where('clave', $row[24])->first();
+
+
+                $concepto = $cfdi->conceptos()->create([
                     'clave_prod_serv' => $row[21],
                     'no_identificacion' => $conceptosQty,
                     'cantidad' => $row[18],
@@ -141,8 +147,32 @@ class CfdiImport implements ToCollection
                     'importe' => $total,
                     'descuento' => 0,
                     'tax_id' => $tax?->id,
-                    'obj_imp_id' => null
+                    'obj_imp_id' => $objImp?->id,
                 ]);
+
+                if($row[24] === '01' || $row[24] === '02')
+                {
+                     TrasladoCfdi::create([
+                        'concepto_id' => $concepto->id,
+                        'importe' => $total,
+                        'tasa' => $tax->rate / 100,
+                        'base' => $concepto->valor_unitario,
+                        'impuesto' => $tax->code, // 002 = IVA, 003 = IEPS
+                        'tipo_factor' => 'tasa',
+                    ]);
+                }
+
+                if($row[24] === '03')
+                {
+                        RetencionCfdi::create([
+                                'concepto_id' => $concepto->id,
+                                'importe' => $total,
+                                'tasa' => $tax->rate / 100,
+                                'base' => $concepto->valor_unitario,
+                                'impuesto' => $tax->code, // 002 = IVA, 003 = IEPS
+                                'tipo_factor' => 'retencion',
+                        ]);
+                }
 
                 $cfdiAnterior = $cfdi;
             }

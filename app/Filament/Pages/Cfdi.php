@@ -236,6 +236,7 @@ class Cfdi extends Page
         // crear servicio para insertar datos del xml en base de datos
         try {
             ComplementoXmlService::insertXmlToDB($this->pathXml, $registro);
+            TimbradoService::createCfdiSimpleToPDF($registro);
         } catch (\Exception $e) {
             Log::error('Error al insertar datos del XML: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
             Notification::make()

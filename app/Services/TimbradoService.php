@@ -807,7 +807,7 @@ class TimbradoService
             $tipoDeComprobante = $comprobante['TipoDeComprobante'];
             $lugarExpedicion = $comprobante['LugarExpedicion'];
             $noCertificado = $comprobante['NoCertificado'];
-
+            $color = $cfdiArchivo?->emisor?->color ?? "#2299dd";
 
             // Obtener TimbreFiscalDigital
             $timbreFiscal = null;
@@ -910,6 +910,8 @@ class TimbradoService
             }
 
             // Cargar vista y generar PDF
+            $RegimenFiscalReceptor = $receptorNode['RegimenFiscalReceptor'] ?? null;
+            $receptorRegimenFiscal = $receptorNode['RegimenFiscalReceptor'] ?? null;
             $viewTemplate = 'template.pdf_xml';
 
             $pdf = \PDF::loadView($viewTemplate, compact(
@@ -920,6 +922,8 @@ class TimbradoService
                 'receptorRfc',
                 'receptorNombre',
                 'receptorUsoCfdi',
+                'RegimenFiscalReceptor',
+                'receptorRegimenFiscal',
                 'fecha',
                 'total',
                 'subTotal',
@@ -935,7 +939,8 @@ class TimbradoService
                 'timbreFiscal',
                 'customer_invoice',
                 'logo',
-                'noCertificado'
+                'noCertificado',
+                'color'
             ));
 
             // Guardar PDF

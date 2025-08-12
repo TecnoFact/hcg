@@ -429,6 +429,12 @@ class ComplementoXmlService
         if ($asserts->hasErrors()) { // contiene si hay o no errores
             Log::debug($asserts->errors());
             //throw new Exception(implode("\n", $asserts->errors()));
+            $errorData = [];
+            foreach ($asserts as $assert) {
+                $errorData[] = $assert->getExplanation();
+            }
+
+            throw new Exception(implode("\n", $errorData));
         }
 
         // método de ayuda para generar el xml y guardar los contenidos en un archivo
@@ -466,7 +472,7 @@ class ComplementoXmlService
             [
                 'name' => $emisor['Nombre'],
                 'tax_regimen_id' => $emisor['RegimenFiscal'] ?? null,
-                'postal_code' => null,
+                'postal_code' => $comprobante['LugarExpedicion'],
             ]
         );
 
@@ -487,6 +493,13 @@ class ComplementoXmlService
             ]
         );
 
+        $impuestos = 0;
+
+        $impuestosTraslados = (float)$comprobante->impuestos['totalImpuestosTrasladados'];
+        $impuestosRetenidos = (float)$comprobante->impuestos['totalImpuestosRetenidos'];
+
+        $impuestos = $impuestosTraslados + $impuestosRetenidos;
+
               $cfdiArchivo->update([
                 'emisor_id' => $emisorData->id,
                 'receptor_id' => $receptorData->id,
@@ -503,30 +516,33 @@ class ComplementoXmlService
                 'metodo_pago' => $comprobante['MetodoPago'],
                 'lugar_expedicion' => $comprobante['LugarExpedicion'],
                 'user_id' => auth()->id(),
-                'cfdi_archivos_id' => null
+                'cfdi_archivos_id' => null,
+                'impuesto' => $impuestos
             ]);
 
          // insertar si hay conceptos en la bsee de datos
-         foreach($conceptos() as $concepto)
-         {
-            $objImp = ObjImp::where('clave', $concepto['ObjetoImp'])->first();
-            $taxs = Tax::where('code', $concepto['Impuesto'])->first();
+            $contador = 1;
+            foreach($conceptos() as $concepto)
+            {
+                // Asignar NoIdentificacion con 3 dígitos (ejemplo: 001, 002, ...)
 
-            $cfdiConcepto = new \App\Models\Models\CfdiConcepto();
-            $cfdiConcepto->cfdi_id = $cfdiArchivo->id;
-            $cfdiConcepto->clave_prod_serv = $concepto['ClaveProdServ'];
-            $cfdiConcepto->no_identificacion = $concepto['NoIdentificacion'];
-            $cfdiConcepto->cantidad = $concepto['Cantidad'];
-            $cfdiConcepto->clave_unidad = $concepto['ClaveUnidad'];
-            $cfdiConcepto->unidad = $concepto['Unidad'];
-            $cfdiConcepto->descripcion = $concepto['Descripcion'];
-            $cfdiConcepto->valor_unitario = $concepto['ValorUnitario'];
-            $cfdiConcepto->importe = $concepto['Importe'];
-            $cfdiConcepto->obj_imp_id = $objImp ? $objImp->id : null;
-            $cfdiConcepto->tax_id = $taxs ? $taxs->id : null;
-            $cfdiConcepto->tipo_impuesto = $taxs ? $taxs->id : null;
-            $cfdiConcepto->save();
+                $noIdentification = str_pad($contador, 3, '0', STR_PAD_LEFT);
 
+                $objImp = ObjImp::where('clave', $concepto['ObjetoImp'])->first();
+
+
+                $cfdiConcepto = \App\Models\Models\CfdiConcepto::create([
+                    'clave_prod_serv' => $concepto['ClaveProdServ'],
+                    'cfdi_id' => $cfdiArchivo->id,
+                    'no_identificacion' => $noIdentification,
+                    'cantidad' => $concepto['Cantidad'],
+                    'clave_unidad' => $concepto['ClaveUnidad'],
+                    'unidad' => $concepto['Unidad'],
+                    'descripcion' => $concepto['Descripcion'],
+                    'valor_unitario' => $concepto['ValorUnitario'],
+                    'importe' => $concepto['Importe'],
+                    'obj_imp_id' => $objImp ? $objImp->id : null,
+                ]);
 
                 // TRASLADOS
                 foreach(($concepto->impuestos->traslados)() as $traslado)
@@ -539,9 +555,13 @@ class ComplementoXmlService
                         'impuesto' => $traslado['Impuesto'], // 002 = IVA, 003 = IEPS
                         'tipo_factor' => $traslado['TipoFactor'],
                     ]);
+                    $taxs = Tax::where('code', $traslado['Impuesto'])->first();
+                    $cfdiConcepto->tax_id = $taxs ? $taxs->id : null;
+                    $cfdiConcepto->tipo_impuesto = $taxs ? $taxs->id : null;
+                    $cfdiConcepto->save();
                 }
 
-                 foreach(($concepto->impuestos->retenciones)() as $retencion) {
+                foreach(($concepto->impuestos->retenciones)() as $retencion) {
                           RetencionCfdi::create([
                                 'concepto_id' => $cfdiConcepto->id,
                                 'importe' => $retencion['importe'],
@@ -550,8 +570,16 @@ class ComplementoXmlService
                                 'impuesto' => $retencion['Impuesto'], // 002 = IVA, 003 = IEPS
                                 'tipo_factor' => $retencion['TipoFactor'],
                         ]);
-                  }
 
+                    $taxs = Tax::where('code', $retencion['Impuesto'])->first();
+                    $cfdiConcepto->tax_id = $taxs ? $taxs->id : null;
+                    $cfdiConcepto->tipo_impuesto = $taxs ? $taxs->id : null;
+                    $cfdiConcepto->save();
+
+                }
+
+
+                $contador++;
          }
     }
 
