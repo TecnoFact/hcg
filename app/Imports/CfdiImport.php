@@ -55,15 +55,12 @@ class CfdiImport implements ToCollection
                 $emisorFind = Emisor::where('rfc', $row[1])->first();
 
                 if (!$emisorFind) {
-
-                    $emisor = [
-                        'rfc' => $row[1],
-                        'name' => $row[2],
-                        'tax_regimen_id' => $row[3],
-                    ];
-
-                    $emisorFind = Emisor::firstOrCreate($emisor);
+                    $errorData[] = "Emisor not found for RFC: {$row[1]}";
+                    throw new \InvalidArgumentException(implode("\n", $errorData));
                 }
+
+
+
 
                 $receptorFind = CfdiReceptor::where('rfc', $row[4])->first();
 
@@ -113,6 +110,7 @@ class CfdiImport implements ToCollection
                     'exportacion' => '01',
                     'user_id' => auth()->id(),
                     'lugar_expedicion' => $row[8],
+                    'impuesto' => 0
                 ]);
 
 
@@ -124,7 +122,13 @@ class CfdiImport implements ToCollection
                 // sum +1 qty conceptos
                 $conceptosQty++;
 
-                $tax = Tax::where('code', $row[23])->first();
+                $tax = Tax::where('name', $row[23])->first();
+
+                if(!$tax)
+                {
+                    continue;
+                }
+
                 $subtotal = $row[18] * $row[22]; // Assuming row[18] is quantity and row[22] is unit price
                 $totalTax = $row[18] * $row[22] * ($tax ? $tax->rate : 0);
 

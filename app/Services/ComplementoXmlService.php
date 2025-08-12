@@ -321,7 +321,8 @@ class ComplementoXmlService
             'TipoDeComprobante' => $datos['cfdi']->tipo_de_comprobante ?? null,
             'LugarExpedicion' => $datos['cfdi']->lugar_expedicion ?? null,
             'Moneda' => 'MXN',
-            'TipoCambio' => '1'
+            'TipoCambio' => '1',
+            'Exportacion' => '01'
         ];
         $creator = new \CfdiUtils\CfdiCreator40($comprobanteAtributos, $certificado);
 
@@ -427,14 +428,15 @@ class ComplementoXmlService
         $asserts = $creator->validate();
 
         if ($asserts->hasErrors()) { // contiene si hay o no errores
-            Log::debug($asserts->errors());
-            //throw new Exception(implode("\n", $asserts->errors()));
+             //throw new Exception(implode("\n", $asserts->errors()));
             $errorData = [];
             foreach ($asserts as $assert) {
                 $errorData[] = $assert->getExplanation();
+                 Log::debug($assert->getExplanation());
             }
 
-            throw new Exception(implode("\n", $errorData));
+
+            throw new \InvalidArgumentException(implode("\n", $errorData));
         }
 
         // método de ayuda para generar el xml y guardar los contenidos en un archivo
