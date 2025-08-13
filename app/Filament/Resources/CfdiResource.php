@@ -333,7 +333,6 @@ class CfdiResource extends Resource
                             ->color('success')
                             ->openUrlInNewTab(false)
                             ->visible(fn($record) => $record->path_xml !== null),
-
                         Action::make('descargar_pdf')
                             ->label('Descargar PDF')
                             ->icon('heroicon-o-arrow-down-tray')
@@ -342,7 +341,8 @@ class CfdiResource extends Resource
                             ->openUrlInNewTab(false)
                             ->visible(fn($record) => $record->pdf_path !== null),
 
-                        Tables\Actions\EditAction::make(),
+                        Tables\Actions\EditAction::make()
+                            ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_TIMBRADO && $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO),
                     ])
             ])
             ->headerActions([

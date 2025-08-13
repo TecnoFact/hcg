@@ -83,7 +83,7 @@ class CfdiArchivosResource extends Resource
                         ->url(fn($record) => route('facturas.descargar-xml', $record))
                         ->color('success')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
+                        ->visible(fn($record) => $record->status_upload === Cfdi::ESTATUS_TIMBRADO || $record->status_upload === Cfdi::ESTATUS_DEPOSITADO),
 
 
                         Action::make('descargar_pdf')
@@ -92,7 +92,7 @@ class CfdiArchivosResource extends Resource
                         ->url(fn($record) => route('facturas.descargar-pdf', $record))
                         ->color('success')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => $record->status_upload === 'timbrado' || $record->status_upload === 'depositado'),
+                        ->visible(fn($record) => $record->status_upload === Cfdi::ESTATUS_TIMBRADO || $record->status_upload === Cfdi::ESTATUS_DEPOSITADO),
 
 
                         Action::make('continuar')
@@ -101,7 +101,7 @@ class CfdiArchivosResource extends Resource
                         ->url(fn($record) => route('filament.admin.pages.cfdi-continues', $record))
                         ->color('success')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => $record->status_upload !== 'depositado'),
+                        ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO),
 
                         Action::make('cancelar')
                         ->label('Cancelar')
@@ -112,7 +112,7 @@ class CfdiArchivosResource extends Resource
                         ->modalHeading('¿Estás seguro?')
                         ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => ($record->status_upload !== 'depositado') && ($record->status_upload !== 'subido')),
+                        ->visible(fn($record) => ($record->status_upload !== Cfdi::ESTATUS_DEPOSITADO) && ($record->status_upload !== Cfdi::ESTATUS_SUBIDO)),
             ]),
 
             ])
