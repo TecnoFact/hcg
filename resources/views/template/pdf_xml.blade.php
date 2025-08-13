@@ -196,14 +196,8 @@
                 <span style="line-height: 16px;"><strong>{{ mb_strtoupper('Total') }}</strong></span>
             </td>
             <td class="text-right">
-                {{ money($customer_invoice->subTotal ?? 0) }}<br/>
-                {{--
-                @if($customer_invoice->impuestos)
-                    @foreach($customer_invoice->impuestos as $result)
-                        <span style="line-height: 16px;">{{ abs($result->amount_tax) }}</span><br/>
-                    @endforeach
-                @endif
-                 --}}
+                {{ money($customer_invoice->subtotal ?? 0) }}<br/>
+
                 <span style="line-height: 16px;"><strong>{{ money($customer_invoice->total ?? 0) }}</strong></span>
             </td>
         </tr>

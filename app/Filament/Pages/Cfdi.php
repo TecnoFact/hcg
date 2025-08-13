@@ -312,7 +312,7 @@ class Cfdi extends Page
             $cfdiArchivo->ruta = $processXml['ruta'];
             $cfdiArchivo->total = $processXml['total'];
             $cfdiArchivo->fecha = $processXml['fecha'];
-            $cfdiArchivo->uuid = $processXml['uuid'];
+            $cfdiArchivo->uuid = '';
             $cfdiArchivo->estatus  = 'validado';
             $cfdiArchivo->save();
 

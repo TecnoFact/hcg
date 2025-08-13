@@ -42,6 +42,7 @@ class Emisor extends Model
 
        // Si no hay logo, retorna el avatar por defecto
        if (!$value) {
+
            return public_path('image/avaatar.png');
        }
        // Si hay logo, verifica si el archivo existe

@@ -38,6 +38,14 @@ return [
             'report' => false,
         ],
 
+        'red' => [
+            'driver' => 'local',
+            'root' => public_path('image'),
+            'serve' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'certi' => [
             'driver' => 'local',
             'root' => storage_path('app'),

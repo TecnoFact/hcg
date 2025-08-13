@@ -330,6 +330,7 @@ class CfdiResource extends Resource
             ])
             ->actions([
                     ActionGroup::make([
+                        /*
                         Action::make('duplicate')
                             ->label('Duplicar')
                             ->icon('heroicon-o-document-duplicate')
@@ -337,9 +338,16 @@ class CfdiResource extends Resource
                                 $new = $record->replicate();
                                 $new->created_at = now();
                                 $new->updated_at = now();
+                                $new->uuid = null;
+                                $new->ruta = null;
+                                $new->path_xml = null;
+                                $new->pdf_path = null;
+                                $new->status_upload = '';
+                                $new->estatus = '';
                                 $new->save();
-                                return redirect()->route('filament.resources.cfdi-resource.edit', ['record' => $new->id]);
+                                return redirect()->route('filament.admin.resources.cfdis.edit', ['record' => $new->id]);
                             }),
+                            */
                         Action::make('descargar_xml')
                             ->label('Descargar XML')
                             ->icon('heroicon-o-arrow-down-tray')
