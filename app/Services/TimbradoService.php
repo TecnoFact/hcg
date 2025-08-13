@@ -758,8 +758,6 @@ class TimbradoService
             return $pdf->output();
 
         } catch (\Exception $e) {
-
-            dump($e);
             Log::error('Error in generatePdfFromXml: ' . $e->getMessage(), [
                 'exception' => $e,
                 'user_id' => auth()->id()
