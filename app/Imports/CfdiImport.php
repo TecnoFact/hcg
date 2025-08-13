@@ -9,6 +9,7 @@ use App\Models\RetencionCfdi;
 use App\Models\Tax;
 use App\Models\TrasladoCfdi;
 use App\Services\ComplementoXmlService;
+use App\Services\TimbradoService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\Models\CfdiReceptor;
@@ -49,7 +50,9 @@ class CfdiImport implements ToCollection
                     Storage::disk('local')->put($path_xml, $xml);
 
                     // Actualiza el registro con la ruta del XML
-                    $cfdi->update(['path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
+                    $cfdiAnterior->update(['ruta' => $path_xml, 'path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
+
+                    TimbradoService::createCfdiSimpleToPDF($cfdiAnterior);
                 }
 
                 $emisorFind = Emisor::where('rfc', $row[1])->first();
@@ -58,9 +61,6 @@ class CfdiImport implements ToCollection
                     $errorData[] = "Emisor not found for RFC: {$row[1]}";
                     throw new \InvalidArgumentException(implode("\n", $errorData));
                 }
-
-
-
 
                 $receptorFind = CfdiReceptor::where('rfc', $row[4])->first();
 
@@ -110,7 +110,8 @@ class CfdiImport implements ToCollection
                     'exportacion' => '01',
                     'user_id' => auth()->id(),
                     'lugar_expedicion' => $row[8],
-                    'impuesto' => 0
+                    'impuesto' => 0,
+                    'estatus' => 'validado'
                 ]);
 
 
@@ -130,7 +131,7 @@ class CfdiImport implements ToCollection
                 }
 
                 $subtotal = $row[18] * $row[22]; // Assuming row[18] is quantity and row[22] is unit price
-                $totalTax = $row[18] * $row[22] * ($tax ? $tax->rate : 0);
+                $totalTax = $row[18] * $row[22] * (($tax ? $tax->rate : 0) / 100);
 
                 $total = $subtotal + $totalTax; // Add tax to total
 
@@ -138,6 +139,10 @@ class CfdiImport implements ToCollection
 
                 $objImp = ObjImp::where('clave', $row[24])->first();
 
+                $cfdi->impuesto = $totalTax;
+                $cfdi->subtotal = $subtotal;
+                $cfdi->total = $total;
+                $cfdi->save();
 
                 $concepto = $cfdi->conceptos()->create([
                     'clave_prod_serv' => $row[21],
@@ -187,11 +192,14 @@ class CfdiImport implements ToCollection
         if ($cfdiAnterior) {
             $xml = ComplementoXmlService::buildXmlCfdiFromDatabase($cfdiAnterior);
 
+
             $name_xml_path = 'CFDI-' . $cfdiAnterior->id . '.xml';
             $path_xml = 'emisiones/' . $name_xml_path;
             Storage::disk('local')->put($path_xml, $xml);
 
-            $cfdiAnterior->update(['path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
+            $cfdiAnterior->update(['ruta' => $path_xml, 'path_xml' => $path_xml, 'status_upload' => Cfdi::ESTATUS_SUBIDO]);
+
+              TimbradoService::createCfdiSimpleToPDF($cfdiAnterior);
         }
     }
 }

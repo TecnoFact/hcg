@@ -436,7 +436,7 @@ class ComplementoXmlService
             }
 
 
-            throw new \InvalidArgumentException(implode("\n", $errorData));
+            //throw new \InvalidArgumentException(implode("\n", $errorData));
         }
 
         // método de ayuda para generar el xml y guardar los contenidos en un archivo
