@@ -164,10 +164,10 @@
                     </td>
                     <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
                     <td class="text-center">
-                                {{ money($result['valorUnitario'] ?? 0) }}
+                                {{ money(($result['valorUnitario'] ?? 0) * 100) }}
                             </td>
                     <td class="text-center">{{ !empty($result['descuento']) ? $result['descuento'] : 0 }}</td>
-                    <td class="text-right">{{ money($result['importe'] ?? 0) }}</td>
+                    <td class="text-right">{{ money(($result['importe'] ?? 0) * 100) }}</td>
                 </tr>
             @endforeach
         @endif
@@ -196,7 +196,7 @@
                 <span style="line-height: 16px;"><strong>{{ mb_strtoupper('Total') }}</strong></span>
             </td>
             <td class="text-right">
-                {{ money($customer_invoice->subTotal ?? 0) }}<br/>
+                {{ money(($customer_invoice->subTotal ?? 0) * 100) }}<br/>
                 {{--
                 @if($customer_invoice->impuestos)
                     @foreach($customer_invoice->impuestos as $result)
@@ -204,7 +204,7 @@
                     @endforeach
                 @endif
                  --}}
-                <span style="line-height: 16px;"><strong>{{ money($customer_invoice->total ?? 0) }}</strong></span>
+                <span style="line-height: 16px;"><strong>{{ money(($customer_invoice->total ?? 0) * 100) }}</strong></span>
             </td>
         </tr>
         </tfoot>

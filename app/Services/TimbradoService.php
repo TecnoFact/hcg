@@ -863,14 +863,14 @@ class TimbradoService
                 }
                 $conceptos[] = [
                     'clave' => $concepto['ClaveProdServ'],
-                    'cantidad' => $concepto['Cantidad'],
+                    'cantidad' => (int) $concepto['Cantidad'],
                     'descripcion' => $concepto['Descripcion'],
-                    'valorUnitario' => $concepto['ValorUnitario'],
-                    'importe' => $concepto['Importe'],
+                    'valorUnitario' => (float) $concepto['ValorUnitario'],
+                    'importe' => (float) $concepto['Importe'],
                     'ObjetoImp' => $concepto['ObjetoImp'] ?? null,
                     'claveUnidad' => $concepto['ClaveUnidad'],
-                    'unidad' => $concepto['Unidad'] ?? null,
-                    'descuento' => $concepto['Descuento'] ?? null,
+                    'unidad' => (int) $concepto['Unidad'] ?? null,
+                    'descuento' => (float) $concepto['Descuento'] ?? null,
                     'impuestos' => [
                         'traslados' => [],
                         'retenciones' => []
