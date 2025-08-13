@@ -121,6 +121,7 @@ class CfdiResource extends Resource
 
                         Forms\Components\Select::make('tipo_de_comprobante')
                             ->label('Tipo de Comprobante')
+                            ->required()
                             ->options([
                                 'I' => 'I - Ingreso',
                                 'E' => 'E - Egreso',
@@ -130,6 +131,7 @@ class CfdiResource extends Resource
 
                         Forms\Components\Select::make('moneda')
                             ->label('Moneda')
+                            ->required()
                             ->options([
                                 'MXN' => 'MXN - Peso Mexicano',
                                 'USD' => 'USD - Dólar Americano',
@@ -231,6 +233,7 @@ class CfdiResource extends Resource
                                 Forms\Components\Select::make('tipo_impuesto')
                                     ->label('Tipo de Impuesto')
                                     ->live(debounce: 500)
+                                    ->required()
                                     ->afterStateUpdated($calcularImporte)
                                     ->options(Tax::pluck('name', 'id')),
                                 Select::make('obj_imp_id')
@@ -242,6 +245,7 @@ class CfdiResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
+                                    ->required()
                                     ->options(options: DB::table('unit_measures')->pluck('name', 'code')),
                                 Forms\Components\TextInput::make('unidad')
                                     ->label('Unidad')
@@ -270,7 +274,7 @@ class CfdiResource extends Resource
 
                                ])
                             ->columns(3)
-                            ->createItemButtonLabel('Agregar Concepto')
+                            ->addActionLabel('Agregar Concepto')
 
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $total = 0;

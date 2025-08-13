@@ -2,20 +2,20 @@
 
 namespace App\Filament\Resources\CfdiResource\Pages;
 
+use App\Filament\Resources\CfdiResource;
 use App\Models\Emisor;
 use App\Models\Models\Cfdi;
+use App\Models\Models\CfdiConcepto;
+use App\Models\Models\CfdiReceptor;
 use App\Models\ObjImp;
 use App\Models\RetencionCfdi;
 use App\Models\Tax;
 use App\Models\TrasladoCfdi;
+use App\Services\ComplementoXmlService;
 use App\Services\TimbradoService;
 use Filament\Actions\Action;
-use App\Models\Models\CfdiConcepto;
-use App\Models\Models\CfdiReceptor;
-use App\Services\ComplementoXmlService;
-use Illuminate\Support\Facades\Storage;
-use App\Filament\Resources\CfdiResource;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Storage;
 
 class CreateCfdi extends CreateRecord
 {
@@ -31,7 +31,7 @@ class CreateCfdi extends CreateRecord
         return 'El Cfdi a sido creado con exito';
     }
 
-     protected function mutateFormDataBeforeCreate(array $data): array
+    protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = auth()->id();
         //$data['nombre_archivo'] = 'CFDI-' . ($data['user_id'] + 1) . '.xml'; // Genera un nombre único basado en el ID del usuario
@@ -48,7 +48,7 @@ class CreateCfdi extends CreateRecord
             'postal_code' => $data['lugar_expedicion'],
         ];
 
-      //  $data['subtotal'] = $data['total'];
+        //  $data['subtotal'] = $data['total'];
 
         $emisor = Emisor::updateOrCreate(
             ['rfc' => $data['emisor']['rfc']],
@@ -96,7 +96,7 @@ class CreateCfdi extends CreateRecord
         foreach ($conceptos as $concepto) {
             // Convert formatted string to float (e.g. '200,000.00' => 200000.00)
             $valor_unitario = isset($concepto['valor_unitario'])
-                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                ? (float)str_replace([',', ' '], '', $concepto['valor_unitario'])
                 : 0;
 
             $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
@@ -132,33 +132,32 @@ class CreateCfdi extends CreateRecord
 
             // si es tipo 003 o 002
             if ($objImp && ($objImp->clave === '03' || $objImp->clave === '02')) {
-
-                        TrasladoCfdi::create([
-                            'concepto_id' => $conceptoCfdi->id,
-                            'base' => $conceptoCfdi->importe,
-                            'impuesto' => $taxFind->code, // Ej: 002
-                            'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
-                            'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
-                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
-                        ]);
+                TrasladoCfdi::create([
+                    'concepto_id' => $conceptoCfdi->id,
+                    'base' => $conceptoCfdi->importe,
+                    'impuesto' => $taxFind->code, // Ej: 002
+                    'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
+                    'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
+                    'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                ]);
             }
 
-            if($objImp && $objImp->clave === '01'){
-                        RetencionCfdi::create([
-                            'concepto_id' => $conceptoCfdi->id,
-                            'base' => $conceptoCfdi->importe,
-                            'impuesto' => $taxFind->code, // Ej: 002
-                            'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
-                            'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
-                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
-                        ]);
+            if ($objImp && $objImp->clave === '01') {
+                RetencionCfdi::create([
+                    'concepto_id' => $conceptoCfdi->id,
+                    'base' => $conceptoCfdi->importe,
+                    'impuesto' => $taxFind->code, // Ej: 002
+                    'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
+                    'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
+                    'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                ]);
             }
 
             $contador++;
         }
 
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml =  $cfdi->emisor->rfc .'/' . $name_xml_path;
+        $path_xml = $cfdi->emisor->rfc . '/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
         $cfdiUpdate = Cfdi::find($cfdi->id);
@@ -191,7 +190,7 @@ class CreateCfdi extends CreateRecord
 
     }
 
-     protected function getFormActions(): array
+    protected function getFormActions(): array
     {
         return [
             $this->getCreateFormAction(),
@@ -199,7 +198,7 @@ class CreateCfdi extends CreateRecord
         ];
     }
 
-     protected function getCreateFormAction(): Action
+    protected function getCreateFormAction(): Action
     {
         return Action::make('create')
             ->label('Prefactura')
