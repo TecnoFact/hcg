@@ -609,7 +609,7 @@ class TimbradoService
                 throw new \Exception("El nodo Complemento no existe en el CFDI");
             }
 
-            // Obtener TimbreFiscalDigital
+//          Obtener TimbreFiscalDigital
             $timbreFiscal = $comprobante->searchNode('cfdi:Complemento')->searchNode('tfd:TimbreFiscalDigital');
             $uuid = $timbreFiscal['UUID'];
             $fechaTimbrado = $timbreFiscal['FechaTimbrado'];
@@ -663,14 +663,14 @@ class TimbradoService
                 }
                 $conceptos[] = [
                     'clave' => $concepto['ClaveProdServ'],
-                    'cantidad' => $concepto['Cantidad'],
+                    'cantidad' => (int) $concepto['Cantidad'],
                     'descripcion' => $concepto['Descripcion'],
-                    'valorUnitario' => $concepto['ValorUnitario'],
-                    'importe' => $concepto['Importe'],
+                    'valorUnitario' => (float) $concepto['ValorUnitario'],
+                    'importe' => (float) $concepto['Importe'],
                     'ObjetoImp' => $concepto['ObjetoImp'] ?? null,
                     'claveUnidad' => $concepto['ClaveUnidad'],
-                    'unidad' => $concepto['Unidad'] ?? null,
-                    'descuento' => $concepto['Descuento'] ?? null,
+                    'unidad' => (int) $concepto['Unidad'] ?? null,
+                    'descuento' => (float) $concepto['Descuento'] ?? null,
                     'impuestos' => [
                         'traslados' => [],
                         'retenciones' => []
@@ -678,7 +678,6 @@ class TimbradoService
                     'complemento_concepto' => $complementoConceptoArr,
                 ];
             }
-
 
             // Generar cadena original
             $myLocalResourcePath = '/tmp/sat';
@@ -750,7 +749,7 @@ class TimbradoService
                 'pdf_path' => $pdf_path
             ]);
 
-            $pathPdf = \Storage::disk('public')->path($pdf_path);
+            \Storage::disk('public')->path($pdf_path);
             Log::info('PDF generado correctamente', [
                 'user_id' => auth()->id(),
                 'pdf_path' => $pdf_path
@@ -759,6 +758,8 @@ class TimbradoService
             return $pdf->output();
 
         } catch (\Exception $e) {
+
+            dump($e);
             Log::error('Error in generatePdfFromXml: ' . $e->getMessage(), [
                 'exception' => $e,
                 'user_id' => auth()->id()
@@ -842,9 +843,6 @@ class TimbradoService
                 throw new \Exception("Emisor no encontrado para el RFC: " . $emisorRfc);
             }
 
-            // Obtener datos del emisor
-
-
             // Obtener datos del receptor
             $receptorNode = $comprobante->searchNode('cfdi:Receptor');
             $receptorRfc = $receptorNode['Rfc'];
@@ -880,13 +878,6 @@ class TimbradoService
                     'complemento_concepto' => $complementoConceptoArr,
                 ];
             }
-
-
-
-            $dataCadena = array(
-                'qr_cadena' => null,
-                // other keys and values
-            );
 
             $cadenaOrigen = null;
 
