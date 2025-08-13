@@ -53,30 +53,29 @@ class EditCfdi extends EditRecord
             $data['receptor_uso_cfdi'] = $receptor->uso_cfdi;
         }
 
-            // conceptos
+        // conceptos
 
-            $cfdi = Cfdi::find($data['id']);
+        $cfdi = Cfdi::find($data['id']);
 
-            if ($cfdi) {
-                $data['conceptos'] = $cfdi->conceptos->toArray();
-            } else {
-                $data['conceptos'] = [];
-            }
+        if ($cfdi) {
+            $data['conceptos'] = $cfdi->conceptos->toArray();
+        } else {
+            $data['conceptos'] = [];
+        }
 
-            $contador = 1;
-            $total = 0;
-             foreach ($data['conceptos'] as $i => $concepto) {
+        $contador = 1;
+        $total = 0;
+        foreach ($data['conceptos'] as $i => $concepto) {
 
-                $concepto['no_identificacion'] = $contador++;
-                $cantidad = isset($concepto['cantidad']) ? (float) $concepto['cantidad'] : 0;
-                $valorUnitario = isset($concepto['valor_unitario']) ? (float) $concepto['valor_unitario'] : 0;
-                $importe = $cantidad * $valorUnitario;
+            $concepto['no_identificacion'] = $contador++;
+            $cantidad = isset($concepto['cantidad']) ? (float)$concepto['cantidad'] : 0;
+            $valorUnitario = isset($concepto['valor_unitario']) ? (float)$concepto['valor_unitario'] : 0;
+            $importe = $cantidad * $valorUnitario;
 
-                $concepto['importe'] = $importe;
-                $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
-                $total += $importe;
-            }
-
+            $concepto['importe'] = $importe;
+            $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
+            $total += $importe;
+        }
 
 
         return $data;
@@ -86,7 +85,7 @@ class EditCfdi extends EditRecord
     {
         $data['user_id'] = auth()->id();
 
-         $data['subtotal'] = 0;
+        $data['subtotal'] = 0;
         //$data['ruta'] = 'emisiones/' . $data['nombre_archivo'];
         $data['iva'] = 0;
         $data['total'] = 0;
@@ -106,8 +105,8 @@ class EditCfdi extends EditRecord
         if (isset($data['conceptos']) && is_array($data['conceptos'])) {
             foreach ($data['conceptos'] as $i => $concepto) {
                 $concepto['no_identificacion'] = $contador++;
-                $cantidad = isset($concepto['cantidad']) ? (float) $concepto['cantidad'] : 0;
-                $valorUnitario = isset($concepto['valor_unitario']) ? (float) $concepto['valor_unitario'] : 0;
+                $cantidad = isset($concepto['cantidad']) ? (float)$concepto['cantidad'] : 0;
+                $valorUnitario = isset($concepto['valor_unitario']) ? (float)$concepto['valor_unitario'] : 0;
                 $importe = $cantidad * $valorUnitario;
                 $data['conceptos'][$i]['importe'] = $importe;
                 $total += $importe;
@@ -145,7 +144,7 @@ class EditCfdi extends EditRecord
 
         $data['receptor_id'] = $receptorFind->id;
 
-        if($data['status_upload'] === null || empty($data['status_upload'])) {
+        if (empty($data['status_upload'])) {
             $data['status_upload'] = Cfdi::ESTATUS_SUBIDO;
             $data['estatus'] = 'validado';
         }
@@ -167,19 +166,24 @@ class EditCfdi extends EditRecord
         $conceptos = array_map(function ($concepto) {
             // Convert formatted string to float (e.g. '200,000.00' => 200000.00)
             $concepto['valor_unitario'] = isset($concepto['valor_unitario'])
-                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                ? (float)str_replace([',', ' '], '', $concepto['valor_unitario'])
+                : 0;
+            $concepto['cantidad'] = isset($concepto['cantidad'])
+                ? (float)str_replace([',', ' '], '', $concepto['cantidad'])
+                : 0;
+            $concepto['importe'] = isset($concepto['importe'])
+                ? (float)str_replace([',', ' '], '', $concepto['importe'])
                 : 0;
 
             return $concepto;
         }, $conceptos);
 
 
-
         // Registrar los conceptos en la base de datos
         $subtotal = 0;
         $total = 0;
         $iva = 0;
-         $conceptoCfdi = [];
+        $conceptoCfdi = [];
 
         foreach ($conceptos as $concepto) {
             $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
@@ -189,7 +193,7 @@ class EditCfdi extends EditRecord
             );
 
             $valor_unitario = isset($concepto['valor_unitario'])
-                ? (float) str_replace([',', ' '], '', $concepto['valor_unitario'])
+                ? (float)str_replace([',', ' '], '', $concepto['valor_unitario'])
                 : 0;
 
             $tax = \App\Models\Tax::find($concepto['tipo_impuesto']);
@@ -209,34 +213,32 @@ class EditCfdi extends EditRecord
             // si es tipo 003 o 002
             if ($objImp && ($objImp->clave === '03' || $objImp->clave === '02')) {
 
-                       TrasladoCfdi::updateOrCreate(
-                                        [
-                                            'concepto_id' => $conceptoCfdi->id,
-                                            'impuesto' => $taxFind->code,
-                                        ],
-                                        [
-                                            'base' => $conceptoCfdi->importe,
-                                            'tipo_factor' => $taxFind->tipo_factor,
-                                            'tasa_o_cuota' => $taxFind->rate,
-                                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
-                                        ]
-                                    );
+                TrasladoCfdi::updateOrCreate(
+                    [
+                        'concepto_id' => $conceptoCfdi->id,
+                        'impuesto' => $taxFind->code,
+                    ],
+                    [
+                        'base' => $conceptoCfdi->importe,
+                        'tipo_factor' => $taxFind->tipo_factor,
+                        'tasa_o_cuota' => $taxFind->rate,
+                        'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                    ]
+                );
             }
 
-            if($objImp && $objImp->clave === '01'){
-                        RetencionCfdi::updateOrCreate(
-                            [
-                                'concepto_id' => $conceptoCfdi->id,
-                                'impuesto' => $taxFind->code, // Ej: 002
-                            ],[
-                             'base' => $conceptoCfdi->importe,
-                            'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
-                            'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
-                            'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
-                        ]);
+            if ($objImp && $objImp->clave === '01') {
+                RetencionCfdi::updateOrCreate(
+                    [
+                        'concepto_id' => $conceptoCfdi->id,
+                        'impuesto' => $taxFind->code, // Ej: 002
+                    ], [
+                    'base' => $conceptoCfdi->importe,
+                    'tipo_factor' => $taxFind->tipo_factor, // Ej: Tasa
+                    'tasa_o_cuota' => $taxFind->rate, // Ej: 0.160000
+                    'importe' => $conceptoCfdi->importe * ($taxFind->rate / 100)
+                ]);
             }
-
-            $contador++;
         }
 
         // Actualizar el subtotal y total del Cfdi
@@ -248,7 +250,7 @@ class EditCfdi extends EditRecord
         $data['total'] = $total;
 
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = $cfdi->emisor->rfc .'/' . $name_xml_path;
+        $path_xml = $cfdi->emisor->rfc . '/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
         $cfdiUpdate = Cfdi::find($cfdi->id);
@@ -274,16 +276,15 @@ class EditCfdi extends EditRecord
         Storage::disk('public')->put($ruta, $xml);
 
 
-
         // Guarda el XML
-         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml =  $cfdi->emisor->rfc .'/' . $name_xml_path;
+        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
+        $path_xml = $cfdi->emisor->rfc . '/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
         Storage::disk('local')->put($ruta, $xml);
 
         // Actualiza el registro con la ruta del XML
-          $cfdi->update(['path_xml' => $ruta]);
+        $cfdi->update(['path_xml' => $ruta]);
         $cfdi->update(['nombre_archivo' => $name_xml_path]);
         $cfdi->update(['ruta' => $ruta]);
 

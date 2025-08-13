@@ -16,7 +16,7 @@ class ListCfdis extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-             \EightyNine\ExcelImport\ExcelImportAction::make()
+            \EightyNine\ExcelImport\ExcelImportAction::make()
                 ->label('Importar Excel')
                 ->color("primary")
                 ->use(CfdiImport::class)

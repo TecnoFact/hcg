@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use League\Csv\Reader;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class CatalogoClaveUnidadSeed extends Seeder
 {

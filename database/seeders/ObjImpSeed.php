@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ObjImp;
 use Illuminate\Database\Seeder;
 
 class ObjImpSeed extends Seeder
@@ -17,7 +17,7 @@ class ObjImpSeed extends Seeder
         $data = json_decode($json, true);
 
         foreach ($data as $item) {
-            \App\Models\ObjImp::create([
+            ObjImp::firstOrCreate([
                 'descripcion' => $item['Descripción'],
                 'clave' => $item['c_ObjetoImp'],
                 'is_active' => true,

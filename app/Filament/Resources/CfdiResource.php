@@ -121,6 +121,7 @@ class CfdiResource extends Resource
 
                         Forms\Components\Select::make('tipo_de_comprobante')
                             ->label('Tipo de Comprobante')
+                            ->required()
                             ->options([
                                 'I' => 'I - Ingreso',
                                 'E' => 'E - Egreso',
@@ -130,6 +131,7 @@ class CfdiResource extends Resource
 
                         Forms\Components\Select::make('moneda')
                             ->label('Moneda')
+                            ->required()
                             ->options([
                                 'MXN' => 'MXN - Peso Mexicano',
                                 'USD' => 'USD - Dólar Americano',
@@ -231,6 +233,7 @@ class CfdiResource extends Resource
                                 Forms\Components\Select::make('tipo_impuesto')
                                     ->label('Tipo de Impuesto')
                                     ->live(debounce: 500)
+                                    ->required()
                                     ->afterStateUpdated($calcularImporte)
                                     ->options(Tax::pluck('name', 'id')),
                                 Select::make('obj_imp_id')
@@ -242,6 +245,7 @@ class CfdiResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->reactive()
+                                    ->required()
                                     ->options(options: DB::table('unit_measures')->pluck('name', 'code')),
                                 Forms\Components\TextInput::make('unidad')
                                     ->label('Unidad')
@@ -270,7 +274,7 @@ class CfdiResource extends Resource
 
                                ])
                             ->columns(3)
-                            ->createItemButtonLabel('Agregar Concepto')
+                            ->addActionLabel('Agregar Concepto')
 
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $total = 0;
@@ -293,22 +297,32 @@ class CfdiResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('emisor.rfc')
                     ->label('RFC Emisor')->searchable(),
+
                 Tables\Columns\TextColumn::make('receptor.rfc')
                     ->label('RFC Receptor')->searchable(),
+
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
-                    TextColumn::make('subtotal')
-                    ->numeric()
 
+                Tables\Columns\TextColumn::make('status_upload')
+                    ->label('Estado')
+                    ->default('prefactura')
+                    ->badge()
+                    ->colors([
+                        'primary' => fn ($state) => true, // siempre usa un color, o puedes condicionar según el valor
+                    ]),
+
+                TextColumn::make('subtotal')
+                    ->numeric()
                     ->label('SubTotal'),
-                    TextColumn::make('impuesto')
-                    ->numeric()
 
+                TextColumn::make('impuesto')
+                    ->numeric()
                     ->label('Impuesto'),
+
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
-
                     ->label('Total'),
             ])
             ->filters([
@@ -333,7 +347,6 @@ class CfdiResource extends Resource
                             ->color('success')
                             ->openUrlInNewTab(false)
                             ->visible(fn($record) => $record->path_xml !== null),
-
                         Action::make('descargar_pdf')
                             ->label('Descargar PDF')
                             ->icon('heroicon-o-arrow-down-tray')
@@ -342,7 +355,8 @@ class CfdiResource extends Resource
                             ->openUrlInNewTab(false)
                             ->visible(fn($record) => $record->pdf_path !== null),
 
-                        Tables\Actions\EditAction::make(),
+                        Tables\Actions\EditAction::make()
+                            ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_TIMBRADO && $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO),
                     ])
             ])
             ->headerActions([
