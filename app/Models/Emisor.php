@@ -36,25 +36,6 @@ class Emisor extends Model
         'date_from'
     ];
 
-   // get logo attribute and validation if not found
-   public function getLogoAttribute($value)
-   {
-
-       // Si no hay logo, retorna el avatar por defecto
-       if (!$value) {
-
-           return public_path('image/avaatar.png');
-       }
-       // Si hay logo, verifica si el archivo existe
-       $logoPath = Storage::disk('local')->path($value);
-
-       if (file_exists($logoPath)) {
-           return $value;
-       }
-       // Si el archivo no existe, retorna el avatar por defecto
-       return public_path('image/avaatar.png');
-   }
-
     public function user()
     {
         return $this->belongsTo(User::class);
