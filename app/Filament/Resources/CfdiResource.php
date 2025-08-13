@@ -293,22 +293,32 @@ class CfdiResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('emisor.rfc')
                     ->label('RFC Emisor')->searchable(),
+
                 Tables\Columns\TextColumn::make('receptor.rfc')
                     ->label('RFC Receptor')->searchable(),
+
                 Tables\Columns\TextColumn::make('fecha')
                     ->dateTime()
                     ->label('Fecha'),
-                    TextColumn::make('subtotal')
-                    ->numeric()
 
+                Tables\Columns\TextColumn::make('status_upload')
+                    ->label('Estado')
+                    ->default('prefactura')
+                    ->badge()
+                    ->colors([
+                        'primary' => fn ($state) => true, // siempre usa un color, o puedes condicionar según el valor
+                    ]),
+
+                TextColumn::make('subtotal')
+                    ->numeric()
                     ->label('SubTotal'),
-                    TextColumn::make('impuesto')
-                    ->numeric()
 
+                TextColumn::make('impuesto')
+                    ->numeric()
                     ->label('Impuesto'),
+
                 Tables\Columns\TextColumn::make('total')
                     ->numeric()
-
                     ->label('Total'),
             ])
             ->filters([
