@@ -176,8 +176,8 @@ class EmisorResource extends Resource
                 Stack::make([
 
                     Tables\Columns\ImageColumn::make('logo')
-                        ->disk(fn($record) => $record->logo ? 'local' : null)
-                        ->visibility(fn($record) => $record->logo ? 'private' : null)
+                        ->disk('local')
+                        ->visibility('private')
                         ->defaultImageUrl(url('/image/avaatar.png'))
                         ->circular(),
 
