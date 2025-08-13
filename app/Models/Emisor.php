@@ -36,6 +36,7 @@ class Emisor extends Model
         'date_from'
     ];
 
+
     public function user()
     {
         return $this->belongsTo(User::class);
