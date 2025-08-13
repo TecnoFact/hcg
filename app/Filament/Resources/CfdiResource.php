@@ -358,7 +358,7 @@ class CfdiResource extends Resource
                         Tables\Actions\EditAction::make()
                             ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_TIMBRADO && $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO && $record->status_upload !== Cfdi::ESTATUS_SELLADO),
 
-                             Action::make('cancelar')
+                        Action::make('cancelar')
                                 ->label('Cancelar')
                                 ->icon('heroicon-o-x-mark')
                                 ->url(fn($record) => route('filament.admin.pages.cfdi-cancel', $record))
