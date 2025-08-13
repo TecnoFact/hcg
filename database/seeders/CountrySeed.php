@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use League\Csv\Reader;
 
 class CountrySeed extends Seeder
 {
@@ -26,8 +24,9 @@ class CountrySeed extends Seeder
 
         foreach ($json as $record) {
 
-            DB::table('catalogo_pais')->insert([
-                'clave' => $record['c_Pais'],
+            DB::table('catalogo_pais')->updateOrInsert([
+                'clave' => $record['c_Pais']
+            ], [
                 'nombre' => $record['Descripción'],
                 'nacionalidad' => $record['Nacionalidad'] ?? 'null',
                 'vigencia_desde' => null,

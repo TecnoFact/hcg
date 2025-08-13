@@ -2,10 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use League\Csv\Reader;
 
 class CitySeed extends Seeder
 {
@@ -29,8 +27,9 @@ class CitySeed extends Seeder
         foreach ($data as $record) {
 
 
-            DB::table('ciudades')->insert([
-                'id_estado' => $record['c_Estado'] ?: null,
+            DB::table('ciudades')->updateOrInsert([
+                'id_estado' => $record['c_Estado'] ?: null],
+                [
                 'descripcion' => $record['Descripción'],
                 //'vigencia_desde' => $record['Fecha de inicio de vigencia'] ?: null,
                 //'vigencia_hasta' => $record['Fecha de fin de vigencia'] ?: null,

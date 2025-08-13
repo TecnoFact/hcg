@@ -2,17 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::create([
-            'name' => 'customer CFDI',
+        $user = User::firstOrCreate([
             'email' => 'customer@cfdi.test',
+        ], [
+            'name' => 'customer CFDI',
             'password' => Hash::make('12345678') // nunca guardes contraseñas sin cifrar
         ]);
 

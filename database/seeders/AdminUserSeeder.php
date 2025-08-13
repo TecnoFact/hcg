@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class AdminUserSeeder extends Seeder
 {
@@ -12,8 +12,9 @@ class AdminUserSeeder extends Seeder
     {
        //User::truncate();
 
-       $user = User::create([
+        $user = User::firstOrCreate([
             'email' => 'admin@cfdi.test',
+        ], [
             'name' => 'Admin CFDI',
             'password' => Hash::make('12345678'),
         ]);

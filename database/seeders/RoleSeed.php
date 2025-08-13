@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class RoleSeed extends Seeder
 {
@@ -13,12 +12,12 @@ class RoleSeed extends Seeder
      */
     public function run(): void
     {
-      $admin = Role::create([
+        $admin = Role::firstOrCreate([
             'name' => 'Admin',
             'guard_name' => 'web',
         ]);
 
-      $customer = Role::create([
+        $customer = Role::firstOrCreate([
             'name' => 'Customer',
             'guard_name' => 'web',
         ]);

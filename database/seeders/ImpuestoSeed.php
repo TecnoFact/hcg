@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Tax;
 use Illuminate\Database\Seeder;
 
 class ImpuestoSeed extends Seeder
@@ -26,7 +26,7 @@ class ImpuestoSeed extends Seeder
                 $code = '003';
             }
 
-            \App\Models\Tax::create([
+            Tax::firstOrCreate([
                 'name' => $item['Descripción'],
                 'code' => $code,
                 'rate' => 0,
