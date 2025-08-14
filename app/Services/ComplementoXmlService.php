@@ -71,151 +71,6 @@ class ComplementoXmlService
         return $dom->saveXML();
     }
 
-    /*
-    public static function buildXmlCfdi(array $datos): string
-    {
-
-        $doc = new DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
-        $cfdi = $doc->createElementNS('http://www.sat.gob.mx/cfd/4', 'cfdi:Comprobante');
-        $cfdi->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
-        $cfdi->setAttribute('xsi:schemaLocation', 'http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd');
-
-        $cfdi->setAttribute('Version', '4.0');
-        $cfdi->setAttribute('Serie', $datos['cfdi']['serie']);
-        $cfdi->setAttribute('Folio', $datos['cfdi']['folio']);
-        $cfdi->setAttribute('Fecha', $datos['cfdi']['fecha']);
-        $cfdi->setAttribute('FormaPago', $datos['cfdi']['forma_pago']);
-        $cfdi->setAttribute('NoCertificado', "");
-        $cfdi->setAttribute('SubTotal', number_format($datos['cfdi']['subtotal'], 2, '.', ''));
-        $cfdi->setAttribute('Moneda', $datos['cfdi']['moneda']);
-        $cfdi->setAttribute('Total', number_format($datos['cfdi']['total'], 2, '.', ''));
-        $cfdi->setAttribute('TipoDeComprobante', $datos['cfdi']['tipo_de_comprobante']);
-        $cfdi->setAttribute('MetodoPago', $datos['cfdi']['metodo_pago']);
-        $cfdi->setAttribute('LugarExpedicion', $datos['cfdi']['lugar_expedicion']);
-
-        // Emisor
-        $emisorFind = Emisor::find($datos['cfdi']['emisor_id']);
-        $regimenFiscal = RegimeFiscal::find($emisorFind->tax_regimen_id);
-        $emisor = $doc->createElement('cfdi:Emisor');
-        $emisor->setAttribute('Rfc', $emisorFind->rfc);
-        $emisor->setAttribute('Nombre', $emisorFind->name);
-        $emisor->setAttribute('RegimenFiscal', $regimenFiscal ? $regimenFiscal->clave : '01');
-        $cfdi->appendChild($emisor);
-
-        // Receptor
-        $receptorFind = CfdiReceptor::find($datos['cfdi']['receptor_id']);
-        $receptor = $doc->createElement('cfdi:Receptor');
-        $receptor->setAttribute('Rfc', $receptorFind->rfc);
-        $receptor->setAttribute('Nombre', $receptorFind->nombre);
-        $receptor->setAttribute('DomicilioFiscalReceptor', $receptorFind->domicilio_fiscal);
-        $receptor->setAttribute('RegimenFiscalReceptor', $receptorFind->regimen_fiscal);
-        $receptor->setAttribute('UsoCFDI', $receptorFind->uso_cfdi);
-        $cfdi->appendChild($receptor);
-
-        // Conceptos
-        $conceptos = $doc->createElement('cfdi:Conceptos');
-
-        foreach ($datos['conceptos'] as $c) {
-            $objeImp = ObjImp::find($c['obj_imp_id']);
-
-            $concepto = $doc->createElement('cfdi:Concepto');
-            $concepto->setAttribute('ClaveProdServ', $c['clave_prod_serv']);
-            $concepto->setAttribute('Cantidad', number_format((float) str_replace([',', ' '], '', $c['cantidad']), 6, '.', ''));
-            $concepto->setAttribute('ClaveUnidad', $c['clave_unidad']);
-            $concepto->setAttribute('Unidad', $c['unidad']);
-            $concepto->setAttribute('Descripcion', $c['descripcion']);
-            $concepto->setAttribute('ValorUnitario', number_format((float) str_replace([',', ' '], '', $c['valor_unitario']), 2, '.', ''));
-            $concepto->setAttribute('Importe', number_format((float) str_replace([',', ' '], '', $c['importe']), 2, '.', ''));
-            $concepto->setAttribute('ObjetoImp', $objeImp ? $objeImp->clave : '01');
-
-            // Nodo de impuestos por concepto
-            if (!empty($c['traslados']) || !empty($c['retenciones'])) {
-                $impuestosConcepto = $doc->createElement('cfdi:Impuestos');
-
-                // Traslados
-                if (!empty($c['traslados'])) {
-                    $traslados = $doc->createElement('cfdi:Traslados');
-                    foreach ($c['traslados'] as $t) {
-                        $traslado = $doc->createElement('cfdi:Traslado');
-                        $traslado->setAttribute('Base', number_format($t['base'], 2, '.', ''));
-                        $traslado->setAttribute('Impuesto', $t['impuesto']); // Ej: 002 = IVA
-                        $traslado->setAttribute('TipoFactor', $t['tipo_factor']); // Ej: Tasa
-                        $traslado->setAttribute('TasaOCuota', number_format($t['tasa'], 6, '.', ''));
-                        $traslado->setAttribute('Importe', number_format($t['importe'], 2, '.', ''));
-                        $traslados->appendChild($traslado);
-                    }
-                    $impuestosConcepto->appendChild($traslados);
-                }
-
-                // Retenciones
-                if (!empty($c['retenciones'])) {
-                    $retenciones = $doc->createElement('cfdi:Retenciones');
-                    foreach ($c['retenciones'] as $r) {
-                        $retencion = $doc->createElement('cfdi:Retencion');
-                        $retencion->setAttribute('Base', number_format($r['base'], 2, '.', ''));
-                        $retencion->setAttribute('Impuesto', $r['impuesto']);
-                        $retencion->setAttribute('TipoFactor', $r['tipo_factor']);
-                        $retencion->setAttribute('TasaOCuota', number_format($r['tasa'], 6, '.', ''));
-                        $retencion->setAttribute('Importe', number_format($r['importe'], 2, '.', ''));
-                        $retenciones->appendChild($retencion);
-                    }
-                    $impuestosConcepto->appendChild($retenciones);
-                }
-
-                $concepto->appendChild($impuestosConcepto);
-            }
-
-            $conceptos->appendChild($concepto);
-        }
-
-        $cfdi->appendChild($conceptos);
-
-        // Nodo global de impuestos
-        $impuestosGlobal = $doc->createElement('cfdi:Impuestos');
-
-        if (!empty($datos['impuestos']['retenciones'])) {
-            $retencionesGlobal = $doc->createElement('cfdi:Retenciones');
-            foreach ($datos['impuestos']['retenciones'] as $r) {
-                $retencion = $doc->createElement('cfdi:Retencion');
-                $retencion->setAttribute('Impuesto', $r['impuesto']);
-                $retencion->setAttribute('Importe', number_format($r['importe'], 2, '.', ''));
-                $retencionesGlobal->appendChild($retencion);
-            }
-            $impuestosGlobal->appendChild($retencionesGlobal);
-        }
-
-        if (!empty($datos['impuestos']['traslados'])) {
-            $trasladosGlobal = $doc->createElement('cfdi:Traslados');
-            foreach ($datos['impuestos']['traslados'] as $t) {
-                $traslado = $doc->createElement('cfdi:Traslado');
-                $traslado->setAttribute('Base', number_format($t['base'], 2, '.', ''));
-                $traslado->setAttribute('Impuesto', $t['impuesto']);
-                $traslado->setAttribute('TipoFactor', $t['tipo_factor']);
-                $traslado->setAttribute('TasaOCuota', number_format($t['tasa'], 6, '.', ''));
-                $traslado->setAttribute('Importe', number_format($t['importe'], 2, '.', ''));
-                $trasladosGlobal->appendChild($traslado);
-            }
-            $impuestosGlobal->appendChild($trasladosGlobal);
-        }
-
-        if (isset($datos['impuestos']['total_retenciones'])) {
-            $impuestosGlobal->setAttribute('TotalImpuestosRetenidos', number_format($datos['impuestos']['total_retenciones'], 2, '.', ''));
-        }
-        if (isset($datos['impuestos']['total_traslados'])) {
-            $impuestosGlobal->setAttribute('TotalImpuestosTrasladados', number_format($datos['impuestos']['total_traslados'], 2, '.', ''));
-        }
-
-        $cfdi->appendChild($impuestosGlobal);
-
-        $doc->appendChild($cfdi);
-
-        return $doc->saveXML();
-
-    }
-    */
-
     public static function buildXmlCfdiFromDatabase(Cfdi $datos)
     {
         $doc = new DOMDocument('1.0', 'UTF-8');
@@ -329,9 +184,10 @@ class ComplementoXmlService
         $comprobante = $creator->comprobante();
 
         // No agrego (aunque puedo) el Rfc y Nombre porque uso los que están establecidos en el certificado
+        $nameEmisor = Str::upper($certificado->getName() ?? $emisor->name);
         $comprobante->addEmisor([
             'Rfc' => $emisor->rfc,
-            'Nombre' => Str::upper($emisor->name),
+            'Nombre' => $nameEmisor,
             'RegimenFiscal' => $emisor->regimenFiscal->clave, // General de Ley Personas Morales
         ]);
 
@@ -381,7 +237,7 @@ class ComplementoXmlService
                     $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 6, '.', '');
                     $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $traslado->base), 6, '.', '');
                     $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
-                    $attributesTaxes['TipoFactor'] = 'tasa';
+                    $attributesTaxes['TipoFactor'] = 'Tasa';
                     $conceptoCfdi->addTraslado($attributesTaxes);
                 }
             }
@@ -395,7 +251,7 @@ class ComplementoXmlService
                     $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 6, '.', '');
                     $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $items->base), 6, '.', '');
                     $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
-                    $attributesTaxes['TipoFactor'] = 'tasa';
+                    $attributesTaxes['TipoFactor'] = 'Tasa';
                     $conceptoCfdi->addRetencion($attributesTaxes);
                 }
             }
@@ -433,10 +289,19 @@ class ComplementoXmlService
             foreach ($asserts as $assert) {
                 $errorData[] = $assert->getExplanation();
                  Log::debug($assert->getExplanation());
+                 Log::debug( $assert->getCode());
+
+                 if($assert->getCode() !== 'TFDSELLO01') {
+                     // Manejar el error específico de TFDSELLO01
+                     $errorData[] = $assert->getExplanation();
+
+                 }
             }
 
-
-            //throw new \InvalidArgumentException(implode("\n", $errorData));
+            if(count($errorData) > 0)
+            {
+                //throw new \InvalidArgumentException($assert->getExplanation());
+            }
         }
 
         // método de ayuda para generar el xml y guardar los contenidos en un archivo
