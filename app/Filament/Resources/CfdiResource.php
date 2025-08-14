@@ -256,11 +256,15 @@ class CfdiResource extends Resource
                                     ->maxLength(255),
                                TextInput::make('valor_unitario')
                                     ->label('Valor Unitario')
-                                    ->mask(RawJs::make('$money($input)'))
+                                    ->mask(RawJs::make(<<<'JS'
+                                                $money($input, '.', ',', 6)
+                                            JS))
                                     ->stripCharacters(',')
                                     ->numeric()
-                                   ->live(debounce: 800)
-                                    ->required()->afterStateUpdated($calcularImporte),
+
+                                    ->live(debounce: 800)
+                                    ->required()
+                                    ->afterStateUpdated($calcularImporte),
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
@@ -330,24 +334,6 @@ class CfdiResource extends Resource
             ])
             ->actions([
                     ActionGroup::make([
-                        /*
-                        Action::make('duplicate')
-                            ->label('Duplicar')
-                            ->icon('heroicon-o-document-duplicate')
-                            ->action(function (Model $record) {
-                                $new = $record->replicate();
-                                $new->created_at = now();
-                                $new->updated_at = now();
-                                $new->uuid = null;
-                                $new->ruta = null;
-                                $new->path_xml = null;
-                                $new->pdf_path = null;
-                                $new->status_upload = '';
-                                $new->estatus = '';
-                                $new->save();
-                                return redirect()->route('filament.admin.resources.cfdis.edit', ['record' => $new->id]);
-                            }),
-                            */
                         Action::make('descargar_xml')
                             ->label('Descargar XML')
                             ->icon('heroicon-o-arrow-down-tray')

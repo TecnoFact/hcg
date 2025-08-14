@@ -363,7 +363,7 @@ class ComplementoXmlService
            $conceptos['ClaveUnidad'] = $concepto->clave_unidad;
            $conceptos['Unidad'] = $concepto->unidad;
            $conceptos['Descripcion'] = $concepto->descripcion;
-           $conceptos['ValorUnitario'] = number_format((float) str_replace([',', ' '], '', $concepto->valor_unitario), 2, '.', '');
+           $conceptos['ValorUnitario'] = number_format((float) str_replace([',', ' '], '', $concepto->valor_unitario), 6, '.', '');
            $conceptos['Importe'] = number_format((float) str_replace([',', ' '], '', $concepto->importe), 2, '.', '');
            $conceptos['ObjetoImp'] = $objeImp ? $objeImp->clave : '01';
 
@@ -378,8 +378,8 @@ class ComplementoXmlService
                 foreach($concepto->traslados as $traslado)
                 {
                     $attributesTaxes['Importe'] = number_format((float) str_replace([',', ' '], '', $traslado->importe), 2, '.', '');
-                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', '');
-                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $traslado->base), 2, '.', '');
+                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 6, '.', '');
+                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $traslado->base), 6, '.', '');
                     $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
                     $attributesTaxes['TipoFactor'] = 'tasa';
                     $conceptoCfdi->addTraslado($attributesTaxes);
@@ -392,8 +392,8 @@ class ComplementoXmlService
                 foreach($concepto->retenciones as $items)
                 {
                     $attributesTaxes['Importe'] = number_format((float) str_replace([',', ' '], '', $items->importe), 2, '.', '');
-                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 2, '.', '');
-                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $items->base), 2, '.', '');
+                    $attributesTaxes['TasaOCuota'] = number_format((float) str_replace([',', ' '], '', ($taxs->rate / 100)), 6, '.', '');
+                    $attributesTaxes['Base'] = number_format((float) str_replace([',', ' '], '', $items->base), 6, '.', '');
                     $attributesTaxes['Impuesto'] = $taxs->code; // 002 = IVA, 003 = IEPS
                     $attributesTaxes['TipoFactor'] = 'tasa';
                     $conceptoCfdi->addRetencion($attributesTaxes);
