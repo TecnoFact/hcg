@@ -201,7 +201,7 @@ class CfdiContinue extends Page
         try {
             $cfdiArchivo = Cfdi::find($this->cfdiArchivo->id);
 
-              $xmlPath = $cfdiArchivo->ruta;
+              $xmlPath = $cfdiArchivo->path_xml;
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->emisor->rfc)->first();
 

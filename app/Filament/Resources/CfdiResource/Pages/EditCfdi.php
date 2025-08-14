@@ -284,6 +284,13 @@ class EditCfdi extends EditRecord
         Storage::disk('local')->put($ruta, $xml);
 
 
+        $cfdiUpdate = Cfdi::find($cfdi->id);
+        $cfdiUpdate->path_xml = $ruta;
+        $cfdiUpdate->nombre_archivo = $name_xml_path;
+        $cfdiUpdate->ruta = $ruta;
+        $cfdiUpdate->save();
+
+
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $ruta]);
         $cfdi->update(['nombre_archivo' => $name_xml_path]);
