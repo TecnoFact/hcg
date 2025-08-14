@@ -516,20 +516,74 @@ class CfdiController extends Controller
         }
 
 
+
         $xmlContent = file_get_contents($fileXml);
-        $xml = new \SimpleXMLElement($xmlContent);
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        $dom->loadXML($xmlContent);
 
         // Eliminar nodo TimbreFiscalDigital dentro de Complemento
-        if (isset($xml->Complemento->TimbreFiscalDigital)) {
-            unset($xml->Complemento->TimbreFiscalDigital);
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('cfdi', 'http://www.sat.gob.mx/cfd/4');
+        $xpath->registerNamespace('tfd', 'http://www.sat.gob.mx/TimbreFiscalDigital');
+
+        // Eliminar el nodo TimbreFiscalDigital si existe
+        foreach ($xpath->query('//cfdi:Complemento/tfd:TimbreFiscalDigital') as $tfdNode) {
+            $tfdNode->parentNode->removeChild($tfdNode);
         }
 
         // Eliminar atributos del nodo Comprobante
-        unset($xml['NoCertificado']);
-        unset($xml['Certificado']);
-        unset($xml['Sello']);
+        $comprobanteNodes = $dom->getElementsByTagName('Comprobante');
+        if ($comprobanteNodes->length > 0) {
+            $comprobante = $comprobanteNodes->item(0);
+            $comprobante->removeAttribute('NoCertificado');
+            $comprobante->removeAttribute('Certificado');
+            $comprobante->removeAttribute('Sello');
+        }
 
-        $xml->asXML($fileXml);
+        $dom->save($fileXml);
+
+         $pathXml = Storage::disk('local')->path($cfdi->path_xml);
+
+        if (!file_exists($pathXml)) {
+            Notification::make()
+                ->title('Error al cancelar CFDI')
+                ->danger()
+                ->body('El archivo XML del CFDI no se encuentra en el servidor.')
+                ->send();
+
+            return redirect()->back();
+        }
+
+
+
+        $xmlContent = file_get_contents($pathXml);
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        $dom->loadXML($xmlContent);
+
+        // Eliminar nodo TimbreFiscalDigital dentro de Complemento
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('cfdi', 'http://www.sat.gob.mx/cfd/4');
+        $xpath->registerNamespace('tfd', 'http://www.sat.gob.mx/TimbreFiscalDigital');
+
+        // Eliminar el nodo TimbreFiscalDigital si existe
+        foreach ($xpath->query('//cfdi:Complemento/tfd:TimbreFiscalDigital') as $tfdNode) {
+            $tfdNode->parentNode->removeChild($tfdNode);
+        }
+
+        // Eliminar atributos del nodo Comprobante
+        $comprobanteNodes = $dom->getElementsByTagName('Comprobante');
+        if ($comprobanteNodes->length > 0) {
+            $comprobante = $comprobanteNodes->item(0);
+            $comprobante->removeAttribute('NoCertificado');
+            $comprobante->removeAttribute('Certificado');
+            $comprobante->removeAttribute('Sello');
+        }
+
+        $dom->save($pathXml);
 
         $cfdi->sello = '';
         $cfdi->uuid = '';
@@ -542,7 +596,8 @@ class CfdiController extends Controller
             ->body('El CFDI ha sido cancelado correctamente.')
             ->send();
 
-        return redirect()->route('filament.admin.pages.cfdi-continues', $cfdi);
+        return redirect()->back();
+        //return redirect()->route('filament.admin.resources.cfdis.edit', $cfdi);
     }
 }
 

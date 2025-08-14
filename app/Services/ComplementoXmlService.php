@@ -283,6 +283,12 @@ class ComplementoXmlService
         // método de ayuda para validar usando las validaciones estándar de creación de la librería
         $asserts = $creator->validate();
 
+        $arrayErrorFromXml = [
+            'TFDSELLO01',
+            'TFDVERSION01',
+            'SELLO08'
+        ];
+
         if ($asserts->hasErrors()) { // contiene si hay o no errores
              //throw new Exception(implode("\n", $asserts->errors()));
             $errorData = [];
@@ -291,7 +297,7 @@ class ComplementoXmlService
                  Log::debug($assert->getExplanation());
                  Log::debug( $assert->getCode());
 
-                 if($assert->getCode() !== 'TFDSELLO01') {
+                 if(!in_array($assert->getCode(), $arrayErrorFromXml)) {
                      // Manejar el error específico de TFDSELLO01
                      $errorData[] = $assert->getExplanation();
 
@@ -300,7 +306,7 @@ class ComplementoXmlService
 
             if(count($errorData) > 0)
             {
-                //throw new \InvalidArgumentException($assert->getExplanation());
+               // throw new \InvalidArgumentException(implode("\n", $errorData));
             }
         }
 
