@@ -796,13 +796,14 @@ class TimbradoService
 
                 // Guarda el XML
                 Storage::disk('local')->put($ruta, $xml);
-
+                $cfdiArchivo = \App\Models\Models\Cfdi::first($cfdiArchivo->id);
                 // Actualiza el registro con la ruta del XML
                 $cfdiArchivo->update(['path_xml' => $ruta]);
                 $cfdiArchivo->update(['nombre_archivo' => $name_xml_path]);
                 $cfdiArchivo->update(['ruta' => $ruta]);
 
                 Log::error("El archivo XML no existe: $xmlPath");
+                $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
                 //throw new \Exception("El archivo XML no existe: $xmlPath");
             }
 
