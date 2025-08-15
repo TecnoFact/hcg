@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cfdis', function (Blueprint $table) {
-            $table->string('token_sat', 500)->change();
+            $table->text('token_sat')->nullable()->change();
         });
     }
 
