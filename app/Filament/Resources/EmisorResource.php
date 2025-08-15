@@ -177,11 +177,6 @@ class EmisorResource extends Resource
                                                     $fileKey->getRealPath(),
                                                     $value
                                                 );
-
-                                                if (Carbon::instance($credential->certificate()->validToDateTime())->isPast()) {
-                                                    $fail('El certificado está vencido.');
-                                                }
-
                                             } catch (\Throwable $e) {
                                                 $fail('La contraseña de la llave privada (.key) es incorrecta o no coincide con el certificado.');
                                             }
