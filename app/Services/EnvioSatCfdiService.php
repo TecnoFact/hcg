@@ -30,7 +30,7 @@ class EnvioSatCfdiService
         Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
 
        // $rfc = config('pac.Rfc');
-        $rfc = $cfdi->rfc_emisor;
+        $rfc = $cfdi->emisor->rfc;
 
         $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
         $cadena = "||{$rfc}|{$fecha}||";
@@ -235,7 +235,7 @@ class EnvioSatCfdiService
             throw new Exception("Token no válido");
         }
 
-        $emisor = Emisor::where('rfc', $cfdi->rfc_emisor)->first();
+        $emisor = Emisor::where('rfc', $cfdi->emisor->rfc)->first();
 
         $numeroCertificado = '00001000000710051653';
 
@@ -243,11 +243,11 @@ class EnvioSatCfdiService
             $certificate = new \CfdiUtils\Certificado\Certificado($emisor->path_certificado);
             $numeroCertificado = $certificate->getSerial();
         } elseif (!$emisor) {
-            Log::warning('Emisor no encontrado para el CFDI', ['rfc' => $cfdi->rfc_emisor]);
+            Log::warning('Emisor no encontrado para el CFDI', ['rfc' => $cfdi->emisor->rfc]);
         }
 
         $data = [
-            'RfcEmisor' => $cfdi->rfc_emisor,
+            'RfcEmisor' => $cfdi->emisor->rfc,
             'UUID' => $cfdi->uuid,
             'Fecha' => $cfdi->fecha,
             'NumeroCertificado' => $numeroCertificado,
@@ -416,7 +416,7 @@ class EnvioSatCfdiService
         }
 
         $data = [
-            'RfcEmisor' => $cfdi->rfc_emisor,
+            'RfcEmisor' => $cfdi->emisor->rfc,
             'UUID' => $cfdi->uuid,
             'Fecha' => $cfdi->fecha,
             'NumeroCertificado' => "00001000000710051653",
@@ -761,7 +761,7 @@ class EnvioSatCfdiService
             Log::info('Iniciando proceso de envío SAT para CFDI', ['uuid' => $cfdi->uuid]);
 
         // $rfc = config('pac.Rfc');
-            $rfc = $cfdi->rfc_emisor;
+            $rfc = $cfdi->emisor->rfc;
 
             $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
             $cadena = "||{$rfc}|{$fecha}||";
@@ -795,6 +795,5 @@ class EnvioSatCfdiService
 
 
     }
-
 }
 

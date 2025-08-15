@@ -65,6 +65,7 @@ class CfdiController extends Controller
             $receptor = $xml->xpath('//cfdi:Receptor')[0] ?? null;
 
             $rfcEmisor = $emisor ? (string) $emisor['Rfc'] : null;
+            $rfcReceptor = $receptor ? (string) $receptor['Rfc'] : null;
 
             // 3. Validar CSD vs RFC
             $validadorCert = new CertificadoValidatorService();
@@ -142,6 +143,9 @@ class CfdiController extends Controller
             $acuseService = new AcuseJsonService();
             $acuse = $acuseService->generarDesdeXml($xmlFirmado);
 
+            $emisor = Emisor::where('rfc', $rfcEmisor)->first();
+            $receptor = CfdiReceptor::where('rfc', $rfcReceptor)->first();
+
             // 10. Guardar en base de datos
             $registro = Cfdi::create([
                 'user_id' => Auth::id(),
@@ -149,12 +153,17 @@ class CfdiController extends Controller
                 'ruta' => $nombre,
                 'uuid' => $uuid,
                 'sello' => $sello,
-                'rfc_emisor' => $rfcEmisor,
-                'rfc_receptor' => $receptor ? (string) $receptor['Rfc'] : null,
+                'rfc_emisor' => $emisor?->id ?? null,
+                'rfc_receptor' => $receptor?->id ?? null,
                 'total' => (float) $xml['Total'],
                 'fecha' => (string) $xml['Fecha'],
-                'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
+                'tipo_de_comprobante' => (string) $xml['TipoDeComprobante'],
                 'estatus' => 'timbrado',
+                'moneda' => (string) $xml['Moneda'],
+                'subtotal' => (float) $xml['SubTotal'],
+                'exportacion' => (string) $xml['Exportacion'],
+                'lugar_expedicion' => (string) $xml['LugarExpedicion'],
+                'intento_envio_sat' => 1
             ]);
 
             // 11. Enviar al SAT (SOAP + Blob)
@@ -191,11 +200,11 @@ class CfdiController extends Controller
                 'archivo_id' => $registro->id,
                 'datos_extraidos' => [
                     'uuid' => $timbreData['uuid'],
-                    'emisor_rfc' => $registro->rfc_emisor,
-                    'receptor_rfc' => $registro->rfc_receptor,
+                    'emisor_rfc' => $registro->emisor->rfc,
+                    'receptor_rfc' => $registro->receptor->rfc,
                     'total' => $registro->total,
                     'fecha' => $registro->fecha,
-                    'tipo' => $registro->tipo_comprobante,
+                    'tipo' => $registro->tipo_de_comprobante,
                     'cadena_original' => $cadenaOriginal,
                     'sello' => $sello,
                     'certificado' => $certificado,
