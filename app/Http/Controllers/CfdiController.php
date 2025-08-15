@@ -290,7 +290,7 @@ class CfdiController extends Controller
                     'receptor_rfc' => $registro->rfc_receptor,
                     'total' => $registro->total,
                     'fecha' => $registro->fecha,
-                    'tipo' => $registro->tipo_comprobante,
+                    'tipo' => $registro->tipo_de_comprobante,
                     //'cadena_original' => $cadenaOriginal,
                     'sello' => $xml['Sello'],
                     'certificado' => $xml['Certificado'],

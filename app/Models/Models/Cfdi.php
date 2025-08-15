@@ -36,6 +36,9 @@ class Cfdi extends Model
         'exportacion',
         'lugar_expedicion',
 
+        'rfc_emisor',
+        'rfc_receptor',
+
         'path_xml',
         'user_id',
         'cfdi_archivos_id',
