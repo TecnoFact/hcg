@@ -164,8 +164,8 @@
                     </td>
                     <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
                     <td class="text-center">
-                        {{ number_format((float) ($result['valorUnitario'] ?? 0), 2, '.', ',') }}
-                    </td>
+                                {{ number_format((float) ($result['valorUnitario'] ?? 0), 2, '.', ',') }}
+                            </td>
                     <td class="text-center">{{ !empty($result['descuento']) ? $result['descuento'] : 0 }}</td>
                     <td class="text-right">{{ number_format((float) ($result['importe'] ?? 0), 2, '.', ',') }}</td>
                 </tr>
@@ -197,6 +197,7 @@
             </td>
             <td class="text-right">
                 {{ number_format((float) ($customer_invoice->subtotal ?? 0), 2, '.', ',') }}<br/>
+
                 <span style="line-height: 16px;"><strong>{{ number_format((float) ($customer_invoice->total ?? 0), 2, '.', ',') }}</strong></span>
             </td>
         </tr>
