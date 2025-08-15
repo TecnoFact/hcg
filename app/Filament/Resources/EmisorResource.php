@@ -159,7 +159,7 @@ class EmisorResource extends Resource
                                 ViewField::make('file_certificate')->label('Certificado')->view('forms.components.certificate-view'),
                                 ViewField::make('file_key')->view('forms.components.private-key-view')->label('Llave privada'),
                                 TextInput::make('password_key')
-//                                    ->password()
+                                    ->password()
                                     ->label('Contraseña llave')
                                     ->required()
                                     ->rule(function (Get $get) {
