@@ -45,10 +45,12 @@ class EmisorResource extends Resource
                         TextInput::make('reason_social')
                             ->label('Razon social')
                             ->required()
-                            ->reactive()
+                           // ->reactive()
+                           /*
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $set('name', $state);
                             })
+                                */
                             ->maxLength(255),
                         TextInput::make('name')
                             ->label('Nombre')
@@ -196,10 +198,11 @@ class EmisorResource extends Resource
         return $table
             ->columns([
                 Stack::make([
+
                     Tables\Columns\ImageColumn::make('logo')
-                        ->label('Logo')
                         ->disk('local')
                         ->visibility('private')
+                        ->defaultImageUrl(url('/image/avaatar.png'))
                         ->circular(),
 
                     Tables\Columns\TextColumn::make('rfc')
@@ -221,30 +224,10 @@ class EmisorResource extends Resource
                         ->searchable(),
                 ]),
             ])
-            ->contentGrid([
-                'md' => 2,
-                'xl' => 3,
-            ])
-            /*
-                ->columns([
-                    Tables\Columns\TextColumn::make('id')->sortable()->searchable(),
-                    Tables\Columns\TextColumn::make('name')->sortable()->searchable()->label('Nombre'),
-                    Tables\Columns\TextColumn::make('rfc')->sortable()->searchable()->label('RFC'),
-                    Tables\Columns\TextColumn::make('reason_social')->sortable()->searchable()->label('Razón Social'),
-                    Tables\Columns\TextColumn::make('website')->sortable()->searchable()->label('Página Web')->toggleable(isToggledHiddenByDefault: true),
-                    Tables\Columns\TextColumn::make('phone')->sortable()->searchable()->label('Teléfono'),
-                    Tables\Columns\ColorColumn::make('color')->label('Color PDF'),
-                    Tables\Columns\TextColumn::make('email')->sortable()->searchable()->label('Correo electronico'),
-                    Tables\Columns\TextColumn::make('created_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de creación'),
-                    Tables\Columns\TextColumn::make('updated_at')->sortable()->toggleable(isToggledHiddenByDefault: true)->label('Fecha de actualización'),
-                ])
-                ->filters([
-                    //
-                ])
-                ->actions([
-                    Tables\Actions\EditAction::make(),
-                ])
-                    */
+        ->contentGrid([
+            'md' => 2,
+            'xl' => 3,
+        ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

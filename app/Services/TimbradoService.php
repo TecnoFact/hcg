@@ -781,7 +781,29 @@ class TimbradoService
             $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
 
             if (!file_exists($xmlPath)) {
-                throw new \Exception("El archivo XML no existe: $xmlPath");
+
+                $data = [
+                    'cfdi' => $cfdiArchivo
+                ];
+
+
+                $name_xml_path = 'CFDI-' . $cfdiArchivo->id . '.xml';
+                $path_xml = $cfdiArchivo->emisor->rfc . '/' . $name_xml_path;
+                $ruta = 'cfdi/' . $path_xml;
+
+                $xml = ComplementoXmlService::buildXmlCfdi($data);
+
+                // Guarda el XML
+                Storage::disk('local')->put($ruta, $xml);
+                $cfdiArchivo = \App\Models\Models\Cfdi::find($cfdiArchivo->id);
+                // Actualiza el registro con la ruta del XML
+                $cfdiArchivo->update(['path_xml' => $ruta]);
+                $cfdiArchivo->update(['nombre_archivo' => $name_xml_path]);
+                $cfdiArchivo->update(['ruta' => $ruta]);
+
+                Log::error("El archivo XML no existe: $xmlPath");
+                $xmlPath = Storage::disk('local')->path($cfdiArchivo->ruta);
+                //throw new \Exception("El archivo XML no existe: $xmlPath");
             }
 
              $xmlContent = file_get_contents($xmlPath);

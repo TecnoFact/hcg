@@ -256,11 +256,15 @@ class CfdiResource extends Resource
                                     ->maxLength(255),
                                TextInput::make('valor_unitario')
                                     ->label('Valor Unitario')
-                                    ->mask(RawJs::make('$money($input)'))
+                                    ->mask(RawJs::make(<<<'JS'
+                                                $money($input, '.', ',', 6)
+                                            JS))
                                     ->stripCharacters(',')
                                     ->numeric()
-                                   ->live(debounce: 800)
-                                    ->required()->afterStateUpdated($calcularImporte),
+
+                                    ->live(debounce: 800)
+                                    ->required()
+                                    ->afterStateUpdated($calcularImporte),
                                 Forms\Components\TextInput::make('cantidad')
                                     ->label('Cantidad')
                                     ->numeric()
@@ -330,16 +334,6 @@ class CfdiResource extends Resource
             ])
             ->actions([
                     ActionGroup::make([
-                        Action::make('duplicate')
-                            ->label('Duplicar')
-                            ->icon('heroicon-o-document-duplicate')
-                            ->action(function (Model $record) {
-                                $new = $record->replicate();
-                                $new->created_at = now();
-                                $new->updated_at = now();
-                                $new->save();
-                                return redirect()->route('filament.resources.cfdi-resource.edit', ['record' => $new->id]);
-                            }),
                         Action::make('descargar_xml')
                             ->label('Descargar XML')
                             ->icon('heroicon-o-arrow-down-tray')
@@ -356,7 +350,18 @@ class CfdiResource extends Resource
                             ->visible(fn($record) => $record->pdf_path !== null),
 
                         Tables\Actions\EditAction::make()
-                            ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_TIMBRADO && $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO),
+                            ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_TIMBRADO && $record->status_upload !== Cfdi::ESTATUS_DEPOSITADO && $record->status_upload !== Cfdi::ESTATUS_SELLADO),
+
+                        Action::make('cancelar')
+                                ->label('Cancelar')
+                                ->icon('heroicon-o-x-mark')
+                                ->url(fn($record) => route('filament.admin.pages.cfdi-cancel', $record))
+                                ->color('danger')
+                                ->requiresConfirmation()
+                                ->modalHeading('¿Estás seguro?')
+                                ->modalSubheading('¿Deseas cancelar la creación de este Cfdi?')
+                                ->openUrlInNewTab(false)
+                                ->visible(fn($record) => $record->status_upload !== Cfdi::ESTATUS_SUBIDO)
                     ])
             ])
             ->headerActions([

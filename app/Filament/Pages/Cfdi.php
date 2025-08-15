@@ -3,11 +3,9 @@
 namespace App\Filament\Pages;
 
 use App\Services\ComplementoXmlService;
-use DateTime;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Pages\Page;
-use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -312,7 +310,7 @@ class Cfdi extends Page
             $cfdiArchivo->ruta = $processXml['ruta'];
             $cfdiArchivo->total = $processXml['total'];
             $cfdiArchivo->fecha = $processXml['fecha'];
-            $cfdiArchivo->uuid = $processXml['uuid'];
+            $cfdiArchivo->uuid = '';
             $cfdiArchivo->estatus  = 'validado';
             $cfdiArchivo->save();
 

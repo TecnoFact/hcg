@@ -28,6 +28,16 @@ class EditCfdi extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->previousUrl ?? $this->getResource()::getUrl('index');
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'El CFDI a sido Actualizado con exito';
+    }
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         //dd($data);
@@ -97,6 +107,7 @@ class EditCfdi extends EditRecord
             'name' => $data['emisor_nombre'],
             'tax_regimen_id' => $data['emisor_regimen_fiscal'],
             'postal_code' => $data['lugar_expedicion'],
+            'user_id' => auth()->id()
         ];
 
         $total = 0;
@@ -187,7 +198,7 @@ class EditCfdi extends EditRecord
 
         foreach ($conceptos as $concepto) {
             $concepto['obj_imp_id'] = $concepto['obj_imp_id'] ?? null; // Asegura que obj_imp_id esté presente
-            CfdiConcepto::updateOrCreate(
+            $conceptoCfdi = CfdiConcepto::updateOrCreate(
                 ['cfdi_id' => $cfdi->id, 'no_identificacion' => $concepto['no_identificacion']],
                 array_merge($concepto, ['cfdi_id' => $cfdi->id])
             );
@@ -249,15 +260,11 @@ class EditCfdi extends EditRecord
         $data['subtotal'] = $total;
         $data['total'] = $total;
 
-        $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
-        $path_xml = $cfdi->emisor->rfc . '/' . $name_xml_path;
-        $ruta = 'cfdi/' . $path_xml;
 
         $cfdiUpdate = Cfdi::find($cfdi->id);
         $cfdiUpdate->subtotal = $subtotal;
         $cfdiUpdate->impuesto = $iva;
         $cfdiUpdate->total = $total;
-        $cfdiUpdate->ruta = $ruta;
         $cfdiUpdate->save();
 
         $cfdiUpdate = Cfdi::with('conceptos')->find($cfdi->id);
@@ -269,24 +276,28 @@ class EditCfdi extends EditRecord
 
         // Genera el XML
         $xml = ComplementoXmlService::buildXmlCfdi($data);
-        TimbradoService::createCfdiSimpleToPDF($cfdi);
 
-        // Guarda el XML
-        Storage::disk('local')->put($path_xml, $xml);
-        Storage::disk('public')->put($ruta, $xml);
-
-
-        // Guarda el XML
         $name_xml_path = 'CFDI-' . $cfdi->id . '.xml';
         $path_xml = $cfdi->emisor->rfc . '/' . $name_xml_path;
         $ruta = 'cfdi/' . $path_xml;
 
+        // Guarda el XML
         Storage::disk('local')->put($ruta, $xml);
+
+
+        $cfdiUpdate = Cfdi::find($cfdi->id);
+        $cfdiUpdate->path_xml = $ruta;
+        $cfdiUpdate->nombre_archivo = $name_xml_path;
+        $cfdiUpdate->ruta = $ruta;
+        $cfdiUpdate->save();
+
 
         // Actualiza el registro con la ruta del XML
         $cfdi->update(['path_xml' => $ruta]);
         $cfdi->update(['nombre_archivo' => $name_xml_path]);
         $cfdi->update(['ruta' => $ruta]);
+
+        TimbradoService::createCfdiSimpleToPDF($cfdiUpdate);
 
         return $data;
     }

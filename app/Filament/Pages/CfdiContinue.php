@@ -5,7 +5,6 @@ namespace App\Filament\Pages;
 use App\Models\Models\Cfdi;
 use Carbon\Carbon;
 use Filament\Pages\Page;
-use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +16,8 @@ class CfdiContinue extends Page
     protected static ?string $navigationIcon = null;
 
     protected static string $view = 'filament.pages.cfdi-continue';
+
+    protected static ?string $title =  'Continuar CFDI';
 
 
     protected static ?string $navigationGroup = null;
@@ -201,7 +202,7 @@ class CfdiContinue extends Page
         try {
             $cfdiArchivo = Cfdi::find($this->cfdiArchivo->id);
 
-              $xmlPath = $cfdiArchivo->ruta;
+              $xmlPath = $cfdiArchivo->path_xml;
 
             $emisor = \App\Models\Emisor::where('rfc', $cfdiArchivo->emisor->rfc)->first();
 
@@ -259,9 +260,9 @@ class CfdiContinue extends Page
             $cfdiArchivo->sello = $processXml['sello'];
             $cfdiArchivo->status_upload = Cfdi::ESTATUS_SELLADO;
             $cfdiArchivo->ruta = $processXml['ruta'];
-            $cfdiArchivo->total = $processXml['total'] ?? 0;
+           // $cfdiArchivo->total = $processXml['total'] ?? 0;
             $cfdiArchivo->fecha = $processXml['fecha'];
-            $cfdiArchivo->uuid = $processXml['uuid'];
+            $cfdiArchivo->uuid = '';
             $cfdiArchivo->estatus  = 'validado';
             $cfdiArchivo->save();
 

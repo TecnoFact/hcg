@@ -31,4 +31,5 @@ Route::middleware('auth')->group(function () {
     Route::get('emision/descargar-xml/{emision}', [EmisionController::class, 'descargarXmlEmision'])->name('emision.descargar-xml');
 });
 
+
 require __DIR__.'/auth.php';

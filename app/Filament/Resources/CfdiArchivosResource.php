@@ -80,19 +80,19 @@ class CfdiArchivosResource extends Resource
                         Action::make('descargar_xml')
                         ->label('Descargar XML')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->url(fn($record) => route('facturas.descargar-xml', $record))
+                        ->url(fn($record) => route('cfdis.descargar-xml', $record))
                         ->color('success')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => $record->status_upload === Cfdi::ESTATUS_TIMBRADO || $record->status_upload === Cfdi::ESTATUS_DEPOSITADO),
+                        ->visible(fn($record) => $record->path_xml !== null),
 
 
                         Action::make('descargar_pdf')
                         ->label('Descargar PDF')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->url(fn($record) => route('facturas.descargar-pdf', $record))
+                        ->url(fn($record) => route('cfdis.descargar-pdf', $record))
                         ->color('success')
                         ->openUrlInNewTab(false)
-                        ->visible(fn($record) => $record->status_upload === Cfdi::ESTATUS_TIMBRADO || $record->status_upload === Cfdi::ESTATUS_DEPOSITADO),
+                        ->visible(fn($record) => $record->pdf_path !== null),
 
 
                         Action::make('continuar')
