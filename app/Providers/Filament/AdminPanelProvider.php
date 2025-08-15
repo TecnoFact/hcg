@@ -23,7 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
-    public CONST COLOR = "#01A4C1";
+    public CONST COLORBLUE = "#01A4C1";
 
     public function panel(Panel $panel): Panel
     {
@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('image/logotips.png'))
             ->brandLogoHeight( fn () => auth()->check() ? '4rem' : '10rem')
             ->colors([
-                'primary' => Self::COLOR,
+                    'primary' => Self::COLORBLUE
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

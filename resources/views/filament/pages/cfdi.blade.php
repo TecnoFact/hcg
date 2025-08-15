@@ -23,7 +23,7 @@
                         x-bind:disabled="subido"
                         wire:loading.attr="disabled"
                         wire:target="subirXml"
-                        class="transition-all duration-300 w-full"
+                        class="transition-all duration-300 w-full opacity-50 cursor-not-allowed"
                         x-bind:class="subido ? 'opacity-75' : ''"
                     >
                         <div

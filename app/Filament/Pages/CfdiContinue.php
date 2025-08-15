@@ -5,7 +5,6 @@ namespace App\Filament\Pages;
 use App\Models\Models\Cfdi;
 use Carbon\Carbon;
 use Filament\Pages\Page;
-use App\Models\CfdiArchivo;
 use App\Services\TimbradoService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +16,8 @@ class CfdiContinue extends Page
     protected static ?string $navigationIcon = null;
 
     protected static string $view = 'filament.pages.cfdi-continue';
+
+    protected static ?string $title =  'Continuar CFDI';
 
 
     protected static ?string $navigationGroup = null;
