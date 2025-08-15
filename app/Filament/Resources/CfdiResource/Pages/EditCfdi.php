@@ -107,6 +107,7 @@ class EditCfdi extends EditRecord
             'name' => $data['emisor_nombre'],
             'tax_regimen_id' => $data['emisor_regimen_fiscal'],
             'postal_code' => $data['lugar_expedicion'],
+            'user_id' => auth()->id()
         ];
 
         $total = 0;
