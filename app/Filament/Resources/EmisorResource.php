@@ -44,10 +44,12 @@ class EmisorResource extends Resource
                         TextInput::make('reason_social')
                             ->label('Razon social')
                             ->required()
-                            ->reactive()
+                           // ->reactive()
+                           /*
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $set('name', $state);
                             })
+                                */
                             ->maxLength(255),
                         TextInput::make('name')
                             ->label('Nombre')
