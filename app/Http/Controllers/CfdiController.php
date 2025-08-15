@@ -367,6 +367,12 @@ class CfdiController extends Controller
             return redirect()->back();
         }
 
+        if($factura->status_upload !== 'timbrado') {
+            TimbradoService::createCfdiSimpleToPDF($factura);
+        }else{
+            TimbradoService::createCfdiToPDF($factura);
+        }
+
         if ($factura->pdf_path === null) {
             Notification::make()
                 ->title('error al generar PDF')
