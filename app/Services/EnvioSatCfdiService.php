@@ -84,6 +84,7 @@ class EnvioSatCfdiService
     static function firmarConHSM(string $url, string $hash): string
     {
         $ch = curl_init($url . '?hash=' . urlencode($hash));
+        Log::info('url: ' . $url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 15,
