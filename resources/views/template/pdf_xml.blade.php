@@ -164,10 +164,10 @@
                     </td>
                     <td class="text-center">[{{ $result['claveUnidad'] }}] {{ $result['unidad'] }}</td>
                     <td class="text-center">
-                                {{ money($result['valorUnitario'] ?? 0) }}
+                                {{ number_format((float) str_replace([',', ' '], '', $result['valorUnitario'] ?? 0), 2, '.', '') }}
                             </td>
                     <td class="text-center">{{ !empty($result['descuento']) ? $result['descuento'] : 0 }}</td>
-                    <td class="text-right">{{ money($result['importe'] ?? 0) }}</td>
+                    <td class="text-right">{{ number_format((float) str_replace([',', ' '], '', $result['importe'] ?? 0), 2, '.', '') }}</td>
                 </tr>
             @endforeach
         @endif
@@ -196,9 +196,9 @@
                 <span style="line-height: 16px;"><strong>{{ mb_strtoupper('Total') }}</strong></span>
             </td>
             <td class="text-right">
-                {{ money($customer_invoice->subtotal ?? 0) }}<br/>
+                {{ number_format((float) str_replace([',', ' '], '', $customer_invoice->subtotal ?? 0), 2, '.', '') }}<br/>
 
-                <span style="line-height: 16px;"><strong>{{ money($customer_invoice->total ?? 0) }}</strong></span>
+                <span style="line-height: 16px;"><strong>{{ number_format((float) str_replace([',', ' '], '', $customer_invoice->total ?? 0), 2, '.', '') }}</strong></span>
             </td>
         </tr>
         </tfoot>
