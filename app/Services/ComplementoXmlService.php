@@ -184,7 +184,7 @@ class ComplementoXmlService
         $comprobante = $creator->comprobante();
 
         // No agrego (aunque puedo) el Rfc y Nombre porque uso los que están establecidos en el certificado
-        $nameEmisor = Str::upper($certificado->getName() ?? $emisor->name);
+        $nameEmisor = Str::upper($emisor->name);
         $comprobante->addEmisor([
             'Rfc' => $emisor->rfc,
             'Nombre' => $nameEmisor,
