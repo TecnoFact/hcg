@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Emisor;
 use App\Models\Models\Cfdi;
+use App\Models\Models\CfdiReceptor;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -230,22 +232,23 @@ class CfdiController extends Controller
         $acuseService = new AcuseJsonService();
         $acuse = $acuseService->generarDesdeXml($xmlContent);
 
-
-
         // 2. Validar complementos
         $xml = simplexml_load_string($xmlContent);
-      //  dd($xml);
 
         try {
-
             // 8. Guardar archivo final
             $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
             Storage::disk('local')->put($nombre, $xmlContent);
+
+            $emisor = Emisor::where('rfc', $acuse['rfcEmisor'])->first();
+            $receptor = CfdiReceptor::where('rfc', $acuse['rfcReceptor'])->first();
 
             // 10. Guardar en base de datos
             $registro = Cfdi::create([
                 'user_id' => Auth::id(),
                 'nombre_archivo' => $file->getClientOriginalName(),
+                'emisor_id' => $emisor->id,
+                'receptor_id' => $receptor->id,
                 'ruta' => $nombre,
                 'uuid' => $acuse['uuid'],
                 'sello' => $xml['Sello'],
@@ -257,7 +260,6 @@ class CfdiController extends Controller
                 'estatus' => 'timbrado',
             ]);
 
-           // dd($registro);
             // Enviar al SAT y Azure
             try {
                 $envio = new EnvioSatCfdiService();
