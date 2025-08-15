@@ -21,7 +21,7 @@ class EditEmisor extends EditRecord
         ];
     }
 
-     protected function getRedirectUrl(): string
+    protected function getRedirectUrl(): string
     {
         return $this->previousUrl ?? $this->getResource()::getUrl('index');
     }
@@ -36,7 +36,6 @@ class EditEmisor extends EditRecord
         $data['user_id'] = auth()->id();
         $data['name'] = $data['reason_social'];
         // subir el archivo cer y key al Storage disk local dentro de la carpeta certificates y con el nombre del rfc y que el nombre del archivo sea el rfc con su extension
-
 
         if (isset($data['file_certificate']) && $data['file_certificate'] instanceof \Illuminate\Http\UploadedFile) {
 
@@ -68,7 +67,6 @@ class EditEmisor extends EditRecord
             $data['due_date'] = $fecha;
         }
 
-
         if (isset($data['file_key']) && $data['file_key'] instanceof \Illuminate\Http\UploadedFile) {
             $data['file_key'] = $data['file_key']->storeAs(
                 'certificates/' . $data['rfc'],
@@ -77,9 +75,6 @@ class EditEmisor extends EditRecord
             );
         }
 
-
         return $data;
     }
-
-
 }

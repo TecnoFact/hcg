@@ -2,27 +2,28 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
-use Filament\Support\Enums\FontWeight;
-use Filament\Tables;
+use App\Filament\Resources\EmisorResource\Pages;
+use App\Filament\Resources\EmisorResource\RelationManagers;
+use App\Models\City;
 use App\Models\Emisor;
-use Filament\Forms\Form;
-use Filament\Tables\Columns\Layout\Stack;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
-use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
+use App\Models\RegimeFiscal;
+use Carbon\Carbon;
+use Closure;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
-use App\Forms\Components\CertificateView;
-use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\ColorPicker;
-use App\Filament\Resources\EmisorResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\EmisorResource\RelationManagers;
+use PhpCfdi\Credentials\Credential;
 
 class EmisorResource extends Resource
 {
@@ -40,7 +41,7 @@ class EmisorResource extends Resource
         return $form
             ->schema([
                 Fieldset::make('Datos del emisor')
-                ->schema([
+                    ->schema([
                         TextInput::make('reason_social')
                             ->label('Razon social')
                             ->required()
@@ -58,7 +59,7 @@ class EmisorResource extends Resource
 
                         TextInput::make('rfc')
                             ->label('RFC')
-                            ->unique(table: Emisor::class, column: 'rfc', ignorable: fn ($livewire) => !($livewire instanceof \App\Filament\Resources\EmisorResource\Pages\CreateEmisor) ? $livewire->record : null)
+                            ->unique(table: Emisor::class, column: 'rfc', ignorable: fn($livewire) => !($livewire instanceof \App\Filament\Resources\EmisorResource\Pages\CreateEmisor) ? $livewire->record : null)
                             ->maxLength(13)
                             ->required(),
                         TextInput::make('email')
@@ -75,15 +76,14 @@ class EmisorResource extends Resource
                             ->label('Telefono')
                             ->tel()
                             ->maxLength(10),
-                            Select::make('tax_regimen_id')
+                        Select::make('tax_regimen_id')
                             ->label('Régimen fiscal')
                             ->relationship('regimenFiscal', 'descripcion')
                             ->searchable()
                             ->preload()
-                            ->getSearchResultsUsing(fn (string $search) =>
-                                \App\Models\RegimeFiscal::where('descripcion', 'like', "%{$search}%")
-                                    ->limit(20)
-                                    ->pluck('descripcion', 'clave')
+                            ->getSearchResultsUsing(fn(string $search) => RegimeFiscal::where('descripcion', 'like', "%{$search}%")
+                                ->limit(20)
+                                ->pluck('descripcion', 'clave')
                             )
                             ->reactive(),
                         ColorPicker::make('color')
@@ -99,74 +99,96 @@ class EmisorResource extends Resource
                             ->description('Datos del domicilio del emisor')
                             ->columns(2)
                             ->schema([
-                                    TextInput::make('street')
-                                        ->label('Calle')
-                                        ->maxLength(255),
-                                    TextInput::make('number_exterior')
-                                        ->label('Numero exterior')
-                                        ->maxLength(10),
-                                    TextInput::make('number_interior')
-                                        ->label('Numero interior')
-                                        ->maxLength(10),
-                                    TextInput::make('colony')
-                                        ->label('Colonia')
-                                        ->maxLength(255),
-                                    TextInput::make('postal_code')
-                                        ->label('Codigo postal')
-                                        ->maxLength(5)->required(),
-                                    Select::make('state_id')
-                                        ->label('Estado')
-                                        ->relationship('state', 'nombre')
-                                        ->searchable()
-                                        ->preload()
-                                        ->getSearchResultsUsing(fn (string $search) =>
-                                            \App\Models\State::where('nombre', 'like', "%{$search}%")
-                                                ->limit(20)
-                                                ->pluck('nombre', 'clave')
-                                        )
-                                        ->reactive()
-                                        ->afterStateUpdated(function ($state, callable $set) {
-                                            $set('city_id', null);
-                                        })
-                                        ->getOptionLabelUsing(fn ($value) =>
-                                            \App\Models\State::find($value)?->nombre
-                                        ),
-                                    Select::make('city_id')
-                                        ->label('Ciudad')
-                                        ->searchable()
-                                        ->reactive()
-                                        ->preload()
-                                        ->options(function ($get) {
-                                            $stateId = $get('state_id');
+                                TextInput::make('street')
+                                    ->label('Calle')
+                                    ->maxLength(255),
+                                TextInput::make('number_exterior')
+                                    ->label('Numero exterior')
+                                    ->maxLength(10),
+                                TextInput::make('number_interior')
+                                    ->label('Numero interior')
+                                    ->maxLength(10),
+                                TextInput::make('colony')
+                                    ->label('Colonia')
+                                    ->maxLength(255),
+                                TextInput::make('postal_code')
+                                    ->label('Codigo postal')
+                                    ->maxLength(5)->required(),
+                                Select::make('state_id')
+                                    ->label('Estado')
+                                    ->relationship('state', 'nombre')
+                                    ->searchable()
+                                    ->preload()
+                                    ->getSearchResultsUsing(fn(string $search) => State::where('nombre', 'like', "%{$search}%")
+                                        ->limit(20)
+                                        ->pluck('nombre', 'clave')
+                                    )
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        $set('city_id', null);
+                                    })
+                                    ->getOptionLabelUsing(fn($value) => State::find($value)?->nombre
+                                    ),
+                                Select::make('city_id')
+                                    ->label('Ciudad')
+                                    ->searchable()
+                                    ->reactive()
+                                    ->preload()
+                                    ->options(function ($get) {
+                                        $stateId = $get('state_id');
 
-                                            if ($stateId) {
+                                        if ($stateId) {
 
-                                               $cities = \App\Models\City::where('id_estado', $stateId)
-                                                    ->orderBy('descripcion')
-                                                    ->pluck('descripcion', 'id')
-                                                    ->toArray();
-                                            }
+                                            $cities = City::where('id_estado', $stateId)
+                                                ->orderBy('descripcion')
+                                                ->pluck('descripcion', 'id')
+                                                ->toArray();
+                                        }
 
-                                            return $cities ?? [];
-                                        })
-                                        ->getOptionLabelUsing(fn ($value) =>
-                                            \App\Models\City::find($value)?->descripcion
-                                        ),
+                                        return $cities ?? [];
+                                    })
+                                    ->getOptionLabelUsing(fn($value) => City::find($value)?->descripcion
+                                    ),
 
-                                    TextInput::make('country_id')->default('MEX')->hidden(),
-                                ]),
+                                TextInput::make('country_id')->default('MEX')->hidden(),
+                            ]),
                         Section::make('Certificado y llave')
                             ->description('Datos del certificado y llave del emisor')
                             ->columns(3)
                             ->schema([
-                                    ViewField::make('file_certificate')->label('Certificado')->view('forms.components.certificate-view'),
-                                    ViewField::make('file_key')->view('forms.components.private-key-view')->label('Llave privada'),
-                                    TextInput::make('password_key')
-                                        ->password()
-                                        ->label('Contraseña llave')
-                                        ->required(),
+                                ViewField::make('file_certificate')->label('Certificado')->view('forms.components.certificate-view'),
+                                ViewField::make('file_key')->view('forms.components.private-key-view')->label('Llave privada'),
+                                TextInput::make('password_key')
+//                                    ->password()
+                                    ->label('Contraseña llave')
+                                    ->required()
+                                    ->rule(function (Get $get) {
+                                        return function (string $attribute, $value, Closure $fail) use ($get) {
+                                            $fileKey = $get('file_key');
+                                            $fileCer = $get('file_certificate');
+
+                                            if (!($fileKey && $fileCer)) {
+                                                return;
+                                            }
+
+                                            try {
+                                                $credential = Credential::openFiles(
+                                                    $fileCer->getRealPath(),
+                                                    $fileKey->getRealPath(),
+                                                    $value
+                                                );
+
+                                                if (Carbon::instance($credential->certificate()->validToDateTime())->isPast()) {
+                                                    $fail('El certificado está vencido.');
+                                                }
+
+                                            } catch (\Throwable $e) {
+                                                $fail('La contraseña de la llave privada (.key) es incorrecta o no coincide con el certificado.');
+                                            }
+                                        };
+                                    })
                             ])
-                        ]),
+                    ]),
             ]);
     }
 
@@ -210,7 +232,7 @@ class EmisorResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]) ->modifyQueryUsing(function (Builder $query) {
+            ])->modifyQueryUsing(function (Builder $query) {
                 if (auth()->user()->hasRole('Customer')) {
                     $query->where('user_id', auth()->id());
                 }
