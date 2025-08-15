@@ -250,13 +250,13 @@ class CfdiController extends Controller
                 'emisor_id' => $emisor->id,
                 'receptor_id' => $receptor->id,
                 'ruta' => $nombre,
+                'tipo_de_comprobante' => (string) $xml['TipoDeComprobante'],
                 'uuid' => $acuse['uuid'],
                 'sello' => $xml['Sello'],
                 'rfc_emisor' => $acuse['rfcEmisor'],
                 'rfc_receptor' => $acuse['rfcReceptor'] ? (string) $acuse['rfcReceptor'] : null,
                 'total' => (float) $xml['Total'],
                 'fecha' => (string) $xml['Fecha'],
-                'tipo_comprobante' => (string) $xml['TipoDeComprobante'],
                 'estatus' => 'timbrado',
             ]);
 
