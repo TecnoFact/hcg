@@ -260,7 +260,7 @@ class CfdiContinue extends Page
             $cfdiArchivo->sello = $processXml['sello'];
             $cfdiArchivo->status_upload = Cfdi::ESTATUS_SELLADO;
             $cfdiArchivo->ruta = $processXml['ruta'];
-            $cfdiArchivo->total = $processXml['total'] ?? 0;
+           // $cfdiArchivo->total = $processXml['total'] ?? 0;
             $cfdiArchivo->fecha = $processXml['fecha'];
             $cfdiArchivo->uuid = '';
             $cfdiArchivo->estatus  = 'validado';
