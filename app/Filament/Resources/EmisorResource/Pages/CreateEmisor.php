@@ -5,7 +5,6 @@ namespace App\Filament\Resources\EmisorResource\Pages;
 use App\Filament\Resources\EmisorResource;
 use CfdiUtils\Certificado\Certificado;
 use CfdiUtils\OpenSSL\OpenSSL;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Storage;
 
@@ -57,9 +56,6 @@ class CreateEmisor extends CreateRecord
             $data['date_from'] = $fechaDesde;
 
             $data['due_date'] = $fecha;
-
-
-
         }
 
         if (isset($data['file_key'])) {
