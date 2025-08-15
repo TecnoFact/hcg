@@ -257,25 +257,23 @@ class ComplementoXmlService
             }
         }
 
-
-
         // método de ayuda para establecer las sumas del comprobante e impuestos
         // con base en la suma de los conceptos y la agrupación de sus impuestos
         $creator->addSumasConceptos(null, 2);
 
-            $keyDerFile = $fileKeyPath;
-            $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
-            $keyDerPass = $emisor->password_key;
+        $keyDerFile = $fileKeyPath;
+        $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
+        $keyDerPass = $emisor->password_key;
 
-            $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+        $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
 
-                if( !file_exists($keyPemFileUnprotected)) {
-                    // Convertir clave DER a PEM
-                    $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
-                }
-
-        // método de ayuda para generar el sello (obtener la cadena de origen y firmar con la llave privada)
-        $creator->addSello('file://' . $keyPemFileUnprotected, $emisor->password_key);
+//        if (!file_exists($keyPemFileUnprotected)) {
+//            // Convertir clave DER a PEM
+//            $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+//        }
+//
+//        // método de ayuda para generar el sello (obtener la cadena de origen y firmar con la llave privada)
+//        $creator->addSello('file://' . $keyPemFileUnprotected, $emisor->password_key);
 
         // método de ayuda para mover las declaraciones de espacios de nombre al nodo raíz
         $creator->moveSatDefinitionsToComprobante();
