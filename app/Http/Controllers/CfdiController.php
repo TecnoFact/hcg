@@ -286,8 +286,8 @@ class CfdiController extends Controller
                 'archivo_id' => $registro->id,
                 'datos_extraidos' => [
                     'uuid' => $acuse['uuid'],
-                    'emisor_rfc' => $registro->rfc_emisor,
-                    'receptor_rfc' => $registro->rfc_receptor,
+                    'emisor_rfc' => $registro->emisor->rfc,
+                    'receptor_rfc' => $registro->receptor->rfc,
                     'total' => $registro->total,
                     'fecha' => $registro->fecha,
                     'tipo' => $registro->tipo_de_comprobante,
