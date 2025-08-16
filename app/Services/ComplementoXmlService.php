@@ -26,9 +26,15 @@ class ComplementoXmlService
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
 
-        $xml = file_get_contents($xml);
+        if (!file_exists($xml)) {
+            throw new Exception("El archivo XML no existe");
+        }
+        $xmlContent = file_get_contents($xml);
+        if ($xmlContent === false || trim($xmlContent) === '') {
+            throw new Exception("El archivo XML está vacío");
+        }
 
-        if (!$dom->loadXML($xml)) {
+        if (!$dom->loadXML($xmlContent)) {
             throw new Exception("No se pudo cargar el CFDI XML");
         }
 
@@ -267,13 +273,19 @@ class ComplementoXmlService
 
         $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
 
-//        if (!file_exists($keyPemFileUnprotected)) {
-//            // Convertir clave DER a PEM
-//            $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
-//        }
-//
+        if (!file_exists($keyPemFileUnprotected)) {
+            // Convertir clave DER a PEM
+            $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+        }
+
+        if (empty(file_get_contents($keyPemFileUnprotected))) {
+            // Convertir clave DER a PEM
+            $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+        }
+
+
 //        // método de ayuda para generar el sello (obtener la cadena de origen y firmar con la llave privada)
-//        $creator->addSello('file://' . $keyPemFileUnprotected, $emisor->password_key);
+        $creator->addSello('file://' . $keyPemFileUnprotected, $emisor->password_key);
 
         // método de ayuda para mover las declaraciones de espacios de nombre al nodo raíz
         $creator->moveSatDefinitionsToComprobante();
