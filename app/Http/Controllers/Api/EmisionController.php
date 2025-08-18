@@ -4,24 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Emisor;
-use App\Models\Models\Cfdi;
-use App\Models\Models\CfdiReceptor;
-use App\Services\AcuseJsonService;
-use App\Services\CertificadoValidatorService;
-use App\Services\CfdiCadenaOriginalService;
 use App\Services\CfdiComplementValidatorService;
-use App\Services\CfdiSignerService;
-use App\Services\CfdiXmlInjectorService;
 use App\Services\ComplementoXmlService;
 use App\Services\TimbradoService;
 use Carbon\Carbon;
-use CfdiUtils\Certificado\Certificado;
 use DOMDocument;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Notification;
+use Illuminate\Support\Str;
 
 class EmisionController extends Controller
 {
@@ -150,7 +141,7 @@ class EmisionController extends Controller
             ], $xmlContent, Carbon::parse((string) $xml['Fecha']));
 
             $complementador = new ComplementoXmlService();
-            $xmlTimbrado = $complementador->insertarTimbreFiscalDigital($xmlContent, $timbreData['xml']);
+            $xmlTimbrado = $complementador->insertarTimbreFiscalDigital($file, $timbreData['xml']);
 
             // 8. Guardar archivo final
             $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
