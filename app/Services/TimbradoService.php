@@ -305,6 +305,8 @@ class TimbradoService
                 'total' => $total,
                 'fecha' => $fecha,
                 'uuid' => $uuid,
+                'certificado' => $certificado,
+                'no_certificado' => $noCertificado,
             ];
 
         }catch(\Exception $e) {

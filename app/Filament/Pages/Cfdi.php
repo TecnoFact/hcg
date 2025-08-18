@@ -164,8 +164,6 @@ class Cfdi extends Page
             'xml_file' => 'required',
         ]);
 
-
-
         $emisor = \App\Models\Emisor::where('rfc', $this->rfc)->first();
 
         if (!$emisor) {
@@ -184,7 +182,7 @@ class Cfdi extends Page
         if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
             $pathXml = $emisor->rfc . DIRECTORY_SEPARATOR . $nameFile;
             $file->storeAs('cfdi', $pathXml, 'local');
-           $this->pathXml = Storage::disk('local')->path('cfdi/' . $pathXml);
+            $this->pathXml = Storage::disk('local')->path('cfdi/' . $pathXml);
         } else {
             // Manejar el caso de error
             Notification::make()
@@ -215,15 +213,13 @@ class Cfdi extends Page
             'ruta' => 'cfdi/' . $pathXml,
             'uuid' => "",
             'sello' => "",
-            'rfc_emisor' => $emisor->rfc,
-            'rfc_receptor' => "",
+            'emisor_id' => $emisor->id,
+            'receptor_id' => "",
             'fecha' => now(),
             'tipo_de_comprobante' => "",
             'lugar_expedicion' => "",
-            'emisor_id' => 1,
             'subtotal' => "0",
             'total' => "0",
-            'receptor_id' => 1,
             'path_xml' => 'cfdi/' . $pathXml,
             'estatus' => 'validado',
             'status_upload' => \App\Models\Models\Cfdi::ESTATUS_SUBIDO

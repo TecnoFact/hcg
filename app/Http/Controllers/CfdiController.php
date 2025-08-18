@@ -271,7 +271,8 @@ class CfdiController extends Controller
                 'subtotal' => $xml['SubTotal'],
                 'exportacion' => (string) $xml['Exportacion'],
                 'lugar_expedicion' => (string) $xml['LugarExpedicion'],
-                'intento_envio_sat' => 1
+                'intento_envio_sat' => 1,
+                'status_upload' => Cfdi::ESTATUS_DEPOSITADO,
             ]);
 
             // Enviar al SAT y Azure

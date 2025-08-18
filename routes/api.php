@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\EmisionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -19,7 +20,14 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::post('/timbrar', [TimbradoController::class, 'timbrar']);
 
-Route::middleware('auth:sanctum')->post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
+//Route::middleware('auth:sanctum')->post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
+
+    Route::post('/cfdi-sellado', [EmisionController::class, 'generateSealFromXml']);
+});
 
 
 Route::middleware('auth:sanctum')->get('/perfil', function (Request $request) {
