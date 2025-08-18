@@ -24,9 +24,16 @@ Route::post('/timbrar', [TimbradoController::class, 'timbrar']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
 
-    Route::post('/cfdi-sellado', [EmisionController::class, 'generateSealFromXml']);
+
+    // RUTA PARA SELLAR UN CFDI
+    Route::post('/cfdi-sellar', [EmisionController::class, 'generateSealFromXml']);
+
+    // RUTA PARA TIMBRAR CFDI
+    Route::post('/cfdi-timbrar', [TimbradoController::class, 'stampCfdiFromXml']);
+
+    // RUTA PARA DEPOSITO
+    Route::post('/cfdi-timbrado', [CfdiController::class, 'uploadAndSendSat']);
 });
 
 
