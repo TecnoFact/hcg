@@ -330,6 +330,156 @@ class TimbradoService
 
     }
 
+      /**
+     * Método para sellar un xml desde un objeto Cfdi.
+     *
+     * @param string $xml archivo xml a sellar.
+     * @param array $emisor array Emisor con los datos del emisor.
+     * @return \Illuminate\Http\JsonResponse
+     */
+    static function sellarCfdiWithoutEmisor($xmlContent, array $emisor)
+    {
+
+
+        $xml = simplexml_load_string($xmlContent);
+        $complementValidator = new CfdiComplementValidatorService();
+        $complementValidation = $complementValidator->validateComplements($xml);
+
+        if (!$complementValidation['valido']) {
+            $errorMsg = $complementValidation['error'] ?? 'Error de complemento';
+            $detalles = $complementValidation['detalles'] ?? null;
+            $msg = $errorMsg . ($detalles ? (': ' . json_encode($detalles)) : '');
+            throw new \Exception($msg, 422);
+        }
+
+
+        try {
+
+            $namespaces = $xml->getNamespaces(true);
+            $xml->registerXPathNamespace('cfdi', $namespaces['cfdi'] ?? '');
+            $emisorXml = $xml->xpath('//cfdi:Emisor')[0] ?? null;
+            $receptorXml = $xml->xpath('//cfdi:Receptor')[0] ?? null;
+
+            $rfcEmisor = $emisorXml ? (string) $emisorXml['Rfc'] : null;
+            $rfcReceptor = $receptorXml ? (string) $receptorXml['Rfc'] : null;
+
+            // 3. Validar CSD vs RFC
+            $validadorCert = new CertificadoValidatorService();
+
+            $certificateFromEditor = Storage::disk('local')->path($emisor['certificado']);
+
+            $keyFromEditor = Storage::disk('local')->path($emisor['key']);
+
+
+            if( !file_exists($certificateFromEditor) || !file_exists($keyFromEditor)) {
+                throw new \Exception('Los archivos de certificado o llave no existen.', 422);
+            }
+
+            $keyDerFile = $keyFromEditor;
+            $keyPemFileUnprotected = $keyDerFile . '.unprotected.pem';
+            $keyDerPass = $emisor['password'];
+
+            if(is_null($keyDerPass) || $keyDerPass === '') {
+               throw new \Exception('La contraseña de la llave es requerida.', 422);
+            }
+
+           try{
+
+                $openssl = new \CfdiUtils\OpenSSL\OpenSSL();
+
+                if( !file_exists($keyPemFileUnprotected)) {
+                    // Convertir clave DER a PEM
+                    $openssl->derKeyConvert($keyDerFile, $keyDerPass, $keyPemFileUnprotected);
+                }
+           }catch(\Exception $e) {
+               Log::error($e->getMessage() . ' ' . $e->getLine() . ' ' . $e->getFile());
+               throw new \Exception('Error al convertir la clave DER a PEM: ' . $e->getMessage(), 422);
+           }
+
+            $coincide = $validadorCert->validarRfcConCertificado($certificateFromEditor, $rfcEmisor);
+
+            if (!$coincide) {
+               throw new \Exception('El RFC del emisor no coincide con el certificado CSD.', 422);
+            }
+            $signer = new CfdiSignerService();
+
+            // agregar el nro certificado al xmlContent
+            $noCertificado = $signer->getNoCertificado($keyPemFileUnprotected, $certificateFromEditor, $keyDerPass);
+            $xmlContent = $signer->agregarNoCertificado($xmlContent, $noCertificado);
+
+            // 4. Generar cadena original y sello
+            $cadenaService = new CfdiCadenaOriginalService();
+            $cadenaOriginal = $cadenaService->generar($xmlContent);
+
+
+            $firma = $signer->firmarCadena(
+                $cadenaOriginal,
+                $keyPemFileUnprotected,
+                $certificateFromEditor,
+                $keyDerPass
+            );
+
+            $sello = $firma['sello'];
+            $certificado = $firma['certificado'];
+            $noCertificado = $firma['no_certificado'];
+
+            // 5. Insertar sello en XML
+            $injector = new CfdiXmlInjectorService();
+
+            $xmlFirmado = $injector->insertarDatosEnXml($xmlContent, $sello, $certificado, $noCertificado);
+
+            // 6. Asegurar atributos de namespace requeridos
+            $doc = new DOMDocument();
+            $doc->preserveWhiteSpace = false;
+            $doc->formatOutput = true;
+            $doc->loadXML($xmlFirmado);
+
+            $comprobante = $doc->getElementsByTagName('Comprobante')->item(0);
+            $comprobante->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+            $comprobante->setAttribute('xsi:schemaLocation', 'http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd');
+
+            $xmlFirmado = $doc->saveXML();
+
+            $total = $comprobante->getAttribute('Total');
+            $fecha = $comprobante->getAttribute('Fecha');
+
+            $uuid = (string) Str::uuid();
+            $nombre = 'cfdis/sellado_' . $emisor['rfc'] . '_' . $uuid . '.xml';
+            Storage::disk('public')->put($nombre, $xmlFirmado);
+
+            return [
+                'xml' => $xmlFirmado,
+                'sello' => $sello,
+                'rfcReceptor' => $rfcReceptor,
+                'ruta' => $nombre,
+                'total' => $total,
+                'fecha' => $fecha,
+                'uuid' => $uuid,
+                'certificado' => $certificado,
+                'no_certificado' => $noCertificado,
+            ];
+
+        }catch(\Exception $e) {
+            Log::error('Error al sellar el CFDI', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'files' => $xml,
+                'emisor_rfc' => $emisor['rfc'],
+            ]);
+
+            // Si ocurre un error, se puede lanzar una excepción o retornar un error
+            throw new \Exception('Error al sellar el CFDI: ' . $e->getMessage(), 500);
+        }
+
+         return [
+                'xml' => "",
+                'sello' => "",
+                'rfcReceptor' => null,
+            ];
+
+    }
+
 
     /**
      * Método para timbrar un CFDI desde un archivo XML.
