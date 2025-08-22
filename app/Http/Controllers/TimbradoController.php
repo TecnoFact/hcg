@@ -169,7 +169,7 @@ class TimbradoController extends Controller
             Log::error('Error al procesar CFDI: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'error' => 'Error interno',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
