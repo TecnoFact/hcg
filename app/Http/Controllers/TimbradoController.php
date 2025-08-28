@@ -93,23 +93,26 @@ class TimbradoController extends Controller
 
 
         $request->validate([
-            'xml' => 'required|file|mimes:xml|max:1024',
-            'certificado' => 'required|file|max:1024',
-            'key' => 'required|file|max:1024',
+            'xml' => 'required|string',
+            'certificado' => 'required|string',
+            'key' => 'required|string',
             'password' => 'required|string|max:255',
         ]);
 
-        $file = $request->file('xml');
+        // Decodificar base64
+        $xmlContent = base64_decode($request->input('xml'));
+        $certContent = base64_decode($request->input('certificado'));
+        $keyContent = base64_decode($request->input('key'));
 
-        $xmlContent = file_get_contents($file);
+        // Nombres de archivo generados
+        $xmlFileName = 'cfdis/original/xml_' . uniqid() . '.xml';
+        $certFileName = 'cfdis/certificados/cert_' . uniqid() . '.cer';
+        $keyFileName = 'cfdis/keys/key_' . uniqid() . '.key';
 
-        $pathCertificado = 'cfdis/certificados/' . $request->file('certificado')->getClientOriginalName();
-        $pathKey = 'cfdis/keys/' . $request->file('key')->getClientOriginalName();
-
-        // quiero almacenar usando Storage el xml, certificado, key en el disk local
-        Storage::disk('local')->put('cfdis/original/' . $file->getClientOriginalName(), $xmlContent);
-        Storage::disk('local')->put($pathCertificado, $request->file('certificado')->get());
-        Storage::disk('local')->put($pathKey, $request->file('key')->get());
+        // Guardar archivos decodificados
+        Storage::disk('local')->put($xmlFileName, $xmlContent);
+        Storage::disk('local')->put($certFileName, $certContent);
+        Storage::disk('local')->put($keyFileName, $keyContent);
 
         // 2. Validar complementos
         $xml = simplexml_load_string($xmlContent);
@@ -135,8 +138,8 @@ class TimbradoController extends Controller
             }
 
             $emisorData = [
-                'certificado' => $pathCertificado,
-                'key' => $pathKey,
+                'certificado' => $certFileName,
+                'key' => $keyFileName,
                 'password' => $request->input('password'),
                 'rfc' => $emisor['Rfc'],
             ];
@@ -174,3 +177,4 @@ class TimbradoController extends Controller
         }
     }
 }
+
