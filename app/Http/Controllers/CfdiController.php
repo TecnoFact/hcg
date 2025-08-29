@@ -252,6 +252,17 @@ class CfdiController extends Controller
             $emisor = Emisor::where('rfc', $acuse['rfcEmisor'])->first();
             $receptor = CfdiReceptor::where('rfc', $acuse['rfcReceptor'])->first();
 
+            if(!$receptor)
+            {
+                $receptor = CfdiReceptor::create([
+                    'rfc' => $acuse['rfcReceptor'],
+                    'nombre' => $acuse['nombreReceptor'],
+                    'domicilio_fiscal' => $acuse['domicilioReceptor'],
+                    'uso_cfdi' => '-',
+                    'regimen_fiscal' => '-'
+                ]);
+            }
+
             // 10. Guardar en base de datos
             $registro = Cfdi::create([
                 'user_id' => Auth::id(),
