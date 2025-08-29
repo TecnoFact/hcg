@@ -20,6 +20,8 @@ class AcuseJsonService
 
         $rfcEmisor = $xpath->evaluate('string(//cfdi:Emisor/@Rfc)');
         $rfcReceptor = $xpath->evaluate('string(//cfdi:Receptor/@Rfc)');
+        $nombreReceptor = $xpath->evaluate('string(//cfdi:Receptor/@Nombre)');
+        $domicilioReceptor = $xpath->evaluate('string(//cfdi:Receptor/@DomicilioFiscalReceptor)');
         $total = $xpath->evaluate('string(//cfdi:Comprobante/@Total)');
         $version = $xpath->evaluate('string(//cfdi:Comprobante/@Version)');
         $serie = $xpath->evaluate('string(//cfdi:Comprobante/@Serie)');
@@ -39,7 +41,9 @@ class AcuseJsonService
             'selloSAT' => $selloSAT,
             'noCertificadoSAT' => $noCertificadoSAT,
             'fecha' => $fecha,
-            'tipo' => $tipo
+            'tipo' => $tipo,
+            'nombreReceptor' => $nombreReceptor,
+            'domicilioReceptor' => $domicilioReceptor
         ];
     }
 }
