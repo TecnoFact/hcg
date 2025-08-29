@@ -248,11 +248,12 @@ class CfdiController extends Controller
             // 8. Guardar archivo final
             $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
             Storage::disk('local')->put($nombre, $xmlContent);
-
+/*
             $emisor = Emisor::where('rfc', $acuse['rfcEmisor'])->first();
             $receptor = CfdiReceptor::where('rfc', $acuse['rfcReceptor'])->first();
 
             // 10. Guardar en base de datos
+
             $registro = Cfdi::create([
                 'user_id' => Auth::id(),
                 'nombre_archivo' => $file->getClientOriginalName(),
@@ -274,12 +275,14 @@ class CfdiController extends Controller
                 'intento_envio_sat' => 1,
                 'status_upload' => Cfdi::ESTATUS_DEPOSITADO,
             ]);
+            */
 
             // Enviar al SAT y Azure
             try {
                 $envio = new EnvioSatCfdiService();
                 $envio->onlyUploadAndSendSat($xmlContent, $acuse['uuid']); // Este método ya actualiza los campos necesarios
             } catch (\Exception $e) {
+                /*
                 $registro->update([
                     'respuesta_sat' => 'Error: ' . $e->getMessage(),
                     'intento_envio_sat' => $registro->intento_envio_sat + 1,
@@ -288,19 +291,27 @@ class CfdiController extends Controller
                     'uuid' => $registro->uuid,
                     'error' => $e->getMessage()
                 ]);
+                */
+
+                return response()->json([
+                    'error' => 'Error interno',
+                    'mensaje' => $e->getMessage(),
+                    'archivo' => $e->getFile(),
+                    'linea' => $e->getLine()
+                ], 500);
             }
 
 
             return response()->json([
                 'mensaje' => 'CFDI recibido y registrado correctamente',
-                'archivo_id' => $registro->id,
+              //  'archivo_id' => $registro->id,
                 'datos_extraidos' => [
                     'uuid' => $acuse['uuid'],
-                    'emisor_rfc' => $registro->emisor->rfc,
-                    'receptor_rfc' => $registro->receptor->rfc,
-                    'total' => $registro->total,
-                    'fecha' => $registro->fecha,
-                    'tipo' => $registro->tipo_de_comprobante,
+                    'emisor_rfc' => $acuse['rfcEmisor'],
+                    'receptor_rfc' => $acuse['rfcReceptor'],
+                    'total' => $acuse['total'],
+                    'fecha' => $acuse['fecha'],
+                    'tipo' => $acuse['tipo'],
                     //'cadena_original' => $cadenaOriginal,
                     'sello' => $xml['Sello'],
                     'certificado' => $xml['Certificado'],

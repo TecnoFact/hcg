@@ -24,6 +24,8 @@ class AcuseJsonService
         $version = $xpath->evaluate('string(//cfdi:Comprobante/@Version)');
         $serie = $xpath->evaluate('string(//cfdi:Comprobante/@Serie)');
         $folio = $xpath->evaluate('string(//cfdi:Comprobante/@Folio)');
+         $fecha = $xpath->evaluate('string(//cfdi:Comprobante/@Fecha)');
+          $tipo = $xpath->evaluate('string(//cfdi:Comprobante/@TipoDeComprobante)');
 
         return [
             'uuid' => $uuid,
@@ -36,6 +38,8 @@ class AcuseJsonService
             'folio' => $folio,
             'selloSAT' => $selloSAT,
             'noCertificadoSAT' => $noCertificadoSAT,
+            'fecha' => $fecha,
+            'tipo' => $tipo
         ];
     }
 }
