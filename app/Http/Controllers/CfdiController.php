@@ -231,11 +231,27 @@ class CfdiController extends Controller
     public function uploadAndSendSat(Request $request)
     {
         $request->validate([
-            'xml' => 'required|file|mimes:xml|max:1024',
+            'xml' => 'required|string',
         ]);
 
-        $file = $request->file('xml');
-        $xmlContent = file_get_contents($file);
+        // 1. Decodificar base64 (asegúrate de que no venga con encabezado tipo data:)
+        $xmlBase64 = $request->input('xml');
+        if (str_starts_with($xmlBase64, 'data:')) {
+            $xmlBase64 = substr($xmlBase64, strpos($xmlBase64, ',') + 1);
+        }
+
+        $xmlContent = base64_decode($xmlBase64, true);
+
+        if ($xmlContent === false) {
+            return response()->json(['error' => 'XML inválido, no se pudo decodificar base64'], 400);
+        }
+
+        // agregar el contenido en un archivo xml
+        $nameFileXml = 'cfdis/original_' . Str::uuid() . '.xml';
+        Storage::disk('local')->put($nameFileXml, $xmlContent);
+        $pathXml = Storage::disk('local')->path($nameFileXml);
+
+        $xmlContent = Storage::disk('local')->get($nameFileXml);
 
 
         $acuseService = new AcuseJsonService();
@@ -246,76 +262,33 @@ class CfdiController extends Controller
 
         try {
             // 8. Guardar archivo final
-            $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
+            $nameFileXml = Str::uuid() . '.xml';
+            $nombre = 'cfdis/timbrado_' . $nameFileXml;
             Storage::disk('local')->put($nombre, $xmlContent);
-
-            $emisor = Emisor::where('rfc', $acuse['rfcEmisor'])->first();
-            $receptor = CfdiReceptor::where('rfc', $acuse['rfcReceptor'])->first();
-
-            if(!$receptor)
-            {
-                $receptor = CfdiReceptor::create([
-                    'rfc' => $acuse['rfcReceptor'],
-                    'nombre' => $acuse['nombreReceptor'],
-                    'domicilio_fiscal' => $acuse['domicilioReceptor'],
-                    'uso_cfdi' => '-',
-                    'regimen_fiscal' => '-'
-                ]);
-            }
-
-            // 10. Guardar en base de datos
-            $registro = Cfdi::create([
-                'user_id' => Auth::id(),
-                'nombre_archivo' => $file->getClientOriginalName(),
-                'emisor_id' => $emisor->id,
-                'receptor_id' => $receptor->id,
-                'ruta' => $nombre,
-                'tipo_de_comprobante' => (string) $xml['TipoDeComprobante'],
-                'uuid' => $acuse['uuid'],
-                'sello' => $xml['Sello'],
-                //'rfc_emisor' => $acuse['rfcEmisor'],
-                //'rfc_receptor' => $acuse['rfcReceptor'] ? (string) $acuse['rfcReceptor'] : null,
-                'total' => $xml['Total'],
-                'fecha' => $xml['Fecha'],
-                'estatus' => 'timbrado',
-                'moneda' => $xml['Moneda'],
-                'subtotal' => $xml['SubTotal'],
-                'exportacion' => (string) $xml['Exportacion'],
-                'lugar_expedicion' => (string) $xml['LugarExpedicion'],
-                'intento_envio_sat' => 1,
-                'status_upload' => Cfdi::ESTATUS_DEPOSITADO,
-            ]);
 
             // Enviar al SAT y Azure
             try {
                 $envio = new EnvioSatCfdiService();
-                $envio->onlyUploadAndSendSat($xmlContent, $acuse['uuid']); // Este método ya actualiza los campos necesarios
+                $envio->onlyUploadAndSendSat($xmlContent, $acuse);
             } catch (\Exception $e) {
-                $registro->update([
-                    'respuesta_sat' => 'Error: ' . $e->getMessage(),
-                    'intento_envio_sat' => $registro->intento_envio_sat + 1,
-                ]);
+
                 \Log::error('Error al enviar CFDI al SAT', [
-                    'uuid' => $registro->uuid,
                     'error' => $e->getMessage()
                 ]);
+
+                 return response()->json([
+                    'error' => 'Error interno',
+                    'mensaje' => $e->getMessage(),
+                    'archivo' => $e->getFile(),
+                    'linea' => $e->getLine()
+                ], 500);
             }
 
 
             return response()->json([
                 'mensaje' => 'CFDI recibido y registrado correctamente',
-                'archivo_id' => $registro->id,
                 'datos_extraidos' => [
                     'uuid' => $acuse['uuid'],
-                    'emisor_rfc' => $registro->emisor->rfc,
-                    'receptor_rfc' => $registro->receptor->rfc,
-                    'total' => $registro->total,
-                    'fecha' => $registro->fecha,
-                    'tipo' => $registro->tipo_de_comprobante,
-                    //'cadena_original' => $cadenaOriginal,
-                    'sello' => $xml['Sello'],
-                    'certificado' => $xml['Certificado'],
-                    'no_certificado' => $xml['NoCertificado'],
                     'acuse' => $acuse,
                 ],
             ], 201);

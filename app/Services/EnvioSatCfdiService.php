@@ -224,39 +224,44 @@ class EnvioSatCfdiService
      * Enviar el CFDI al SAT al metodo de recepcion de documentos.
      *
      * @param string $token obtenido del login al sat
-     * @param Cfdi $cfdi
+     * @param array $acuse
      * @param string $nameXml nombre del archivo XML
      * @return void
      * @throws Exception
      */
-    private function enviarSoapSat(string $token, Cfdi $cfdi, string $nameXml): array
+    private function enviarSoapSat(string $token, array $acuse, string $nameXml): array
     {
 
         if(!$token) {
             throw new Exception("Token no válido");
         }
 
-        $emisor = Emisor::where('rfc', $cfdi->emisor->rfc)->first();
+        // CERTIFICADO CSD ESTABLECIDO DE FORMA DIRECTA SOLO PARA SERVICIO DE DEPOSITO
+        $FileCertificado = '00001000000710051653.cer';
 
-        $numeroCertificado = '00001000000710051653';
-
-        if ($emisor && $emisor->path_certificado) {
-            $certificate = new \CfdiUtils\Certificado\Certificado($emisor->path_certificado);
-            $numeroCertificado = $certificate->getSerial();
-        } elseif (!$emisor) {
-            Log::warning('Emisor no encontrado para el CFDI', ['rfc' => $cfdi->emisor->rfc]);
+        if (!file_exists(Storage::disk('csd')->path( $FileCertificado))) {
+            throw new Exception("El archivo del certificado no existe");
         }
 
+        $certificate = new \CfdiUtils\Certificado\Certificado(Storage::disk('csd')->path($FileCertificado));
+
+        if (!$certificate) {
+            throw new Exception("Certificado no válido");
+        }
+
+        $emisorRfc = $certificate->getRfc();
+        $numeroCertificado = $certificate->getSerial();
+
         $data = [
-            'RfcEmisor' => $cfdi->emisor->rfc,
-            'UUID' => $cfdi->uuid,
-            'Fecha' => $cfdi->fecha,
+            'RfcEmisor' => $emisorRfc,
+            'UUID' => $acuse['uuid'],
+            'Fecha' => $acuse['fecha'],
             'NumeroCertificado' => $numeroCertificado,
             'VersionComprobante' => "4.0",
             'RutaCFDI' => config('pac.BlobStorageEndpoint') . "asf180914ky5/$nameXml",
         ];
 
-        $fecha = Carbon::parse($cfdi->fecha)->format('Y-m-d\TH:i:s');
+        $fecha = Carbon::parse($acuse['fecha'])->format('Y-m-d\TH:i:s');
 
 
         $soapEnvelope = <<<EOT
@@ -282,6 +287,7 @@ class EnvioSatCfdiService
         $soapEnvelope = stripslashes($soapEnvelope);
 
         Log::debug('XML de envío al SAT', ['xml' => $soapEnvelope]);
+
 
         $url = 'https://recepcion.facturaelectronica.sat.gob.mx/Recepcion/CFDI40/RecibeCFDIService.svc';
 
@@ -358,6 +364,7 @@ class EnvioSatCfdiService
         // Extraer datos de incidencia si existen
         $incidencia = $acuse->Incidencia;
         $incidenciaData = null;
+
         if ($incidencia) {
             $incidenciaData = [
                 'mensaje' => (string)($incidencia->MensajeIncidencia ?? ''),
@@ -369,7 +376,7 @@ class EnvioSatCfdiService
         }
 
         // Validar que el UUID coincida con el enviado
-        if (strtoupper($uuid) !== strtoupper($cfdi->uuid)) {
+        if (strtoupper($uuid) !== strtoupper($acuse['uuid'])) {
             throw new Exception("El UUID en el acuse no coincide con el CFDI enviado");
         }
 
@@ -378,24 +385,6 @@ class EnvioSatCfdiService
             ? 'aceptado'
             : 'rechazado';
 
-        // Actualización del modelo con todos los datos del acuse
-        $updateData = [
-            'fecha_envio_sat' => now(),
-            'fecha_respuesta_sat' => $fechaAcuse,
-            'respuesta_sat' => $response, // Guardamos la respuesta completa
-            'token_sat' => $token,
-            'intento_envio_sat' => $cfdi->intento_envio_sat + 1,
-            'estatus' => $estado === 'aceptado' ? 'publicado' : 'rechazado',
-            'estado_sat' => $estado,
-            'codigo_estatus_sat' => $codigo,
-            'mensaje_sat' => $codigo,
-            'no_certificado_sat' => $noCertificadoSAT,
-            'incidencia_sat' => $incidenciaData ? json_encode($incidenciaData) : null,
-        ];
-
-        if (!$cfdi->update($updateData)) {
-            throw new Exception("Error al actualizar el CFDI en la base de datos");
-        }
 
         // Log exitoso
         Log::info('CFDI procesado por el SAT', [
@@ -726,8 +715,10 @@ class EnvioSatCfdiService
      * @param string $uuid
      * @return void
      */
-    public function onlyUploadAndSendSat($xml, $uuid)
+    public function onlyUploadAndSendSat($xml, $acuse)
     {
+        $uuid = $acuse['uuid'];
+
         $this->subirABlob($uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $uuid]);
 
@@ -736,15 +727,10 @@ class EnvioSatCfdiService
         Log::debug('Token recibido del SAT', ['token' => $token]);
 
         $nameXml = $uuid . '.xml';
-        $cfdi = Cfdi::where('uuid', $uuid)->first();
 
-        if (!$cfdi) {
-            Log::error('CFDI no encontrado', ['uuid' => $uuid]);
-            throw new Exception("CFDI no encontrado con UUID: $uuid");
-        }
 
-       $this->enviarSoapSat($token, $cfdi, $nameXml);
-        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $cfdi->uuid]);
+       $this->enviarSoapSat($token, $acuse, $nameXml);
+        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
 
     }
 

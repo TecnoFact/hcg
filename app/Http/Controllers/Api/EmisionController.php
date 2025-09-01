@@ -18,20 +18,25 @@ class EmisionController extends Controller
 {
 
     /**
-     * Summary of generateSealFromXml
+     * Summary of generateSealFromXml (DEPRECATED)
      * Function para generar sellado del XML
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
+/*
     public function generateSealFromXml(Request $request)
     {
-        $request->validate([
-            'xml' => 'required|file|mimes:xml|max:1024',
+       $request->validate([
+            'xml' => 'required|string',
         ]);
 
-        $file = $request->file('xml');
+        // 1. Decodificar base64 (asegúrate de que no venga con encabezado tipo data:)
+        $xmlBase64 = $request->input('xml');
+        if (str_starts_with($xmlBase64, 'data:')) {
+            $xmlBase64 = substr($xmlBase64, strpos($xmlBase64, ',') + 1);
+        }
 
-        $xmlContent = file_get_contents($file);
+        $xmlContent = base64_decode($xmlBase64, true);
 
 
         // 2. Validar complementos
@@ -58,13 +63,7 @@ class EmisionController extends Controller
             }
 
             $rfcEmisor = $emisor ? (string) $emisor['Rfc'] : null;
-            $emisorFind = Emisor::where('rfc', $rfcEmisor)->first();
 
-
-            if(!$emisorFind)
-            {
-                return response()->json(['error' => "El emisor $rfcEmisor no existe registrado"], 422);
-            }
 
             $processXml = TimbradoService::sellarCfdi($xmlContent, $emisorFind);
 
@@ -97,7 +96,7 @@ class EmisionController extends Controller
             ], 500);
         }
     }
-
+*/
 
 
     /**
@@ -108,15 +107,56 @@ class EmisionController extends Controller
     public function stampCfdiFromXml(Request $request)
     {
 
-         $request->validate([
-            'xml' => 'required|file|mimes:xml|max:1024',
+        $request->validate([
+            'xml' => 'required|string',
         ]);
 
-        $file = $request->file('xml');
-        $xmlContent = file_get_contents($file);
+        // 1. Decodificar base64 (asegúrate de que no venga con encabezado tipo data:)
+        $xmlBase64 = $request->input('xml');
+        if (str_starts_with($xmlBase64, 'data:')) {
+            $xmlBase64 = substr($xmlBase64, strpos($xmlBase64, ',') + 1);
+        }
 
-        // 2. Validar complementos
+        $xmlContent = base64_decode($xmlBase64, true);
+
+        if ($xmlContent === false) {
+            return response()->json(['error' => 'XML inválido, no se pudo decodificar base64'], 400);
+        }
+
+        // agregar el contenido en un archivo xml
+        $nameFileXml = 'cfdis/original_' . Str::uuid() . '.xml';
+        Storage::disk('local')->put($nameFileXml, $xmlContent);
+        $pathXml = Storage::disk('local')->path($nameFileXml);
+
+        $xmlContent = Storage::disk('local')->get($nameFileXml);
+
+
+        // 2. Validar que realmente sea XML
+        libxml_use_internal_errors(true);
         $xml = simplexml_load_string($xmlContent);
+
+        if ($xml === false) {
+            $errors = libxml_get_errors();
+            return response()->json(['error' => 'XML mal formado', 'details' => $errors], 400);
+        }
+
+
+        $sello = isset($xml['Sello']) ? (string)$xml['Sello'] : null;
+        $noCertificado = isset($xml['NoCertificado']) ? (string)$xml['NoCertificado'] : null;
+        $certificado = isset($xml['Certificado']) ? (string)$xml['Certificado'] : null;
+
+        $faltantes = [];
+        if (empty($sello)) $faltantes[] = 'Sello';
+        if (empty($noCertificado)) $faltantes[] = 'NoCertificado';
+        if (empty($certificado)) $faltantes[] = 'Certificado';
+
+        if (!empty($faltantes)) {
+            return response()->json([
+                'error' => 'El XML no contiene: ' . implode(', ', $faltantes)
+            ], 422);
+        }
+
+        // 3. Pasar a tu validador de complementos
         $complementValidator = new CfdiComplementValidatorService();
         $complementValidation = $complementValidator->validateComplements($xml);
 
@@ -126,10 +166,6 @@ class EmisionController extends Controller
                 'detalles' => $complementValidation['detalles'] ?? null,
             ], 422);
         }
-
-        // obtener el sello desde el xml $xmlContent
-        $sello = (string) $xml->xpath('//cfdi:Comprobante/@Sello')[0] ?? null;
-
 
         try {
           // 7. Generar Timbre Fiscal Digital
@@ -141,30 +177,20 @@ class EmisionController extends Controller
             ], $xmlContent, Carbon::parse((string) $xml['Fecha']));
 
             $complementador = new ComplementoXmlService();
-            $xmlTimbrado = $complementador->insertarTimbreFiscalDigital($file, $timbreData['xml']);
+            $xmlTimbrado = $complementador->insertarTimbreFiscalDigital($pathXml, $timbreData['xml']);
+
 
             // 8. Guardar archivo final
-            $nombre = 'cfdis/timbrado_' . $file->getClientOriginalName();
+            $nombre = 'cfdis/timbrado_' . $uuid . '.xml';
             Storage::disk('local')->put($nombre, $xmlTimbrado);
 
             $namespaces = $xml->getNamespaces(true);
             $xml->registerXPathNamespace('cfdi', $namespaces['cfdi'] ?? '');
             $emisor = $xml->xpath('//cfdi:Emisor')[0] ?? null;
 
-
-
             if(!$emisor)
             {
                 return response()->json(['error' => 'El emisor no está presente en el XML.'], 422);
-            }
-
-            $rfcEmisor = $emisor ? (string) $emisor['Rfc'] : null;
-
-            $emisor = Emisor::where('rfc', $rfcEmisor)->first();
-
-            if(!$emisor)
-            {
-                return response()->json(['error' => "El emisor $rfcEmisor no existe registrado"], 422);
             }
 
             // base64

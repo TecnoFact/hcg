@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 class TimbradoController extends Controller
 {
     /**
-     * Simula el timbrado de un CFDI firmado.
+     * Simula el timbrado de un CFDI firmado.(DEPRECATED)
      */
     public function timbrar(Request $request)
     {
