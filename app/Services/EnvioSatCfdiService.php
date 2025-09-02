@@ -250,7 +250,6 @@ class EnvioSatCfdiService
         }
 
         $emisorRfc = $certificate->getRfc();
-        $numeroCertificado = $certificate->getSerial();
 
         $data = [
             'RfcEmisor' => $emisorRfc,
@@ -400,6 +399,169 @@ class EnvioSatCfdiService
         ]);
 
         return ['xml' => $xmlResponse->asXML()];
+    }
+
+    private function enviarSoapSatFromXmlNew(string $token,  $cfdi = null, string $nameXml, array $data): void
+    {
+
+        if(!$token) {
+            throw new Exception("Token no válido");
+        }
+
+        $data = [
+            'RfcEmisor' => $data['rfcEmisor'],
+            'UUID' => $data['uuid'],
+            'Fecha' => $data['fecha'],
+            'NumeroCertificado' => "00001000000710051653",
+            'VersionComprobante' => "4.0",
+            'RutaCFDI' => config('pac.BlobStorageEndpoint') . "asf180914ky5/$nameXml",
+        ];
+
+        $fecha = Carbon::parse($data['Fecha'])->format('Y-m-d\TH:i:s');
+
+
+        $soapEnvelope = <<<EOT
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:rec="http://recibecfdi.sat.gob.mx">
+                <soapenv:Header>
+                    <rec:EncabezadoCFDI>
+                        <rec:RfcEmisor>{$data['RfcEmisor']}</rec:RfcEmisor>
+                        <rec:UUID>{$data['UUID']}</rec:UUID>
+                        <rec:Fecha>{$fecha}</rec:Fecha>
+                        <rec:NumeroCertificado>{$data['NumeroCertificado']}</rec:NumeroCertificado>
+                        <rec:VersionComprobante>{$data['VersionComprobante']}</rec:VersionComprobante>
+                    </rec:EncabezadoCFDI>
+                </soapenv:Header>
+                <soapenv:Body>
+                    <rec:CFDI>
+                        <rec:RutaCFDI>{$data['RutaCFDI']}</rec:RutaCFDI>
+                    </rec:CFDI>
+                </soapenv:Body>
+                </soapenv:Envelope>
+                EOT;
+
+        $soapEnvelope = self::nospaces($soapEnvelope);
+        $soapEnvelope = stripslashes($soapEnvelope);
+
+        Log::debug('XML de envío al SAT', ['xml' => $soapEnvelope]);
+
+        $url = 'https://recepcion.facturaelectronica.sat.gob.mx/Recepcion/CFDI40/RecibeCFDIService.svc';
+
+        $ch = curl_init($url);
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $soapEnvelope,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: text/xml; charset=utf-8',
+                'Content-Length: ' . strlen($soapEnvelope),
+                'SOAPAction: "http://recibecfdi.sat.gob.mx/IRecibeCFDIService/Recibe"',
+                'Authorization: WRAP access_token="' . $token .'"',
+                'Expect: ' // Importante para evitar problemas con algunos servidores
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_TIMEOUT => 45, // Aumentado a 45 segundos
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_FAILONERROR => false, // Para manejar manualmente códigos HTTP
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        ]);
+
+       $response = curl_exec($ch);
+
+        if ($response === false) {
+            $errno = curl_errno($ch);
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new Exception("Error CURL ($errno) al enviar CFDI al SAT: $error");
+        }
+
+        curl_close($ch);
+
+        // Parsear respuesta como XML
+        $xmlResponse = simplexml_load_string($response);
+        if ($xmlResponse === false) {
+            throw new Exception("Respuesta XML inválida del SAT");
+        }
+
+        // Registrar respuesta completa para depuración
+        Log::debug('Respuesta completa del SAT', ['response' => $response]);
+
+        // Registrar namespaces encontrados
+        $namespaces = $xmlResponse->getNamespaces(true);
+        Log::debug('Namespaces en la respuesta', ['namespaces' => $namespaces]);
+
+        // Registrar estructura XML para diagnóstico
+        Log::debug('Estructura XML recibida', ['xml' => $xmlResponse->asXML()]);
+
+        // Registrar el cuerpo del SOAP
+        $body = $xmlResponse->children('s', true)->Body;
+        if (!$body) {
+            throw new Exception("No se encontró el elemento Body en la respuesta SOAP");
+        }
+
+        // Registrar contenido del Body
+        Log::debug('Contenido del Body SOAP', ['body' => $body->asXML()]);
+
+
+                // Acceder al nodo AcuseRecepcionCFDI
+        $acuse = $body->children('http://recibecfdi.sat.gob.mx')->AcuseRecepcion->AcuseRecepcionCFDI;
+
+
+
+
+        // Extraer los datos del acuse
+        $uuid = (string)$acuse->attributes()['UUID'];
+        $codigo = (string)$acuse->attributes()['CodEstatus'];
+        $fechaAcuse = (string)$acuse->attributes()['Fecha'];
+        $noCertificadoSAT = (string)($acuse->attributes()['NoCertificadoSAT'] ?? '');
+
+        // Extraer datos de incidencia si existen
+        $incidencia = $acuse->Incidencia;
+        $incidenciaData = null;
+        if ($incidencia) {
+            $incidenciaData = [
+                'mensaje' => (string)($incidencia->MensajeIncidencia ?? ''),
+                'codigo_error' => (string)($incidencia->CodigoError ?? ''),
+                'rfc_emisor' => (string)($incidencia->RfcEmisor ?? ''),
+                'id_incidencia' => (string)($incidencia->IdIncidencia ?? ''),
+                'fecha_registro' => (string)($incidencia->FechaRegistro ?? '')
+            ];
+        }
+
+        // Validar que el UUID coincida con el enviado
+        if (strtoupper($uuid) !== strtoupper($data['UUID'])) {
+            throw new Exception("El UUID en el acuse no coincide con el CFDI enviado");
+        }
+
+        // Determinar estado basado en el código
+        $estado = (str_starts_with($codigo, '200') || $codigo === 'Comprobante recibido satisfactoriamente')
+            ? 'aceptado'
+            : 'rechazado';
+
+        // Actualización del modelo con todos los datos del acuse
+        $updateData = [
+            'fecha_envio_sat' => now(),
+            'fecha_respuesta_sat' => $fechaAcuse,
+            'respuesta_sat' => $response, // Guardamos la respuesta completa
+            'token_sat' => $token,
+            'intento_envio_sat' => 1,
+            'estado_sat' => $estado,
+            'codigo_estatus_sat' => $codigo,
+            'mensaje_sat' => $codigo,
+            'no_certificado_sat' => $noCertificadoSAT,
+            'incidencia_sat' => $incidenciaData ? json_encode($incidenciaData) : null,
+        ];
+
+
+        // Log exitoso
+        Log::info('CFDI procesado por el SAT', [
+            'uuid' => $uuid,
+            'estado' => $estado,
+            'codigo' => $codigo,
+            'mensaje' => $codigo,
+            'incidencia' => $incidenciaData
+        ]);
     }
 
      private function enviarSoapSatFromXml(string $token, Cfdi $cfdi, string $nameXml): void
@@ -719,9 +881,9 @@ class EnvioSatCfdiService
      * @param array $cfdi
      * @return void
      */
-    public function onlyUploadAndSendSat(string $xml, array $cfdi)
+    public function onlyUploadAndSendSat(string $xml, array $data)
     {
-        $uuid = $cfdi['uuid'];
+        $uuid = $data['uuid'];
 
         $this->subirABlob($uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $uuid]);
@@ -733,8 +895,9 @@ class EnvioSatCfdiService
         $nameXml = $uuid . '.xml';
 
 
-       $this->enviarSoapSat($token, $cfdi, $nameXml);
-        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
+       //$this->enviarSoapSat($token, $cfdi, $nameXml);
+       $this->enviarSoapSatFromXmlNew($token, null, $nameXml, $data);
+       Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
 
     }
 
