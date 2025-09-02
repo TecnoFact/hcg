@@ -913,8 +913,8 @@ class EnvioSatCfdiService
        {
            Log::info('Respuesta del SAT', ['response' => $response]);
 
-           if(count($response['incidencia']) > 0 && $response['incidencia']['codigo_error'])
-           {
+            if(!empty($response['incidencia']) && is_array($response['incidencia']) && !empty($response['incidencia']['codigo_error']))
+            {
                 $responseData = [
                     'status' => false,
                     'xml' => $response['xml'],
