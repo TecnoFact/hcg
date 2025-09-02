@@ -401,7 +401,7 @@ class EnvioSatCfdiService
         return ['xml' => $xmlResponse->asXML(), 'incidencia' => $incidenciaData, 'codigo' => $codigo];
     }
 
-    private function enviarSoapSatFromXmlNew(string $token,  $cfdi = null, string $nameXml, array $data): void
+    private function enviarSoapSatFromXmlNew(string $token,  $cfdi = null, string $nameXml, array $data): array
     {
 
         if(!$token) {
@@ -562,6 +562,8 @@ class EnvioSatCfdiService
             'mensaje' => $codigo,
             'incidencia' => $incidenciaData
         ]);
+
+          return ['xml' => $xmlResponse->asXML(), 'incidencia' => $incidenciaData, 'codigo' => $codigo];
     }
 
      private function enviarSoapSatFromXml(string $token, Cfdi $cfdi, string $nameXml): void
@@ -895,8 +897,8 @@ class EnvioSatCfdiService
         $nameXml = $uuid . '.xml';
 
 
-        $response = $this->enviarSoapSat($token, $data, $nameXml);
-        // $response = $this->enviarSoapSatFromXmlNew($token, null, $nameXml, $data);
+       // $response = $this->enviarSoapSat($token, $data, $nameXml);
+         $response = $this->enviarSoapSatFromXmlNew($token, null, $nameXml, $data);
         Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
 
         $responseData = [
