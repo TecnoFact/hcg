@@ -224,12 +224,12 @@ class EnvioSatCfdiService
      * Enviar el CFDI al SAT al metodo de recepcion de documentos.
      *
      * @param string $token obtenido del login al sat
-     * @param array $acuse
+     * @param array $cfdi
      * @param string $nameXml nombre del archivo XML
      * @return void
      * @throws Exception
      */
-    private function enviarSoapSat(string $token, array $acuse, string $nameXml): array
+    private function enviarSoapSat(string $token, array $cfdi, string $nameXml): array
     {
 
         if(!$token) {
@@ -254,14 +254,14 @@ class EnvioSatCfdiService
 
         $data = [
             'RfcEmisor' => $emisorRfc,
-            'UUID' => $acuse['uuid'],
-            'Fecha' => $acuse['fecha'],
+            'UUID' => $cfdi['uuid'],
+            'Fecha' => $cfdi['fecha'],
             'NumeroCertificado' => $numeroCertificado,
             'VersionComprobante' => "4.0",
             'RutaCFDI' => config('pac.BlobStorageEndpoint') . "asf180914ky5/$nameXml",
         ];
 
-        $fecha = Carbon::parse($acuse['fecha'])->format('Y-m-d\TH:i:s');
+        $fecha = Carbon::parse($cfdi['fecha'])->format('Y-m-d\TH:i:s');
 
 
         $soapEnvelope = <<<EOT
