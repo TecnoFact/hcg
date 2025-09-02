@@ -376,7 +376,11 @@ class EnvioSatCfdiService
         }
 
         // Validar que el UUID coincida con el enviado
-        if (strtoupper($uuid) !== strtoupper($acuse['uuid'])) {
+        if (strtoupper($uuid) !== strtoupper($cfdi['uuid'])) {
+            Log::error('El UUID en el acuse no coincide con el CFDI enviado', [
+                'uuid_enviado' => $cfdi['uuid'],
+                'uuid_en_acuse' => $uuid
+            ]);
             throw new Exception("El UUID en el acuse no coincide con el CFDI enviado");
         }
 
