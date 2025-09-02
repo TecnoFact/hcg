@@ -269,7 +269,23 @@ class CfdiController extends Controller
             // Enviar al SAT y Azure
             try {
                 $envio = new EnvioSatCfdiService();
-                $envio->onlyUploadAndSendSat($xmlContent, $cfdi);
+
+                $response = $envio->onlyUploadAndSendSat($xmlContent, $cfdi);
+
+                if(!$response['status'])
+                {
+                    return response()->json([
+                        'error' => 'Error al enviar CFDI al SAT',
+                        'mensaje' => $response['mensaje'] ?? 'Error desconocido',
+                        'codigo' => $response['codigo'] ?? null,
+                        'incidencia' => $response['incidencia'] ?? null,
+                        'datos_extraidos' => [
+                            'uuid' => null,
+                            'acuse' => null,
+                        ],
+                    ], 500);
+                }
+
             } catch (\Exception $e) {
 
                 \Log::error('Error al enviar CFDI al SAT', [

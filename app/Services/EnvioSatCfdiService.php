@@ -398,7 +398,7 @@ class EnvioSatCfdiService
             'incidencia' => $incidenciaData
         ]);
 
-        return ['xml' => $xmlResponse->asXML()];
+        return ['xml' => $xmlResponse->asXML(), 'incidencia' => $incidenciaData, 'codigo' => $codigo];
     }
 
     private function enviarSoapSatFromXmlNew(string $token,  $cfdi = null, string $nameXml, array $data): void
@@ -881,7 +881,7 @@ class EnvioSatCfdiService
      * @param array $cfdi
      * @return void
      */
-    public function onlyUploadAndSendSat(string $xml, array $data)
+    public function onlyUploadAndSendSat(string $xml, array $data): array
     {
         $uuid = $data['uuid'];
 
@@ -895,10 +895,45 @@ class EnvioSatCfdiService
         $nameXml = $uuid . '.xml';
 
 
-       //$this->enviarSoapSat($token, $cfdi, $nameXml);
-       $this->enviarSoapSatFromXmlNew($token, null, $nameXml, $data);
-       Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
+        $response = $this->enviarSoapSat($token, $data, $nameXml);
+        // $response = $this->enviarSoapSatFromXmlNew($token, null, $nameXml, $data);
+        Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
 
+        $responseData = [
+            'status' => false,
+            'mensaje' => null,
+            'xml' => null,
+            'incidencia' => null,
+            'codigo' => null
+        ];
+
+       if($response)
+       {
+           Log::info('Respuesta del SAT', ['response' => $response]);
+
+           if(count($response['incidencia']) > 0 && $response['incidencia']['codigo_error'])
+           {
+                $responseData = [
+                    'status' => false,
+                    'xml' => $response['xml'],
+                    'incidencia' => $response['incidencia'],
+                    'codigo' => $response['incidencia']['codigo_error'],
+                    'mensaje' => $response['incidencia']['mensaje'] ?? null
+                ];
+
+           }else{
+                $responseData = [
+                    'status' => true,
+                    'xml' => $response['xml'],
+                    'incidencia' => $response['incidencia'],
+                    'codigo' => 0,
+                    'mensaje' => 'Comprobante recibido satisfactoriamente'
+                ];
+           }
+
+       }
+
+       return $responseData;
     }
 
 
