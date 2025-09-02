@@ -712,12 +712,12 @@ class EnvioSatCfdiService
      * Método para subir el CFDI y enviarlo al SAT.
      *
      * @param string $xml
-     * @param string $uuid
+     * @param array $cfdi
      * @return void
      */
-    public function onlyUploadAndSendSat($xml, $acuse)
+    public function onlyUploadAndSendSat(string $xml, array $cfdi)
     {
-        $uuid = $acuse['uuid'];
+        $uuid = $cfdi['uuid'];
 
         $this->subirABlob($uuid, $xml);
         Log::info('CFDI almacenado en Azure Blob', ['uuid' => $uuid]);
@@ -729,7 +729,7 @@ class EnvioSatCfdiService
         $nameXml = $uuid . '.xml';
 
 
-       $this->enviarSoapSat($token, $acuse, $nameXml);
+       $this->enviarSoapSat($token, $cfdi, $nameXml);
         Log::info('CFDI enviado exitosamente al SAT', ['uuid' => $uuid]);
 
     }

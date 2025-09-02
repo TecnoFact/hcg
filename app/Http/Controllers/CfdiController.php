@@ -255,7 +255,7 @@ class CfdiController extends Controller
 
 
         $acuseService = new AcuseJsonService();
-        $acuse = $acuseService->generarDesdeXml($xmlContent);
+        $cfdi = $acuseService->generarDesdeXml($xmlContent);
 
         // 2. Validar complementos
         $xml = simplexml_load_string($xmlContent);
@@ -269,7 +269,7 @@ class CfdiController extends Controller
             // Enviar al SAT y Azure
             try {
                 $envio = new EnvioSatCfdiService();
-                $envio->onlyUploadAndSendSat($xmlContent, $acuse);
+                $envio->onlyUploadAndSendSat($xmlContent, $cfdi);
             } catch (\Exception $e) {
 
                 \Log::error('Error al enviar CFDI al SAT', [
@@ -288,8 +288,8 @@ class CfdiController extends Controller
             return response()->json([
                 'mensaje' => 'CFDI recibido y registrado correctamente',
                 'datos_extraidos' => [
-                    'uuid' => $acuse['uuid'],
-                    'acuse' => $acuse,
+                    'uuid' => $cfdi['uuid'],
+                    'acuse' => $cfdi,
                 ],
             ], 201);
         } catch (\Exception $e) {
