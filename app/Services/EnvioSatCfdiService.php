@@ -256,7 +256,7 @@ class EnvioSatCfdiService
             'RfcEmisor' => $emisorRfc,
             'UUID' => $cfdi['uuid'],
             'Fecha' => $cfdi['fecha'],
-            'NumeroCertificado' => $numeroCertificado,
+            'NumeroCertificado' => '00001000000710051653',
             'VersionComprobante' => "4.0",
             'RutaCFDI' => config('pac.BlobStorageEndpoint') . "asf180914ky5/$nameXml",
         ];
