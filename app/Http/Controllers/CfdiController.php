@@ -303,6 +303,9 @@ class CfdiController extends Controller
 
             return response()->json([
                 'mensaje' => 'CFDI recibido y registrado correctamente',
+                'message' => $response['mensaje'] ?? '-',
+                'codigo' => $response['codigo'] ?? null,
+                'incidencia' => $response['incidencia'] ?? null,
                 'datos_extraidos' => [
                     'uuid' => $cfdi['uuid'],
                     'acuse' => $cfdi,

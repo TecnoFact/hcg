@@ -548,7 +548,7 @@ class EnvioSatCfdiService
             'intento_envio_sat' => 1,
             'estado_sat' => $estado,
             'codigo_estatus_sat' => $codigo,
-            'mensaje_sat' => $codigo,
+            'mensaje_sat' => $incidencia->MensajeIncidencia ?? '',
             'no_certificado_sat' => $noCertificadoSAT,
             'incidencia_sat' => $incidenciaData ? json_encode($incidenciaData) : null,
         ];
@@ -559,11 +559,11 @@ class EnvioSatCfdiService
             'uuid' => $uuid,
             'estado' => $estado,
             'codigo' => $codigo,
-            'mensaje' => $codigo,
+            'mensaje' => $incidencia->MensajeIncidencia ?? '',
             'incidencia' => $incidenciaData
         ]);
 
-          return ['xml' => $xmlResponse->asXML(), 'incidencia' => $incidenciaData, 'codigo' => $codigo];
+          return ['xml' => $xmlResponse->asXML(), 'incidencia' => $incidenciaData, 'codigo' => $codigo, 'message' => $incidencia->MensajeIncidencia ?? ''];
     }
 
      private function enviarSoapSatFromXml(string $token, Cfdi $cfdi, string $nameXml): void
@@ -920,7 +920,7 @@ class EnvioSatCfdiService
                     'xml' => $response['xml'],
                     'incidencia' => $response['incidencia'],
                     'codigo' => $response['incidencia']['codigo_error'],
-                    'mensaje' => $response['incidencia']['mensaje'] ?? null
+                    'mensaje' => $response['message'] ?? null
                 ];
 
            }else{
